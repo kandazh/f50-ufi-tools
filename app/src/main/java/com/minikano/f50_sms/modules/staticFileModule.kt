@@ -1,0 +1,48 @@
+package com.minikano.f50_sms.modules
+
+import android.content.Context
+import com.minikano.f50_sms.utils.KanoLog
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.defaultForFilePath
+import io.ktor.server.application.call
+import io.ktor.server.request.path
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import java.io.FileNotFoundException
+
+//静态资源
+fun Route.staticFileModule(context: Context) {
+    val TAG = "[$BASE_TAG]_staticFileModule"
+
+    get("{...}") {
+        val rawPath = (
+            call.parameters["..."]
+                ?: call.request.path().removePrefix("/")
+            ).trim('/')
+        val path = if (rawPath.isBlank()) "index.html" else rawPath
+
+        if (path.contains("..")) {
+            KanoLog.w(TAG, "静态资源请求被拒绝(路径非法): $rawPath")
+            call.respond(HttpStatusCode.Forbidden, "403 Forbidden")
+            return@get
+        }
+
+        try {
+            val bytes = context.assets.open(path).use { it.readBytes() }
+            val contentType = ContentType.defaultForFilePath(path)
+            call.respondBytes(bytes, contentType)
+        } catch (e: SecurityException) {
+            KanoLog.e(TAG, "静态资源无权限访问：$path", e)
+            call.respond(HttpStatusCode.Forbidden, "403 Forbidden")
+        } catch (e: FileNotFoundException) {
+            KanoLog.e(TAG, "静态资源不存在：$path", e)
+            call.respond(HttpStatusCode.NotFound, "404 Not Found")
+        } catch (e: Exception) {
+            KanoLog.e(TAG, "静态资源读取失败：$path", e)
+            call.respond(HttpStatusCode.InternalServerError, "500 Internal Server Error")
+        }
+    }
+}

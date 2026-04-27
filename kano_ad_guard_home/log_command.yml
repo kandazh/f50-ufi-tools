@@ -1,0 +1,7 @@
+cat /data/agh/history.log
+cat /data/agh/boot.log
+cat /data/agh/agh/bin.log
+
+sh /data/agh/agh/scripts/debug.sh
+
+cat /data/agh/agh/debug.log

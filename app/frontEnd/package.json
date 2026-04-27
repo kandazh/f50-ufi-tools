@@ -1,0 +1,19 @@
+{
+  "name": "ufi-tools-web",
+  "version": "1.0.0",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node dev-server.js",
+    "debug":"node build.js --debug"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
+    "javascript-obfuscator": "^4.1.1"
+  }
+}
