@@ -159,9 +159,6 @@
 <!--#include views/modals.html -->
         </div>
     </div>
-    <div class="footer">
-        <p>F50 Tools</p>
-    </div>
 
     <div class="toolbar">
         <div id="top_btn" class="top" onclick="scroolToTop()" style="display: none;opacity: 0;">

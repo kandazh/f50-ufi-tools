@@ -728,12 +728,40 @@ function main_func() {
                         headers: { ...common_headers, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ enabled: !on, password: KANO_PASSWORD })
                     })).json()
-                    qtSet('adbnet', !on)
+                    // Poll until actual state matches desired state
+                    const desired = !on
+                    for (let attempt = 0; attempt < 10; attempt++) {
+                        await new Promise(r => setTimeout(r, 1000))
+                        try {
+                            const check = await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                                method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
+                            }, 3000)).json()
+                            const actual = check.enabled === 'true' || check.enabled === true
+                            if (actual === desired) break
+                        } catch {}
+                    }
+                    qtSet('adbnet', desired)
                     break
                 }
                 case 'perf': {
                     const on = d.performance_mode === '1'
                     await (await postData(cookie, { goformId: 'PERFORMANCE_MODE_SETTING', performance_mode: on ? '0' : '1' })).json()
+                    // Poll baseDeviceInfo to verify cores actually changed
+                    const expectCores = on ? 4 : 8
+                    for (let attempt = 0; attempt < 10; attempt++) {
+                        await new Promise(r => setTimeout(r, 1000))
+                        try {
+                            const info = await (await fetchWithTimeout(`${KANO_baseURL}/baseDeviceInfo`, {
+                                headers: { ...common_headers }
+                            }, 5000)).json()
+                            const usage = info.cpuUsageInfo || {}
+                            let coreCount = 0
+                            for (let i = 0; i < 8; i++) {
+                                if (usage['cpu' + i] !== undefined && usage['cpu' + i] !== null) coreCount++
+                            }
+                            if (coreCount >= expectCores) break
+                        } catch {}
+                    }
                     d.performance_mode = on ? '0' : '1'
                     qtSet('perf', !on)
                     break
@@ -1152,15 +1180,14 @@ function main_func() {
                 // Network type: 5G, LTE CA, LTE (4G), 3G, 2G
                 if (gsType) {
                     let type = '';
-                    const nt = String(res.network_type);
-                    if (nt === '20') {
+                    const nt = String(res.network_type).toUpperCase();
+                    if (nt === '20' || nt === '5G' || nt.includes('5G')) {
                         type = '5G';
-                    } else if (nt === '13') {
-                        // Check for carrier aggregation
-                        type = (res.Lte_ca_status && res.Lte_ca_status !== 'off') ? 'LTE CA' : '4G';
-                    } else if (nt === '10') {
+                    } else if (nt === '13' || nt === 'LTE' || nt === 'LTE_CA' || nt.includes('LTE')) {
+                        type = (nt === 'LTE_CA' || (res.Lte_ca_status && res.Lte_ca_status !== 'off')) ? 'LTE CA' : '4G';
+                    } else if (nt === '10' || nt === '3G' || nt.includes('WCDMA') || nt.includes('HSPA')) {
                         type = '3G';
-                    } else if (nt === '6') {
+                    } else if (nt === '6' || nt === '2G' || nt.includes('GSM') || nt.includes('EDGE')) {
                         type = '2G';
                     }
                     gsType.textContent = type;
