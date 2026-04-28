@@ -781,8 +781,8 @@
     function resizeUsageChartWrap(count) {
         const wrap = document.querySelector('.dash-usage-chart-wrap');
         if (!wrap) return;
-        // Scale height: 7d→140px, 14d→160px, 30d→190px, 60d→230px, 90d→270px
-        const h = Math.min(300, Math.max(140, 120 + count * 1.7));
+        // Scale height: 7d→140px, 14d→160px, 30d→190px, 60d→230px, 90d→270px, 180d→420px
+        const h = Math.min(450, Math.max(140, 120 + count * 1.7));
         wrap.style.height = Math.round(h) + 'px';
     }
 
