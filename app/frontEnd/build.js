@@ -32,14 +32,14 @@ const obfuscateJsFiles = ['requests.js','main.js']
 const obfuscateOptions = {
     compact: true,
     controlFlowFlattening: !isDebug,
-    controlFlowFlatteningThreshold: 1.0,
+    controlFlowFlatteningThreshold: 0.4,
     deadCodeInjection: !isDebug,
-    deadCodeInjectionThreshold: 1.0,
+    deadCodeInjectionThreshold: 0.3,
     // disableConsoleOutput: !isDebug,
     stringArray: true,
-    stringArrayThreshold: 1.0,
+    stringArrayThreshold: 0.8,
     transformObjectKeys: false,
-    unicodeEscapeSequence: true,
+    unicodeEscapeSequence: false,
     renameGlobals: false,
 };
 
