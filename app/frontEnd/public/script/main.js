@@ -457,7 +457,7 @@ function main_func() {
         initSmsForwardModal()
         initChangePassData()
         initChangeTokenData()
-        adbQuery()
+        try { adbQuery() } catch(e) {}
         loadTitle()
         initUpdateSoftware()
         handlerADBStatus()
@@ -1078,7 +1078,7 @@ function main_func() {
             // Update row 7 device info
             if (typeof updateDeviceInfo === 'function') updateDeviceInfo(res);
 
-            adbQuery()
+            try { adbQuery() } catch(e) {}
             isNotLoginOnce = false
             let html = ''
             try {

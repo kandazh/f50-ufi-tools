@@ -35,8 +35,8 @@ const originFetch = window.fetch;
         const t = Date.now();
         const method = (init.method || 'GET').toUpperCase();
 
-        //无感验证anyProxy
-        if (input.startsWith('/api/proxy')) {
+        //无感验证 — add authorization for all /api/ requests
+        if (input.startsWith('/api')) {
             let _token = common_headers.authorization
             if (!_token) {
                 _token = localStorage.getItem('kano_sms_token')
