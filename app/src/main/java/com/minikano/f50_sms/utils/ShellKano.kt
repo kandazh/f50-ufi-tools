@@ -651,9 +651,9 @@ class ShellKano {
 
                                     KanoLog.d("UFI_TOOLS_LOG", "禁用FOTA结果: $result3")
 
-                                    val samba_result = sendShellCmd("cat /data/samba/etc/smb.conf | grep internal_storage")
+                                    val samba_result = sendShellCmd("cat /data/samba/etc/smb.conf | grep samba_exec.sh")
 
-                                    if(samba_result.done && samba_result.content.contains("internal_storage")){
+                                    if(samba_result.done && samba_result.content.contains("samba_exec.sh")){
                                         val result = req.postData(
                                             cookie, mapOf(
                                                 "goformId" to "SAMBA_SETTING",

@@ -33,19 +33,19 @@ object SmbThrottledRunner {
         running.set(true)
 
         Thread {
-            val samba_result = sendShellCmd("cat /data/samba/etc/smb.conf | grep internal_storage")
+            val samba_result = sendShellCmd("cat /data/samba/etc/smb.conf | grep samba_exec.sh")
             val advancedIsEnable =
-                samba_result.done && samba_result.content.contains("internal_storage")
+                samba_result.done && samba_result.content.contains("samba_exec.sh")
             var needOpenSMB = false
             if(advancedIsEnable) {
                 try {
                     KanoLog.d(
                         "UFI_TOOLS_LOG",
-                        "开始执行 SMB 命令,连接到：\"smb://$host/internal_storage/\""
+                        "开始执行 SMB 命令,连接到：\"smb://$host/Internal/\""
                     )
 
                     val ctx = SingletonContext.getInstance()
-                    val smbFile = SmbFile("smb://$host/internal_storage/", ctx)
+                    val smbFile = SmbFile("smb://$host/Internal/", ctx)
 
                     if (smbFile.exists()) {
                         KanoLog.d("UFI_TOOLS_LOG", "SMB路径存在")
@@ -59,7 +59,7 @@ object SmbThrottledRunner {
                                     RootShell.sendCommandToSocket(
                                         """
 SRC_LIST="/sdcard/DCIM /mnt/media_rw /storage/sdcard0"
-TGT_LIST="/data/SAMBA_SHARE/机内存储 /data/SAMBA_SHARE/外部存储 /data/SAMBA_SHARE/SD卡"
+TGT_LIST="/data/SAMBA_SHARE/Internal /data/SAMBA_SHARE/External /data/SAMBA_SHARE/SDCard"
 
 i=1
 for src in ${'$'}SRC_LIST; do
