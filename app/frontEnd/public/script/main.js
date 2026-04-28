@@ -2117,7 +2117,8 @@ function main_func() {
     rebootDeviceBtnInit()
 
     //字段显示隐藏
-    document.querySelector("#DICTIONARY").onclick = (e) => {
+    const _dictEl = document.querySelector("#DICTIONARY");
+    if (_dictEl) _dictEl.onclick = (e) => {
         showModal('#dictionaryModal')
     }
 
@@ -2201,7 +2202,8 @@ function main_func() {
     })
 
     //流量管理逻辑
-    document.querySelector("#DataManagement").onclick = async () => {
+    const _dataManagementEl = document.querySelector("#DataManagement");
+    if (_dataManagementEl) _dataManagementEl.onclick = async () => {
         if (!(await initRequestData())) {
             createToast(t('toast_please_login'), 'red')
             out()
@@ -2483,7 +2485,8 @@ function main_func() {
         }
     }
 
-    document.querySelector("#WIFIManagement").onclick = async () => {
+    const _wifiManagementEl = document.querySelector("#WIFIManagement");
+    if (_wifiManagementEl) _wifiManagementEl.onclick = async () => {
         if (!(await initRequestData())) {
             createToast(t('toast_please_login'), 'red')
             out()
