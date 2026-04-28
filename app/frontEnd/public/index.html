@@ -113,9 +113,15 @@
                     <span class="gs-item gs-lan-count" id="gs-lan">--</span>
                     <span class="gs-spacer"></span>
                     <div class="gs-power-wrap">
-                        <button class="header-refresh-btn" id="headerPowerBtn" title="Restart" onclick="headerReboot()">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        <button class="header-refresh-btn" id="headerPowerBtn" title="Restart" onclick="togglePowerMenu()">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
                         </button>
+                        <div class="gs-power-menu" id="powerMenu">
+                            <button class="gs-power-item" onclick="headerReboot()">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                <span>Restart</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

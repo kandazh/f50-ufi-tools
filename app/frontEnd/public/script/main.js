@@ -607,21 +607,41 @@ function main_func() {
         }
     }
 
-    // --- Header restart button (click to confirm, click again to restart) ---
+    // --- Power menu (header restart) ---
+    const togglePowerMenu = () => {
+        const menu = document.getElementById('powerMenu')
+        if (!menu) return
+        menu.classList.toggle('open')
+        if (menu.classList.contains('open')) {
+            setTimeout(() => {
+                document.addEventListener('click', closePowerMenuOutside, { once: true })
+            }, 0)
+        }
+    }
+    const closePowerMenuOutside = (e) => {
+        const menu = document.getElementById('powerMenu')
+        const wrap = document.querySelector('.gs-power-wrap')
+        if (menu && wrap && !wrap.contains(e.target)) {
+            menu.classList.remove('open')
+        }
+    }
     let headerRebootCount = 0
     let headerRebootTimer = null
     const headerReboot = async () => {
-        const btn = document.getElementById('headerPowerBtn')
+        const menu = document.getElementById('powerMenu')
         headerRebootCount++
         if (headerRebootCount < 2) {
-            createToast(t('toast_reboot_confirm') || 'Confirm restart?', 'yellow')
+            const item = menu?.querySelector('.gs-power-item span')
+            if (item) item.textContent = 'Confirm?'
             clearTimeout(headerRebootTimer)
             headerRebootTimer = setTimeout(() => {
                 headerRebootCount = 0
+                if (item) item.textContent = 'Restart'
             }, 3000)
             return
         }
         headerRebootCount = 0
+        if (menu) menu.classList.remove('open')
         if (!(await initRequestData())) {
             createToast(t('toast_please_login'), 'red')
             return
@@ -7505,6 +7525,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         toggleCellInfoRefresh,
         toggleLoginLogout,
         updateLoginIcon,
+        togglePowerMenu,
         headerReboot,
         qtToggle,
         qtUpdateAll
