@@ -6677,6 +6677,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const initCheckWeakToken = async () => {
         if (!(await initRequestData())) {
+            showModal('#tokenModal')
             return null
         }
 
