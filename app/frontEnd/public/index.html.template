@@ -176,6 +176,15 @@
     <script src="/script/theme.js"></script>
     <script src="/script/charts.js"></script>
     <script src="/script/main.js"></script>
+    <script>
+        // Show login modal if no credentials stored (after main.js loads)
+        setTimeout(function() {
+            if (!localStorage.getItem('kano_sms_token') && !localStorage.getItem('kano_sms_pwd')) {
+                var m = document.getElementById('tokenModal');
+                if (m && m.style.display === 'none') showModal('#tokenModal');
+            }
+        }, 1500);
+    </script>
     <script src="/script/dash-charts.js"></script>
     <script src="/script/dashboard.js"></script>
 </body>
