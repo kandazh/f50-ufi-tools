@@ -38,7 +38,7 @@ const obfuscateOptions = {
     // disableConsoleOutput: !isDebug,
     stringArray: true,
     stringArrayThreshold: 1.0,
-    transformObjectKeys: true,
+    transformObjectKeys: false,
     unicodeEscapeSequence: true,
     renameGlobals: false,
 };
