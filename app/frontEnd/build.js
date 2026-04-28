@@ -27,7 +27,7 @@ if (fs.existsSync(templatePath)) {
     fs.writeFileSync(path.join(inputDir, 'index.html'), assembled, 'utf8');
     console.log('✔️ Assembled index.html from template + partials');
 }
-const obfuscateJsFiles = ['requests.js','main.js']
+const obfuscateJsFiles = ['requests.js']
 
 const obfuscateOptions = {
     compact: true,
