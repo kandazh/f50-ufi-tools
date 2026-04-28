@@ -607,18 +607,17 @@ function main_func() {
         }
     }
 
-    // --- Header restart button (double-click to confirm) ---
+    // --- Header restart button (click to confirm, click again to restart) ---
     let headerRebootCount = 0
     let headerRebootTimer = null
     const headerReboot = async () => {
         const btn = document.getElementById('headerPowerBtn')
         headerRebootCount++
         if (headerRebootCount < 2) {
-            if (btn) btn.title = 'Confirm?'
+            createToast(t('toast_reboot_confirm') || 'Confirm restart?', 'yellow')
             clearTimeout(headerRebootTimer)
             headerRebootTimer = setTimeout(() => {
                 headerRebootCount = 0
-                if (btn) btn.title = 'Restart'
             }, 3000)
             return
         }

@@ -494,6 +494,8 @@
     "toast_set_cell_failed": "设置基站失败!",
     "toast_unlock_cell_success": "解锁基站成功！",
     "toast_unlock_cell_failed": "解锁基站失败!",
+    "toast_reboot_confirm": "\u518D\u6B21\u70B9\u51FB\u4EE5\u91CD\u542F",
+    "toast_reboot_confirm": "\u518D\u6B21\u70B9\u51FB\u4EE5\u91CD\u542F",
     "toast_rebot_success": "重启成功！",
     "toast_reboot_failed": "重启失败，请检查网络",
     "toast_start_refresh": "已开始刷新",

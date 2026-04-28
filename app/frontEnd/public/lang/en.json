@@ -480,6 +480,7 @@
     "toast_set_cell_failed": "Set cell failed",
     "toast_unlock_cell_success": "Cell unlocked",
     "toast_unlock_cell_failed": "Unlock cell failed",
+    "toast_reboot_confirm": "Click again to restart",
     "toast_rebot_success": "Rebooted",
     "toast_reboot_failed": "Reboot failed, check network",
     "toast_start_refresh": "Started refreshing",

@@ -480,6 +480,8 @@
     "toast_set_cell_failed": "Cài đặt Cell thất bại",
     "toast_unlock_cell_success": "Mở khóa Cell thành công",
     "toast_unlock_cell_failed": "Mở khóa Cell thất bại",
+    "toast_reboot_confirm": "Nh\u1EA5n l\u1EA7n n\u1EEFa \u0111\u1EC3 kh\u1EDFi \u0111\u1ED9ng l\u1EA1i",
+    "toast_reboot_confirm": "Nh\u1EA5n l\u1EA7n n\u1EEFa \u0111\u1EC3 kh\u1EDFi \u0111\u1ED9ng l\u1EA1i",
     "toast_rebot_success": "Đã khởi động lại",
     "toast_reboot_failed": "Khởi động lại thất bại, kiểm tra mạng",
     "toast_start_refresh": "Bắt đầu làm mới",

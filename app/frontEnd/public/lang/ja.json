@@ -481,6 +481,8 @@
     "toast_set_cell_failed": "基地局の設定に失敗しました！",
     "toast_unlock_cell_success": "基地局の解除に成功しました！",
     "toast_unlock_cell_failed": "基地局の解除に失敗しました！",
+    "toast_reboot_confirm": "\u3082\u3046\u4E00\u5EA6\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u518D\u8D77\u52D5",
+    "toast_reboot_confirm": "\u3082\u3046\u4E00\u5EA6\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u518D\u8D77\u52D5",
     "toast_rebot_success": "再起動成功！",
     "toast_reboot_failed": "再起動失敗、ネットワークを確認してください",
     "toast_start_refresh": "更新開始しました",
