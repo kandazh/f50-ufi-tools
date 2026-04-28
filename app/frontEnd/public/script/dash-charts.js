@@ -5,6 +5,7 @@
    ========================================================== */
 (() => {
     const HISTORY = 40;
+    const _baseURL = (typeof KANO_baseURL !== 'undefined') ? KANO_baseURL : '/api';
 
     // Color palette
     const colors = {
@@ -567,7 +568,7 @@
     // Poll /api/connInfo for network connections
     async function pollConnInfo() {
         try {
-            const res = await fetch(KANO_baseURL + '/connInfo');
+            const res = await fetch(_baseURL + '/connInfo');
             const json = await res.json();
             if (json.result === 'success' && json.data) {
                 updateConnCard(json.data);
@@ -631,7 +632,7 @@
     // --- USB Status (shown in Battery card) ---
     async function pollUSBStatus() {
         try {
-            const res = await (await fetch(KANO_baseURL + '/usb_status')).json();
+            const res = await (await fetch(_baseURL + '/usb_status')).json();
             if (!res || !res.details) return;
             const isGadget = res.details.typec_mode === 'gadget';
             const speed = isGadget ? res.details.gadget_speed : formatSpeed(res.maxSpeed);
@@ -799,7 +800,7 @@
 
         try {
             const res = await fetch(
-                KANO_baseURL + '/cellularUsage?startTime=' + start.getTime() + '&endTime=' + end.getTime() + '&method=date-range'
+                _baseURL + '/cellularUsage?startTime=' + start.getTime() + '&endTime=' + end.getTime() + '&method=date-range'
             );
             const json = await res.json();
             const items = json.usage || [];
@@ -897,7 +898,7 @@
     // Fetch firmware version once from version_info API
     (async function() {
         try {
-            const r = await fetch(KANO_baseURL + '/version_info');
+            const r = await fetch(_baseURL + '/version_info');
             const j = await r.json();
             deviceInfoVersion = j.wa_inner_version || j.version || (j.model + ' ' + j.app_ver) || null;
             const el = document.getElementById('ddi-version');
@@ -995,7 +996,7 @@
     // --- QCI / DL Max / UL Max poller (independent of main.js QOSRDPCommand) ---
     async function pollQoS() {
         try {
-            const r = await fetch(KANO_baseURL + '/AT?command=' + encodeURIComponent('AT+CGEQOSRDP=1') + '&slot=0');
+            const r = await fetch(_baseURL + '/AT?command=' + encodeURIComponent('AT+CGEQOSRDP=1') + '&slot=0');
             const j = await r.json();
             if (j.result) {
                 const m = j.result.match(/\+CGEQOSRDP:\s*(.+?)\s*OK/);
