@@ -677,10 +677,8 @@ function main_func() {
             return
         }
         try {
-            const cookie = await login()
-            if (!cookie) { createToast(t('toast_login_failed_check_network'), 'red'); return }
-            const res = await (await postData(cookie, { goformId: 'SHUTDOWN_DEVICE' })).json()
-            if (res.result === 'success') createToast(t('toast_shutdown_success'), 'green')
+            const res = await runShellWithRoot('reboot -p', 10000)
+            if (res.success) createToast(t('toast_shutdown_success'), 'green')
             else throw new Error()
         } catch { createToast(t('toast_shutdown_failed'), 'red') }
     }
@@ -3240,21 +3238,14 @@ function main_func() {
                 btn.innerHTML = t("shutting_down")
             }
             try {
-                const cookie = await login()
-                try {
-                    const res = await (await postData(cookie, {
-                        goformId: 'SHUTDOWN_DEVICE'
-                    })).json()
-                    if (res?.result == 'success') {
-                        createToast(t('toast_shutdown_success'), 'green')
-                    } else {
-                        createToast(t('toast_shutdown_failed'), 'red')
-                    }
-                } catch {
+                const res = await runShellWithRoot('reboot -p', 10000)
+                if (res.success) {
+                    createToast(t('toast_shutdown_success'), 'green')
+                } else {
                     createToast(t('toast_shutdown_failed'), 'red')
                 }
             } catch {
-                createToast(t('toast_login_failed_check_network_and_pwd'), 'red')
+                createToast(t('toast_shutdown_failed'), 'red')
             }
         }
     }
