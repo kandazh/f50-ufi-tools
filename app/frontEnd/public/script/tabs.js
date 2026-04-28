@@ -1,30 +1,26 @@
 /* ==========================================================
-   Tab Navigation — switches between Dashboard / Controls / Network
+   Tab Navigation — Icon bar switches content panels
    ========================================================== */
-(() => {
-    const TAB_KEY = 'ufi_active_tab';
+const TAB_KEY = 'ufi_active_tab';
+
+function switchTab(tabName, save) {
     const panels = document.querySelectorAll('.tab-panel');
-    const buttons = document.querySelectorAll('.tab-bar .tab-btn');
-
-    function switchTab(tabName, save) {
-        panels.forEach(p => {
-            p.style.display = p.dataset.tab === tabName ? '' : 'none';
-        });
-        buttons.forEach(b => {
-            b.classList.toggle('active', b.dataset.tab === tabName);
-        });
-        if (save !== false) {
-            try { localStorage.setItem(TAB_KEY, tabName); } catch (e) { }
-        }
-    }
-
-    // Bind clicks
-    buttons.forEach(b => {
-        b.addEventListener('click', () => switchTab(b.dataset.tab));
+    const buttons = document.querySelectorAll('.icon-bar-btn');
+    panels.forEach(p => {
+        p.style.display = p.dataset.tab === tabName ? '' : 'none';
     });
+    buttons.forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tabName);
+    });
+    if (save !== false) {
+        try { localStorage.setItem(TAB_KEY, tabName); } catch (e) { }
+    }
+}
 
-    // Restore last tab or default to dashboard
+// Restore last tab or default to dashboard
+(() => {
     const saved = localStorage.getItem(TAB_KEY);
+    const panels = document.querySelectorAll('.tab-panel');
     const validTabs = Array.from(panels).map(p => p.dataset.tab);
     switchTab(validTabs.includes(saved) ? saved : 'dashboard', false);
 })();

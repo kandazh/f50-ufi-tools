@@ -51,6 +51,18 @@ android {
     namespace = "com.minikano.f50_sms"
     compileSdk = 35
 
+    signingConfigs {
+        create("release") {
+            val ksFile = rootProject.file("release.keystore")
+            if (ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "androidkey"
+                keyAlias = System.getenv("KEY_ALIAS") ?: "f50-key"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "androidkey"
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.minikano.f50_sms"
         minSdk = 26
@@ -64,6 +76,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

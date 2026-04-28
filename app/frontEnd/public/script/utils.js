@@ -664,7 +664,7 @@ Array.from(document.querySelectorAll('.mask'))?.forEach(el => {
         const classList = Array.from(e?.target?.classList || [])
         const id = e.target.id
         //维护一个黑名单，黑名单内的模态框不受影响
-        const blackList = ["AddTaskModal", 'updateSoftwareModal', "plugin_store", "APNViewModal", "APNEditModal", "advanceModal"]
+        const blackList = ["AddTaskModal", "plugin_store", "APNViewModal", "APNEditModal", "advanceModal"]
         const isCloseable = !blackList.includes(id)
         if (classList && classList.includes('mask') && isCloseable) {
             if (id) {
@@ -820,7 +820,7 @@ const createModal = ({ name, noBlur, isMask, title, titleI18nKey = "", maxWidth,
     </div>
 `
 
-    const container = document.querySelector('#BG_OVERLAY .container')
+    const container = document.querySelector('.container')
     if (container) {
         let mod = document.createElement('div')
         mod.id = name
@@ -1058,25 +1058,6 @@ const checkWeakToken = async () => {
         return false;
     }
 }
-
-const forceEnableOTABtn = (() => {
-    let count = 0
-    let timer = null
-    return () => {
-        count++
-        if (count < 5) {
-            if (timer) clearTimeout(timer)
-            timer = setTimeout(() => {
-                count = 0
-            }, 2000);
-            return
-        }
-        closeModal('#updateSoftwareModal');
-        createToast('Enabled! please reopen the update software modal again', 'pink');
-        UFI_FORCE_ENABLE_UPDATE = 1
-        count = 0
-    }
-})()
 
 
 const saveConfig = async (file, outputFile) => {

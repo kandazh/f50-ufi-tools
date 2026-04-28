@@ -1,73 +1,40 @@
-﻿            <!-- ç™»å½•æ¨¡æ€æ¡† -->
+﻿            <!-- Login Modal -->
             <div class="mask" id="tokenModal" style="display: none">
-                <div class="modal" style="width: 90vw;max-width: 450px;">
-                    <div class="title" style="display: flex;justify-content: space-between;">
-                        <span data-i18n="token_title">è¯·è¾“å…¥å£ä»¤ä¸Žå¯†ç </span>
-                        <button style="border-radius: 50%;" onclick="showLoginHelp()">?</button>
+                <div class="modal" style="width: 90vw;max-width: 360px;">
+                    <div class="title" style="text-align:center;font-size:1.1rem;padding:10px 0 4px;">
+                        <span>F50 Login</span>
                     </div>
-                    <div class="title" style="margin: 10px 0;">
-                        <p style="font-size: 12px;margin: 0;">
-                            <i>
-                                <span data-i18n="token_note_1">æ³¨ï¼šè¯·å¡«å…¥å£ä»¤å’Œå¯†ç </span><br>
-                                <span data-i18n="token_note_2">ç¬¬ä¸€ä¸ªä¸ºUFI-TOOLSç™»å½•å£ä»¤(é»˜è®¤ä¸ºadmin)</span><br>
-                                <span data-i18n="token_note_3">ç¬¬äºŒä¸ªä¸ºæŸå…´åŽå°çš„ç®¡ç†å¯†ç (åœ¨æœºå™¨èƒŒé¢å¯ä»¥æ‰¾åˆ°)</span><br>
-                                <span data-i18n="token_note_4">å¦‚æžœå‡ºçŽ°å¯†ç é”™è¯¯ï¼Œè¯·æ¢ä¸€ä¸ªç™»å½•æ–¹å¼</span>
-                            </i>
-                        </p>
-                    </div>
-                    <form class="content"
-                        style="padding: 0px 4px 0 4px;display: flex;flex-direction: column;align-items: center;">
-                        <input type="text" name="username" autocomplete="username" style="display: none;">
-                        <div style="display: flex;width: 100%;">
-                            <select style="width: 100%;margin-bottom: 10px;" class="select" name="" value="1"
-                                id="login_method">
-                                <option value="1" data-i18n="login_method_1">ç™»å½•æ–¹å¼1</option>
-                                <option value="0" data-i18n="login_method_2">ç™»å½•æ–¹å¼2</option>
-                            </select>
-                            <button type="button" data-i18n="no_pass_login_btn"
-                                onclick="event.preventDefault();noPassLogin()"
-                                style="flex-shrink: 0;margin: 4px 2px;">å…å¯†ç ç™»å½•</button>
+                    <form class="content" style="padding: 12px 16px;display:flex;flex-direction:column;gap:14px;">
+                        <input type="text" name="username" autocomplete="username" style="display:none;" value="admin">
+                        <div>
+                            <div style="font-size:.78rem;margin-bottom:4px;opacity:.6;">Username</div>
+                            <input id="TOKEN" name="backend_password" autocomplete="current-password" type="text"
+                                value="admin" placeholder="admin"
+                                style="width:100%;text-indent:.5em;height:36px;box-sizing:border-box;">
                         </div>
-                        <div id="TOKEN_LABEL" style="align-self: start;margin-bottom: 10px;font-size: .85rem;"
-                            data-i18n="token_div_1">UFI å£ä»¤ï¼š</div>
-                        <div style="display: flex;width: 100%;margin-bottom: 10px;gap: 4px;">
-                            <input name="backend_password" autocomplete="current-password" id="TOKEN" type="password"
-                                data-i18n-placeholder="token_placeholder_token" placeholder="å£ä»¤(UFI-TOOLSåŽå°åº”ç”¨ä¸­æŸ¥çœ‹)"
-                                style="width: 100%;text-indent: .5em;height: 30px;">
-                            <button type="button" onclick="switchPassInputShow(event,'#TOKEN')"
-                                style="background: none;;flex-shrink: 0;display: flex;align-items: center;justify-content: center;"><svg
-                                    style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                    width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg></button>
+                        <div>
+                            <div style="font-size:.78rem;margin-bottom:4px;opacity:.6;">Password</div>
+                            <div style="display:flex;gap:4px;">
+                                <input id="PWDINPUT" name="web_password" autocomplete="new-password" type="password"
+                                    placeholder="Device admin password"
+                                    style="width:100%;text-indent:.5em;height:36px;box-sizing:border-box;">
+                                <button type="button" onclick="switchPassInputShow(event,'#PWDINPUT')"
+                                    style="background:none;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg
+                                        style="pointer-events:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                        width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg></button>
+                            </div>
                         </div>
-                        <div style="align-self: start;margin-bottom: 10px;font-size: .85rem;" id="token_div_label2"
-                            data-i18n="token_div_2">
-                            æŸå…´åŽå°å¯†ç ï¼š</div>
-                        <div style="display: flex;width: 100%;margin-bottom: 10px;gap: 4px;" id="PWD_BLK">
-                            <input name="web_password" autocomplete="new-password" id="PWDINPUT" type="password"
-                                data-i18n-placeholder="token_placeholder_pwd" placeholder="å®˜æ–¹åŽå°çš„ç®¡ç†å¯†ç "
-                                style="width: 100%;text-indent: .5em; height: 30px;">
-                            <button type="button" onclick="switchPassInputShow(event,'#PWDINPUT')"
-                                style="background: none;flex-shrink: 0;display: flex;align-items: center;justify-content: center;"><svg
-                                    style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                    width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg></button>
-                        </div>
-                        <label class="user_select_none"
-                            style="align-self: start;margin-bottom: 10px;margin-top: 2px;font-size: .8rem;display: flex;align-items: center;justify-content: center;">
-                            <span data-i18n="remember-me">è®°ä½æˆ‘</span>
-                            <input type="checkbox" style="margin: 0 6px;" id="loginRememberMe">
+                        <label class="user_select_none" style="font-size:.78rem;display:flex;align-items:center;gap:5px;">
+                            <input type="checkbox" id="loginRememberMe">
+                            <span data-i18n="remember-me">Remember me</span>
                         </label>
                     </form>
-                    <div class="btn" style="text-align: right;">
-                        <button data-i18n="confirm_btn" onclick="onTokenConfirm()">ç¡®è®¤</button>
-                        <button data-i18n="cancel_btn" onclick="closeModal('#tokenModal')">å–æ¶ˆ</button>
+                    <div class="btn" style="text-align:right;padding:6px 16px 12px;">
+                        <button data-i18n="confirm_btn" onclick="onTokenConfirm()">Login</button>
                     </div>
                 </div>
             </div>
@@ -685,81 +652,6 @@
                     </form>
                 </div>
             </div>
-            <!-- ä¸»é¢˜èƒŒæ™¯æ¨¡æ€æ¡† -->
-            <div class="modal" id="bgSettingModal"
-                style="overflow: auto;width: 90%;max-width: 400px; display: flex;flex-direction: column;display: none;">
-                <div class="title" style="margin-bottom: 4px;" data-i18n="bg_setting_title">ä¸»é¢˜èƒŒæ™¯è®¾ç½®</div>
-                <div class="content" style="min-height: 450px;">
-                    <div style="text-align: left;">
-                        <div style="display: flex;align-items: center;gap:10px;font-size: 14px;margin-top: 6px;">
-                            <label style="display: flex;align-items: center;">
-                                <span style="width: 100px;" data-i18n="bg_setting_cloud_sync">å¤šè®¾å¤‡åŒæ­¥ï¼Ÿ</span>
-                                <input type="checkbox" id="isCloudSync">
-                            </label>
-                            <button class="btn" style="flex: 1;" onclick="syncTheme()"
-                                data-i18n="bg_setting_manual_sync">æ‰‹åŠ¨åŒæ­¥</button>
-                        </div>
-                        <p style="font-size: 14px">
-                            <label style="display: flex;align-items: center;">
-                                <span style="width: 100px;" data-i18n="bg_setting_enable_bg">å¯ç”¨èƒŒæ™¯å›¾ç‰‡ï¼Ÿ</span>
-                                <input type="checkbox" id="isCheckedBG">
-                            </label>
-                        </p>
-                        <p style="display: flex;align-items: center;font-size: 14px;">
-                            <span data-i18n="bg_setting_image_url">å›¾ç‰‡ç½‘å€ï¼š</span>
-                            <input placeholder="è¾“å…¥ç½‘å€" data-i18n-placeholder="bg_setting_input_url" type="text"
-                                id="BG_INPUT" style="flex:1;padding: 6px 10px;margin: 4px 0;">
-                        </p>
-                        <label>
-                            <input id="fileUploader" type="file" style="display: none;"
-                                onchange="handleFileUpload(event)">
-                            <button style="width: 100%;" onclick="document.querySelector('#fileUploader').click()"
-                                data-i18n="bg_setting_upload">ä¸Šä¼ å›¾ç‰‡(10MBå†…)</button>
-                            <button class="btn" style="width: 100%;margin-top: 10px;"
-                                onclick="event.preventDefault();handleOpenUploadFilesList()"
-                                data-i18n="upload_file_manager">ä¸Šä¼ æ–‡ä»¶ç®¡ç†</button>
-                        </label>
-                    </div>
-
-                    <div style="text-align: left;width: 100%;font-size: 14px;">
-                        <p>
-                            <label style="display: flex;align-items: center;">
-                                <span data-i18n="bg_setting_blur_toggle">ä¸»é¡µæ¯›çŽ»ç’ƒå¼€å…³</span>&nbsp;
-                                <input onchange="updateBlurSwitch(event)" id="blurSwitch" type="checkbox">
-                            </label>
-                        </p>
-                        <p>
-                            <label style="display: flex;align-items: center;">
-                                <span data-i18n="bg_setting_overlay_color">èƒŒæ™¯é®ç½©é¢œè‰²</span>&nbsp;
-                                <input onchange="updateOverlaySwitch(event)" id="overlaySwitch" type="checkbox">
-                            </label>
-                        </p>
-                        <p><span data-i18n="bg_setting_text_color">å­—ä½“é¢œè‰²(é»‘-ç™½)</span>&nbsp;ï¼š&nbsp;<span
-                                id="fontColorValue"></span></p>
-                        <input id="textColorEl" oninput="updateTextColor(event)"
-                            style="width: 100%;margin-left: 0;margin-right: 0;" min="0" max="100" type="range">
-                        <p data-i18n="bg_setting_theme_color">ä¸»é¢˜é¢œè‰²(é¢œè‰²ã€é¥±å’Œåº¦ã€äº®åº¦)</p>
-                        <p>Hï¼š<span id="HValue">255</span>&nbsp;&nbsp;Sï¼š<span id="SValue">255</span>&nbsp;&nbsp;Lï¼š<span
-                                id="LValue">255</span></p>
-                        <div class="color-panel"></div>
-                        <input id="colorEl" oninput="getColorByPercent(event)"
-                            style="width: 100%;margin-left: 0;margin-right: 0;" min="0" max="100" type="range">
-                        <input id="saturationEl" oninput="getSaturationByPercent(event)"
-                            style="width: 100%;margin-left: 0;margin-right: 0;" min="0" max="100" type="range">
-                        <input id="brightEl" oninput="getValueByPercent(event)"
-                            style="width: 100%;margin-left: 0;margin-right: 0;" min="0" max="100" type="range">
-                        <p><span data-i18n="bg_setting_opacity">ä¸»é¢˜é€æ˜Žåº¦</span>&nbsp;ï¼š&nbsp;<span
-                                id="opacityValue">255</span></p>
-                        <input id="opacityEl" oninput="getOpacityByPercent(event)"
-                            style="width: 100%;margin-left: 0;margin-right: 0;" type="range" min="0" max="100">
-                    </div>
-                </div>
-                <div class="btn" style="text-align: right;margin-top: 6px;">
-                    <button type="button" onclick="resetTheme(event)" data-i18n="reset_theme_btn">é‡ç½®ä¸»é¢˜</button>
-                    <button type="button" onclick="handleSubmitBg(event)" data-i18n="submit_btn">æäº¤</button>
-                    <button type="button" onclick="closeModal('#bgSettingModal')" data-i18n="close_btn">å…³é—­</button>
-                </div>
-            </div>
             <!-- æ’ä»¶æ¨¡æ€æ¡† -->
             <div class="mask" id="PluginModal" style="display: none;">
                 <div class="modal" id="pluginDropZone"
@@ -1272,34 +1164,6 @@
                         data-i18n="close_btn">å…³é—­</button>
                 </div>
             </div>
-            <!-- ç‰ˆæœ¬æ›´æ–°æ¨¡æ€æ¡† -->
-            <div class="mask" id="updateSoftwareModal" style="display: none;">
-                <div class="modal" style="width: 90%; max-width: 800px;">
-                    <button onclick="forceEnableOTABtn()"
-                        style="opacity: 0;border-radius: 50%;position: absolute;right: 10px;top: 10px;">&nbsp;</button>
-                    <div class="title" data-i18n="update_title">UFI-TOOLS è½¯ä»¶æ›´æ–°</div>
-                    <div class="title socat_status" style="font-size: 12px;margin: 8px 0;margin-bottom: 0;"></div>
-                    <div style="font-size: 12px;margin-top: 0px;" class="adb_status title"></div>
-                    <div class="title" style="font-size: 10px;margin-top: 10px;">
-                        <div>
-                            <i
-                                data-i18n="update_notice_1">è½¯ä»¶æ›´æ–°éœ€è¦å¯ç”¨USBè°ƒè¯•+ç½‘ç»œADBè°ƒè¯•åŠŸèƒ½(é‡å¯ï¼Œæˆ–è€…å…³é—­å¼€å¯ä¸€ä¸‹USBè°ƒè¯•),å¦‚æ— æ³•æ­£å¸¸ä½¿ç”¨ä¸€é”®æ›´æ–°åŠŸèƒ½,å¯ä»¥ç‚¹å‡»ä¸‹è½½å®‰è£…åŒ…è‡ªè¡Œä¸‹è½½å®‰è£…ã€‚</i><br>
-                            <i data-i18n="update_notice_2">ç”±äºŽAndroidçš„åŒ…ç®¡ç†æœºåˆ¶,æ›´æ–°è¿‡ç¨‹ä¸­è¯·ä¸è¦æ–­ç”µï¼Œè¯·ç¡®ä¿æ›´æ–°å®ŒæˆåŽèƒ½æ­£å¸¸è¿›å…¥åŽå°å†é‡å¯ã€‚</i>
-                        </div>
-                    </div>
-                    <div class="speedtest" style="border-left: 6px solid pink;font-size: 12px;margin-top: 10px;"
-                        id="OTATextContent" data-i18n="update_checking">æ­£åœ¨æ£€æŸ¥æ›´æ–°...</div>
-                    <div class="content" style="margin: 15px 0; overflow-y: scroll; max-height: 250px;">
-                        <div class="speedtest" style="font-size: 12px;" id="ChangelogTextContent"></div>
-                    </div>
-                    <div class="btn" style="text-align: right;">
-                        <button id="doUpdate" data-i18n="btn_update">ä¸€é”®æ›´æ–°</button>
-                        <button id="downloadAPK" data-i18n="btn_download">ä¸‹è½½å®‰è£…åŒ…</button>
-                        <button id="closeUpdateBtn" type="button" onclick="closeModal('#updateSoftwareModal')"
-                            data-i18n="close_btn">å…³é—­</button>
-                    </div>
-                </div>
-            </div>
             <!-- çŸ­ä¿¡è½¬å‘æ¨¡æ€æ¡† -->
             <div class="mask" id="smsForwardModal" style="display: none">
                 <div class="modal">
@@ -1645,42 +1509,3 @@
                 </div>
             </div>
 
-            <!-- â¤ï¸ -->
-            <div class="mask" id="payModal" style="display: none" onclick="handleClosePayModal(event)">
-                <div class="modal">
-                    <div class="title" style="width: 100%;display: flex;justify-content:space-between;"><span
-                            data-i18n="pay_title">æ‰“èµä½œè€…/ç¾¤ç»„é“¾æŽ¥</span>
-                        <button type="button" onclick="onClosePayModal()" data-i18n="pay_btn_dismiss"
-                            style="margin-right: 15px;">ä¸å†æ˜¾ç¤º</button>
-                    </div>
-                    <div class="title"
-                        style="display: flex;align-items: center;margin-top: 10px;font-size: 12px;margin-bottom: 10px;">
-                        <div>
-                            <p style="margin: 0; font-style: italic;" data-i18n="pay_tip_1">å¼€å‘ä¸æ˜“ï¼Œæ‰“èµéšæ„ï½ž</p>
-                            <p style="margin: 0; font-style: italic;" data-i18n="pay_tip_2">é•¿æŒ‰èµžèµç å¯ä¿å­˜ä¸ºå›¾ç‰‡</p>
-                        </div>
-                    </div>
-                    <div class="title" style="font-size: 14px;display: flex;flex-direction: column;">
-                        <button style="width: 100%;"><a href="https://t.me/ufi_tools_chat" target="_blank"
-                                data-i18n="tg_group">ç‚¹æˆ‘åŠ å…¥TGç¾¤ç»„:
-                                @ufi_tools_chat</a></button>
-                    </div>
-                    <div class="donate_content"
-                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 15px; width: 70vw; max-width: 400px; flex-wrap: wrap;">
-
-                        <a href="https://api.kanokano.cn/pay/zsm.png" target="_blank"
-                            style="display:flex;width: 48%; height: auto; border-radius: 20px;">
-                            <img src="https://api.kanokano.cn/pay/zsm.png"
-                                style="flex:1;width: 100%; height: auto;border-radius: 20px;" alt=""
-                                onerror="this.onerror=null; this.src='/img/zsm.png'">
-                        </a>
-                        <a href="https://api.kanokano.cn/pay/group.png" target="_blank"
-                            style="display:flex;width: 48%; height: auto; border-radius: 20px;">
-                            <img src="https://api.kanokano.cn/pay/group.png"
-                                style="flex:1;width: 100%; height: auto;border-radius: 20px;" alt=""
-                                onerror="this.onerror=null; this.src='/img/group.png'">
-                        </a>
-
-                    </div>
-                </div>
-            </div>

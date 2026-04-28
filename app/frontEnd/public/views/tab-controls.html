@@ -1,4 +1,4 @@
-            <!-- 操作按钮 -->
+﻿            <!-- 操作按钮 -->
             <div class="kano_function_main func_list_container">
                 <div class="title" id="collapseBtn_menu"
                     style="align-self: start;justify-self: start;margin: 6px;margin-left: 0;margin-top: 0;">
@@ -7,20 +7,10 @@
                 <div class="functions-container actions collapse collapse_menu" data-name="close">
                     <div style="margin: auto;">
                         <div class="collapse_box actions-buttons">
-                            <button id="CLEAR" class="btn" data-i18n="login_btn">登录/登出</button>
-                            <button class="btn REFRESH_BTN" data-i18n="stop_refresh">停止刷新</button>
-                            <button id="CHANGETOKEN" class="btn" data-i18n="change_token"
-                                onclick="createToast(t('please_login'),'red')">更改口令</button>
                             <button id="CHANGEPWD" class="btn" data-i18n="change_password"
                                 onclick="createToast(t('please_login'),'red')">更改密码</button>
-                            <button id="REBOOT" class="btn" data-i18n="reboot"
-                                onclick="createToast(t('please_login'),'red')">重启设备</button>
                             <button id="SCHEDULE_REBOOT" class="btn" data-i18n="schedule_reboot"
                                 onclick="createToast(t('please_login'),'red')">定时重启</button>
-                            <button id="SHUTDOWN" style="display: none;" class="btn" data-i18n="shutdown"
-                                onclick="createToast(t('please_login'),'red')">关机</button>
-                            <button id="BG_SETTING" class="btn" data-i18n="bg_setting"
-                                onclick="createToast(t('please_login'),'red')">主题背景</button>
                             <button id="PLUGIN_SETTING" class="btn" data-i18n="plugin_setting"
                                 onclick="createToast(t('please_login'),'red')">插件功能</button>
                             <div style="display: inline-block;position: relative;">
@@ -28,8 +18,6 @@
                                 <button id="SMS" class="btn" data-i18n="sms">短信收发</button>
                             </div>
                             <button id="DataManagement" class="btn" data-i18n="data_mgmt">流量管理</button>
-                            <button id="DataUsageHistory" onclick="openDataUsageHistory()" class="btn"
-                                data-i18n="data_usage_history_btn">流量历史</button>
                             <button id="SpeedTestBtn" class="btn" data-i18n="speed_test"
                                 onclick="showModal('#speedTestModal')">内网测速</button>
                             <button id="CellularSpeedTestBtn" class="btn" data-i18n="cellular_speed_test"
@@ -41,32 +29,14 @@
                                 onclick="createToast(t('please_login'),'red')">AT指令</button>
                             <button id="ADVANCE" class="btn" data-i18n="advanced"
                                 onclick="createToast(t('please_login'),'red')">高级功能</button>
-                            <button id="CECULLAR" class="btn" data-i18n="cellular"
-                                onclick="createToast(t('please_login'),'red')">数据流量</button>
-                            <button id="ADB" class="btn" data-i18n="adb"
-                                onclick="createToast(t('please_login'),'red')">USB调试</button>
-                            <button id="ADB_NET" class="btn" data-i18n="adb_autostart"
-                                onclick="createToast(t('please_login'),'red')">ADB自启</button>
-                            <button id="PERF" class="btn" data-i18n="performance_mode"
-                                onclick="createToast(t('please_login'),'red')">性能模式</button>
-                            <button id="LIGHT" class="btn" data-i18n="indicator"
-                                onclick="createToast(t('please_login'),'red')">指示灯</button>
                             <button id="NFC" style="display: none;" class="btn" data-i18n="nfc"
                                 onclick="createToast(t('please_login'),'red')">NFC</button>
-                            <button id="SMB" class="btn" data-i18n="file_sharing"
-                                onclick="createToast(t('please_login'),'red')">文件共享</button>
-                            <button id="ROAM" class="btn" data-i18n="network_roam"
-                                onclick="createToast(t('please_login'),'red')">网络漫游</button>
                             <button id="smsForward" class="btn" data-i18n="sms_forward"
                                 onclick="createToast(t('please_login'),'red')">短信转发</button>
                             <button id="ScheduledTaskManagement" class="btn" data-i18n="scheduled_task"
                                 onclick="createToast(t('please_login'),'red')">定时任务</button>
                             <button id="APNManagement" data-i18n="apn_setting" class="btn"
                                 onclick="createToast(t('please_login'),'red')">APN设置</button>
-                            <button id="USBStatusManagement" data-i18n="usb_status" class="btn"
-                                onclick="createToast(t('please_login'),'red')">USB状态</button>
-                            <button id="OTA" class="btn" data-i18n="ota"
-                                onclick="createToast(t('please_login'),'red')">软件更新</button>
 
                             <select class="select" style="display: none;" id="SLEEP_TIME"
                                 onchange="changeSleepTime(event)">

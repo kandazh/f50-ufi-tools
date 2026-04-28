@@ -332,6 +332,69 @@
   .kpi-value { font-size: 1.1rem; }
 }
 
+/* --- Quick Toggles --- */
+
+.quick-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.qt-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  color: var(--dark-text-color);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s ease;
+  white-space: nowrap;
+}
+
+.qt-btn:hover {
+  border-color: rgba(139, 92, 246, .5);
+}
+
+.qt-btn.qt-on {
+  border-color: #34d399;
+  background: rgba(52, 211, 153, .12);
+}
+
+.qt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .25);
+  transition: background .2s ease;
+  flex-shrink: 0;
+}
+
+.qt-btn.qt-on .qt-dot {
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, .6);
+}
+
+.qt-btn.qt-busy {
+  opacity: .5;
+  pointer-events: none;
+}
+
+.qt-label {
+  line-height: 1;
+}
+
 /* --- Live Tracking Charts --- */
 
 .chart-grid {
@@ -1119,12 +1182,6 @@
 #TTYDModal {
   user-select: none;
   -webkit-user-select: none;
-}
-
-/* --- Background setting modal --- */
-
-#bgSettingModal p {
-  margin: 10px 0;
 }
 
 /* --- Scheduled tasks modal --- */

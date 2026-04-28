@@ -4,7 +4,7 @@ function gsmEncode(text) { function encodeText(text) { let encoded = []; for (le
 let KANO_baseURL = '/api'
 let KANO_PASSWORD = null
 let KANO_TOKEN = null
-let ACCEPT_TERMS = true
+
 let KANO_COOKIE = null
 
 let loginMethod = localStorage.getItem('login_method') == "1" ? "1" : "0"; //1新方法，0旧方法
@@ -146,9 +146,9 @@ let login2 = async () => {
 }
 
 let login = async () => {
-    if (loginMethod == '1') {
-        return await login2()
-    }
+    // Try login2 first, fallback to login1
+    const result = await login2()
+    if (result) return result
     return await login1()
 }
 
@@ -580,12 +580,6 @@ const switchAPNAuto = async ({ isAuto = true, index = 0 }) => {
     const data = isAuto ? formData : { ...formData, ...manualData }
     const res = await postData(await login(), data)
     return res.json()
-}
-
-// check Terms acceptance (bypassed)
-const getTermsAcceptance = async () => {
-    ACCEPT_TERMS = true
-    return true
 }
 
 // check sim pin

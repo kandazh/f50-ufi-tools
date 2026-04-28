@@ -6,6 +6,18 @@ const fs = require('fs');
 const app = express();
 const publicDir = path.join(__dirname, 'public');
 
+// Mutable toggle state (updated by goform POST, read by goform GET)
+const toggleState = {
+  ppp_status: 'ppp_connected',
+  usb_port_switch: '1',
+  performance_mode: '0',
+  indicator_light_switch: '1',
+  samba_switch: '0',
+  roam_setting_option: 'off',
+  dial_roam_setting_option: 'off',
+  adb_wifi_enabled: false,
+};
+
 // Assemble index.html from template + partials
 function assembleHTML() {
   const templatePath = path.join(publicDir, 'index.html.template');
@@ -20,6 +32,23 @@ function assembleHTML() {
   });
   return html;
 }
+
+// Mock /api/adb_wifi_setting for local development
+app.use('/api/adb_wifi_setting', (req, res) => {
+  if (req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        toggleState.adb_wifi_enabled = data.enabled === true || data.enabled === 'true';
+      } catch {}
+      res.json({ result: 'success', enabled: toggleState.adb_wifi_enabled });
+    });
+    return;
+  }
+  res.json({ enabled: toggleState.adb_wifi_enabled, port: 5555 });
+});
 
 // Mock /api/connInfo for local development
 app.use('/api/connInfo', (req, res) => {
@@ -92,8 +121,51 @@ app.use('/api/AT', (req, res) => {
 });
 
 // Mock goform_get_cmd_process (main device poll)
-app.use('/api/goform/goform_get_cmd_process', (req, res) => {
+app.use('/api/goform', (req, res) => {
+  // Handle goform_set_cmd_process (login, logout, etc.)
+  if (req.path === '/goform_set_cmd_process') {
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', () => {
+        const params = new URLSearchParams(body);
+        const goformId = params.get('goformId');
+        if (goformId === 'LOGIN' || goformId === 'LOGIN_MULTI_USER') {
+          res.set('kano-cookie', 'mock_session_cookie_12345; Path=/');
+          res.set('Access-Control-Expose-Headers', 'kano-cookie');
+          return res.json({ result: '0' });
+        }
+        // Handle toggle goformIds by updating mutable state
+        if (goformId === 'CONNECT_NETWORK') toggleState.ppp_status = 'ppp_connected';
+        if (goformId === 'DISCONNECT_NETWORK') toggleState.ppp_status = 'ppp_disconnected';
+        if (goformId === 'USB_PORT_SETTING') toggleState.usb_port_switch = params.get('usb_port_switch') || toggleState.usb_port_switch;
+        if (goformId === 'PERFORMANCE_MODE_SETTING') toggleState.performance_mode = params.get('performance_mode') || toggleState.performance_mode;
+        if (goformId === 'INDICATOR_LIGHT_SETTING') toggleState.indicator_light_switch = params.get('indicator_light_switch') || toggleState.indicator_light_switch;
+        if (goformId === 'SAMBA_SETTING') toggleState.samba_switch = params.get('samba_switch') || toggleState.samba_switch;
+        if (goformId === 'SET_CONNECTION_MODE') {
+          toggleState.roam_setting_option = params.get('roam_setting_option') || toggleState.roam_setting_option;
+          toggleState.dial_roam_setting_option = params.get('dial_roam_setting_option') || toggleState.dial_roam_setting_option;
+        }
+        res.json({ result: '0' });
+      });
+      return;
+    }
+    return res.json({ result: '0' });
+  }
+  // Handle goform_get_cmd_process
   const cmd = req.query.cmd || '';
+  // LD for login hash
+  if (cmd === 'LD') {
+    return res.json({ LD: 'mock_ld_value_12345' });
+  }
+  // RD for postData AD calculation
+  if (cmd === 'RD') {
+    return res.json({ RD: 'mock_rd_value_12345' });
+  }
+  // Password fail check
+  if (cmd.includes('psw_fail_num_str')) {
+    return res.json({ psw_fail_num_str: '0', login_lock_time: '0' });
+  }
   // lan_station_list: separate response
   if (cmd === 'lan_station_list') {
     return res.json({ lan_station_list: [] });
@@ -109,6 +181,7 @@ app.use('/api/goform/goform_get_cmd_process', (req, res) => {
     msisdn: '+919514577859',
     sim_msisdn: '+919514577859',
     cr_version: 'MU300_ZYV1.0.0B13',
+    wa_inner_version: 'MU300_ZYV1.0.0B13',
     // Network addressing
     wan_ipaddr: '100.82.45.193',
     ipv6_wan_ipaddr: '2402:3a80:183d:b503:74d2:d4ff:fe1c:343f',
@@ -133,7 +206,7 @@ app.use('/api/goform/goform_get_cmd_process', (req, res) => {
     network_information: 'Vi India',
     network_signalbar: '5',
     network_rssi: jitter(-72, 10),
-    ppp_status: 'ppp_connected',
+    ppp_status: toggleState.ppp_status,
     // Battery
     battery_value: '100',
     battery_vol_percent: '100',
@@ -151,7 +224,13 @@ app.use('/api/goform/goform_get_cmd_process', (req, res) => {
     // WiFi
     wifi_access_sta_num: '1',
     // USB
-    usb_port_switch: 'diag,serial_gs3,rmnet0',
+    usb_port_switch: toggleState.usb_port_switch,
+    // Toggle states
+    performance_mode: toggleState.performance_mode,
+    indicator_light_switch: toggleState.indicator_light_switch,
+    samba_switch: toggleState.samba_switch,
+    roam_setting_option: toggleState.roam_setting_option,
+    dial_roam_setting_option: toggleState.dial_roam_setting_option,
     // SMS
     sms_received_flag: '0',
     sms_unread_num: '0',
@@ -217,6 +296,16 @@ app.use('/api/baseDeviceInfo', (req, res) => {
     external_available_storage: '0',
     model: 'F50'
   });
+});
+
+// Mock need_token
+app.use('/api/need_token', (req, res) => {
+  res.json({ result: 'success', need_token: true });
+});
+
+// Mock update_admin_pwd
+app.post('/api/update_admin_pwd', express.json(), (req, res) => {
+  res.json({ result: 'success' });
 });
 
 app.use('/api', createProxyMiddleware({

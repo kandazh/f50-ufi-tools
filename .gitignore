@@ -30,3 +30,6 @@ app/src/main/assets/node_modules/*/**
 app/src/main/assets/dictionary.json
 app/frontEnd/node_modules/*/**
 app/frontEnd/node_modules/*
+release.keystore
+*.keystore
+*.jks

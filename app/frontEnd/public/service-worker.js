@@ -13,7 +13,6 @@ const URLS_TO_CACHE = [
   '/main.js',
   '/draglist.js',
   '/requests.js',
-  '/theme.js',
   '/utils.js',
   '/icons/icon-192.webp',
   '/icons/icon-512.webp'

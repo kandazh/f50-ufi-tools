@@ -1,4 +1,4 @@
-// toolbar
+﻿// toolbar
 const tb = document.querySelector('#top_btn')
 if (tb) {
     let ctTimer = null
@@ -23,12 +23,6 @@ if (tb) {
     if (ct) {
         ct.addEventListener('scroll', fn)
     }
-}
-
-const _cloudSync = localStorage.getItem('isCloudSync');
-if (_cloudSync == null || _cloudSync == undefined) {
-    localStorage.setItem('isCloudSync', true);
-    initTheme()
 }
 
 let REFRESH_TIME = getRefteshRate((val) => {
@@ -451,15 +445,12 @@ function main_func() {
     const initRenderMethod = async () => {
         initScheduledTask()
         initPluginSetting()
-        initTheme();
-        initBGBtn()
         initLANSettings()
         initSmsForwardModal()
         initChangePassData()
         initChangeTokenData()
         try { adbQuery() } catch(e) {}
         loadTitle()
-        initUpdateSoftware()
         handlerADBStatus()
         handlerADBNetworkStatus()
         handlerPerformaceStatus()
@@ -484,9 +475,8 @@ function main_func() {
         initSleepTime()
         initAdvanceTools()
         QOSRDPCommand("AT+CGEQOSRDP=1")
-        // initTerms() — terms bypassed
-        initCheckWeakToken()
         initTTYD()
+        updateLoginIcon()
     }
 
     let toastTimer = null
@@ -575,6 +565,7 @@ function main_func() {
             closeModal('#tokenModal')
             initRenderMethod()
             initMessage()
+            updateLoginIcon()
             //记住密码
             const loginRememberMe = document.querySelector('#loginRememberMe')
             if (loginRememberMe && loginRememberMe.checked) {
@@ -594,6 +585,222 @@ function main_func() {
     }, 200)
 
     let timer_out = null
+    const toggleLoginLogout = () => {
+        const isLoggedIn = !!localStorage.getItem('kano_sms_pwd')
+        if (isLoggedIn) {
+            out()
+            createToast('Logged out', 'green')
+        } else {
+            showModal('#tokenModal')
+        }
+        updateLoginIcon()
+    }
+    const updateLoginIcon = () => {
+        const btn = document.querySelector('#loginBtnIcon')
+        if (!btn) return
+        const isLoggedIn = !!localStorage.getItem('kano_sms_pwd')
+        if (isLoggedIn) {
+            btn.innerHTML = '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'
+            btn.parentElement.title = 'Logout'
+        } else {
+            btn.innerHTML = '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>'
+            btn.parentElement.title = 'Login'
+        }
+    }
+
+    // --- Power menu (header restart/shutdown) ---
+    const togglePowerMenu = () => {
+        const menu = document.getElementById('powerMenu')
+        if (!menu) return
+        menu.classList.toggle('open')
+        if (menu.classList.contains('open')) {
+            setTimeout(() => {
+                document.addEventListener('click', closePowerMenuOutside, { once: true })
+            }, 0)
+        }
+    }
+    const closePowerMenuOutside = (e) => {
+        const menu = document.getElementById('powerMenu')
+        const wrap = document.querySelector('.gs-power-wrap')
+        if (menu && wrap && !wrap.contains(e.target)) {
+            menu.classList.remove('open')
+        }
+    }
+    let headerRebootCount = 0
+    let headerRebootTimer = null
+    const headerReboot = async () => {
+        const menu = document.getElementById('powerMenu')
+        headerRebootCount++
+        if (headerRebootCount < 2) {
+            const items = menu?.querySelectorAll('.gs-power-item')
+            if (items?.[0]) items[0].querySelector('span').textContent = 'Confirm?'
+            clearTimeout(headerRebootTimer)
+            headerRebootTimer = setTimeout(() => {
+                headerRebootCount = 0
+                if (items?.[0]) items[0].querySelector('span').textContent = 'Restart'
+            }, 3000)
+            return
+        }
+        headerRebootCount = 0
+        if (menu) menu.classList.remove('open')
+        if (!(await initRequestData())) {
+            createToast(t('toast_please_login'), 'red')
+            return
+        }
+        try {
+            const cookie = await login()
+            if (!cookie) { createToast(t('toast_login_failed_check_network'), 'red'); return }
+            const res = await (await postData(cookie, { goformId: 'REBOOT_DEVICE' })).json()
+            if (res.result === 'success') createToast(t('toast_rebot_success'), 'green')
+            else throw new Error()
+        } catch { createToast(t('toast_reboot_failed'), 'red') }
+    }
+    let headerShutdownCount = 0
+    let headerShutdownTimer = null
+    const headerShutdown = async () => {
+        const menu = document.getElementById('powerMenu')
+        headerShutdownCount++
+        if (headerShutdownCount < 2) {
+            const items = menu?.querySelectorAll('.gs-power-item')
+            if (items?.[1]) items[1].querySelector('span').textContent = 'Confirm?'
+            clearTimeout(headerShutdownTimer)
+            headerShutdownTimer = setTimeout(() => {
+                headerShutdownCount = 0
+                if (items?.[1]) items[1].querySelector('span').textContent = 'Shutdown'
+            }, 3000)
+            return
+        }
+        headerShutdownCount = 0
+        if (menu) menu.classList.remove('open')
+        if (!(await initRequestData())) {
+            createToast(t('toast_please_login'), 'red')
+            return
+        }
+        try {
+            const cookie = await login()
+            if (!cookie) { createToast(t('toast_login_failed_check_network'), 'red'); return }
+            const res = await (await postData(cookie, { goformId: 'SHUTDOWN_DEVICE' })).json()
+            if (res.result === 'success') createToast(t('toast_shutdown_success'), 'green')
+            else throw new Error()
+        } catch { createToast(t('toast_shutdown_failed'), 'red') }
+    }
+
+    // ── Quick Toggles ──
+    const qtSet = (id, on) => {
+        const btn = document.getElementById('qt-' + id)
+        if (!btn) return
+        btn.classList.toggle('qt-on', !!on)
+    }
+
+    const qtBusy = (id, busy) => {
+        const btn = document.getElementById('qt-' + id)
+        if (!btn) return
+        btn.classList.toggle('qt-busy', !!busy)
+    }
+
+    const qtUpdateAll = () => {
+        const d = window.UFI_DATA || {}
+        qtSet('data', d.ppp_status && d.ppp_status !== 'ppp_disconnected')
+        qtSet('adb', d.usb_port_switch === '1')
+        qtSet('perf', d.performance_mode === '1')
+        qtSet('light', d.indicator_light_switch === '1')
+        qtSet('smb', d.samba_switch === '1')
+        qtSet('roam', d.roam_setting_option === 'on' || d.dial_roam_setting_option === 'on')
+        // adbnet uses a separate endpoint
+        fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+            method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
+        }, 2000).then(r => r.json()).then(res => {
+            qtSet('adbnet', res.enabled === 'true' || res.enabled === true)
+        }).catch(() => {})
+    }
+
+    const qtToggle = async (id) => {
+        if (!(await initRequestData())) {
+            createToast(t('toast_please_login'), 'red'); return
+        }
+        qtBusy(id, true)
+        try {
+            const cookie = await login()
+            if (!cookie) { createToast(t('toast_login_failed_check_network'), 'red'); return }
+            const d = window.UFI_DATA || {}
+            switch (id) {
+                case 'data': {
+                    const on = d.ppp_status && d.ppp_status !== 'ppp_disconnected'
+                    await (await postData(cookie, { goformId: on ? 'DISCONNECT_NETWORK' : 'CONNECT_NETWORK' })).json()
+                    d.ppp_status = on ? 'ppp_disconnected' : 'ppp_connected'
+                    qtSet('data', !on)
+                    break
+                }
+                case 'adb': {
+                    const on = d.usb_port_switch === '1'
+                    await (await postData(cookie, { goformId: 'USB_PORT_SETTING', usb_port_switch: on ? '0' : '1' })).json()
+                    d.usb_port_switch = on ? '0' : '1'
+                    qtSet('adb', !on)
+                    break
+                }
+                case 'adbnet': {
+                    const res = await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                        method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
+                    }, 3000)).json()
+                    const on = res.enabled === 'true' || res.enabled === true
+                    if (!on) {
+                        await (await postData(cookie, { goformId: 'USB_PORT_SETTING', usb_port_switch: '1' })).json()
+                        d.usb_port_switch = '1'
+                        qtSet('adb', true)
+                    }
+                    await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                        method: 'POST',
+                        headers: { ...common_headers, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enabled: !on, password: KANO_PASSWORD })
+                    })).json()
+                    qtSet('adbnet', !on)
+                    break
+                }
+                case 'perf': {
+                    const on = d.performance_mode === '1'
+                    await (await postData(cookie, { goformId: 'PERFORMANCE_MODE_SETTING', performance_mode: on ? '0' : '1' })).json()
+                    d.performance_mode = on ? '0' : '1'
+                    qtSet('perf', !on)
+                    break
+                }
+                case 'light': {
+                    const on = d.indicator_light_switch === '1'
+                    await (await postData(cookie, { goformId: 'INDICATOR_LIGHT_SETTING', indicator_light_switch: on ? '0' : '1' })).json()
+                    d.indicator_light_switch = on ? '0' : '1'
+                    qtSet('light', !on)
+                    break
+                }
+                case 'smb': {
+                    const on = d.samba_switch === '1'
+                    await (await postData(cookie, { goformId: 'SAMBA_SETTING', samba_switch: on ? '0' : '1' })).json()
+                    d.samba_switch = on ? '0' : '1'
+                    qtSet('smb', !on)
+                    break
+                }
+                case 'roam': {
+                    const roamVal = d.dial_roam_setting_option || d.roam_setting_option
+                    const on = roamVal === 'on'
+                    const newVal = on ? 'off' : 'on'
+                    await (await postData(cookie, {
+                        goformId: 'SET_CONNECTION_MODE',
+                        ConnectionMode: 'auto_dial',
+                        roam_setting_option: newVal,
+                        dial_roam_setting_option: newVal
+                    })).json()
+                    d.roam_setting_option = newVal
+                    d.dial_roam_setting_option = newVal
+                    qtSet('roam', !on)
+                    break
+                }
+            }
+            createToast(t('toast_oprate_success'), 'green')
+        } catch {
+            createToast(t('toast_oprate_failed'), 'red')
+        } finally {
+            qtBusy(id, false)
+        }
+    }
+
     function out() {
         smsSender && smsSender()
         localStorage.removeItem('kano_sms_pwd')
@@ -920,6 +1127,9 @@ function main_func() {
                 window.UFI_DATA[key] = res[key];
             });
 
+            // Update quick toggle states
+            if (typeof qtUpdateAll === 'function') qtUpdateAll();
+
             // Update global status bar
             (() => {
                 const gsLogo = document.getElementById('gs-carrier-logo');
@@ -1229,6 +1439,7 @@ function main_func() {
     //检查usb调试状态
     let handlerADBStatus = async () => {
         const btn = document.querySelector('#ADB')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -1271,6 +1482,7 @@ function main_func() {
     //检查usb网络调试状态
     let handlerADBNetworkStatus = async () => {
         const btn = document.querySelector('#ADB_NET')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -1333,6 +1545,7 @@ function main_func() {
     //检查性能模式状态
     let handlerPerformaceStatus = async () => {
         const btn = document.querySelector('#PERF')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -1387,7 +1600,7 @@ function main_func() {
     smsBtn.onclick = init
 
     let clearBtn = document.querySelector('#CLEAR')
-    clearBtn.onclick = async () => {
+    if (clearBtn) clearBtn.onclick = async () => {
         isFirstRender = true
         lastRequestSmsIds = null
         localStorage.removeItem('kano_sms_pwd')
@@ -1641,7 +1854,8 @@ function main_func() {
 
     let initSMBStatus = async () => {
         const el = document.querySelector('#SMB')
-        if (!(await initRequestData()) || !el) {
+        if (!el) return null
+        if (!(await initRequestData())) {
             el.onclick = () => createToast(t('toast_please_login'), 'red')
             el.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
@@ -1682,7 +1896,8 @@ function main_func() {
     //检查网路漫游状态
     let initROAMStatus = async () => {
         const el = document.querySelector('#ROAM')
-        if (!(await initRequestData()) || !el) {
+        if (!el) return null
+        if (!(await initRequestData())) {
             el.onclick = () => createToast(t('toast_please_login'), 'red')
             el.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
@@ -1727,7 +1942,8 @@ function main_func() {
 
     let initLightStatus = async () => {
         const el = document.querySelector('#LIGHT')
-        if (!(await initRequestData()) || !el) {
+        if (!el) return null
+        if (!(await initRequestData())) {
             el.onclick = () => createToast(t('toast_please_login'), 'red')
             el.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
@@ -2106,6 +2322,7 @@ function main_func() {
 
     rebootDeviceBtnInit = async () => {
         let target = document.querySelector('#REBOOT')
+        if (!target) return
         if (!(await initRequestData())) {
             target.onclick = () => createToast(t('toast_please_login'), 'red')
             target.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -2183,17 +2400,35 @@ function main_func() {
     }
 
     //暂停开始刷新
+    const playIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><polygon points="6,4 20,12 6,20"/></svg>'
+    const pauseIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="10" y2="18"/><line x1="14" y1="6" x2="14" y2="18"/></svg>'
     Array.from(document.querySelectorAll('.REFRESH_BTN'))?.forEach(el => {
         el.onclick = (e) => {
-            if (e.target.innerHTML == t('start_refresh')) {
+            const headerBtn = document.querySelector('#headerRefreshBtn')
+            const isRunning = headerBtn && headerBtn.classList.contains('is-running')
+            if (!isRunning) {
                 Array.from(document.querySelectorAll('.REFRESH_BTN')).forEach(ee => {
-                    ee.innerHTML = t('stop_refresh')
+                    if (ee.id === 'headerRefreshBtn') {
+                        ee.innerHTML = pauseIcon
+                        ee.classList.add('is-running')
+                        ee.classList.remove('is-paused')
+                        ee.title = 'Stop refresh'
+                    } else {
+                        ee.innerHTML = t('stop_refresh')
+                    }
                 })
                 createToast(t('toast_start_refresh'), 'green')
                 startRefresh()
             } else {
                 Array.from(document.querySelectorAll('.REFRESH_BTN')).forEach(ee => {
-                    ee.innerHTML = t('start_refresh')
+                    if (ee.id === 'headerRefreshBtn') {
+                        ee.innerHTML = playIcon
+                        ee.classList.add('is-paused')
+                        ee.classList.remove('is-running')
+                        ee.title = 'Start refresh'
+                    } else {
+                        ee.innerHTML = t('start_refresh')
+                    }
                 })
                 createToast(t('toast_stop_refresh'), 'green')
                 stopRefresh()
@@ -2813,6 +3048,7 @@ function main_func() {
     //开关蜂窝数据
     let handlerCecullarStatus = async () => {
         const btn = document.querySelector('#CECULLAR')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -2881,160 +3117,6 @@ function main_func() {
         } catch {/*没有，不处理*/ }
     }
     loadTitle()
-
-    //设置背景图片
-    const initBGBtn = async () => {
-        const btn = document.querySelector('#BG_SETTING')
-        if (!(await initRequestData())) {
-            btn.onclick = () => createToast(t('toast_please_login'), 'red')
-            btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-            return null
-        }
-        btn.style.backgroundColor = ''
-        btn.onclick = () => {
-            showModal('#bgSettingModal')
-            initBG()
-        }
-    }
-    initBGBtn()
-
-    //设置主题背景
-    let handleSubmitBg = async (showSuccessToast = true) => {
-        const imgUrl = document.querySelector('#BG_INPUT')?.value
-        const bg_checked = document.querySelector('#isCheckedBG')?.checked
-        const BG = document.querySelector('#BG')
-        const BG_OVERLAY = document.querySelector('#BG_OVERLAY')
-        const isCloudSync = document.querySelector("#isCloudSync")
-
-        localStorage.setItem("isCloudSync", isCloudSync.checked)
-
-        if (!BG || bg_checked == undefined || !BG_OVERLAY) return
-        if (!bg_checked) {
-            BG.style.backgroundImage = 'unset'
-            localStorage.removeItem('backgroundUrl')
-        } else {
-            imgUrl.trim() && (BG.style.backgroundImage = `url(${imgUrl})`)
-            imgUrl.trim() && localStorage.setItem('backgroundUrl', imgUrl)
-        }
-        //发请求同步数据
-        if (isCloudSync.checked) {
-            try {
-                const { result, error } = await (await fetch(`${KANO_baseURL}/set_theme`, {
-                    method: 'POST',
-                    headers: common_headers,
-                    body: JSON.stringify({
-                        "backgroundEnabled": bg_checked,
-                        "backgroundUrl": localStorage.getItem("backgroundUrl") || '',
-                        "textColor": localStorage.getItem("textColor"),
-                        "textColorPer": localStorage.getItem("textColorPer"),
-                        "themeColor": localStorage.getItem("themeColor"),
-                        "colorPer": localStorage.getItem("colorPer"),
-                        "saturationPer": localStorage.getItem("saturationPer"),
-                        "brightPer": localStorage.getItem("brightPer"),
-                        "opacityPer": localStorage.getItem("opacityPer"),
-                        "blurSwitch": localStorage.getItem("blurSwitch"),
-                        "overlaySwitch": localStorage.getItem("overlaySwitch")
-                    })
-                })).json()
-
-                if (result == "success") {
-                    showSuccessToast && createToast(t('toast_save_success_sync'), 'green')
-                    document.querySelector('#fileUploader').value = ''
-                    closeModal('#bgSettingModal')
-                }
-                else throw error || ''
-            }
-            catch (e) {
-                createToast(t('toast_sync_failed'), 'red')
-            }
-        } else {
-            document.querySelector('#fileUploader').value = ''
-            closeModal('#bgSettingModal')
-            createToast(t('toast_save_success_local'), 'green')
-        }
-    }
-
-    //手动同步主题
-    const syncTheme = () => {
-        initTheme(true); initBG()
-        createToast(t('toast_sync_success'), 'green')
-    }
-
-    //初始化背景图片
-    const initBG = async () => {
-        const BG = document.querySelector('#BG')
-        const imgUrl = localStorage.getItem('backgroundUrl')
-        const isCheckedBG = document.querySelector('#isCheckedBG')
-        const BG_INPUT = document.querySelector('#BG_INPUT')
-
-        if (!BG || !isCheckedBG || !BG_INPUT) return
-        isCheckedBG.checked = imgUrl ? true : false
-        if (imgUrl?.length < 9999) {
-            BG_INPUT.value = imgUrl
-        }
-        if (!imgUrl) {
-            const BG_OVERLAY = document.querySelector('#BG_OVERLAY')
-            // BG_OVERLAY && (BG_OVERLAY.style.background = 'transparent')
-            return
-        }
-
-        BG.style.backgroundImage = `url(${imgUrl})`
-    }
-    initBG()
-
-    //重置主题
-    let resetThemeBtnTimer = 1
-    let isConfirmResetTheme = false
-    const resetTheme = async (e) => {
-        e.target.innerHTML = t('reset_theme_confirm')
-        resetThemeBtnTimer && clearTimeout(resetThemeBtnTimer)
-        resetThemeBtnTimer = setTimeout(() => {
-            isConfirmResetTheme = false
-            e.target.disabled = false
-            e.target.innerHTML = t('reset_theme_btn')
-        }, 2000)
-        if (!isConfirmResetTheme) {
-            isConfirmResetTheme = true
-            return
-        }
-        const isSync = localStorage.getItem("isCloudSync", isCloudSync.checked)
-        if (isSync == true || isSync == "true") {
-            try {
-                const { result, error } = await (await fetch(`${KANO_baseURL}/set_theme`, {
-                    method: 'POST',
-                    headers: common_headers,
-                    body: JSON.stringify({})
-                })).json()
-
-                if (result == "success") {
-                    localStorage.removeItem('themeColor')
-                    localStorage.removeItem('textColorPer')
-                    localStorage.removeItem('textColor')
-                    localStorage.removeItem('saturationPer')
-                    localStorage.removeItem('opacityPer')
-                    localStorage.removeItem('colorPer')
-                    localStorage.removeItem('brightPer')
-
-                    createToast(t('toast_reset_success'), 'green')
-                    document.querySelector('#fileUploader').value = ''
-                    setTimeout(() => {
-                        initBG().then(() => {
-                            handleSubmitBg(false)
-                        })
-                    }, 100);
-                }
-                else throw error || ''
-            }
-            catch (e) {
-                createToast(t('toast_reset_failed'), 'red')
-            }
-        } else {
-            createToast(t('toast_must_enable_sync_to_reset'), 'red')
-        }
-        initTheme && initTheme()
-        e.target.innerHTML = t('reset_theme_btn')
-        e.target.disabled = true
-    }
 
     //定时重启模态框
     let initScheduleRebootStatus = async () => {
@@ -3673,7 +3755,8 @@ function main_func() {
     //更改口令
     initChangeTokenData = async () => {
         const el = document.querySelector("#CHANGETOKEN")
-        if (!(await initRequestData()) || !el) {
+        if (!el) return null
+        if (!(await initRequestData())) {
             el.onclick = () => createToast(t('toast_please_login'), 'red')
             el.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
@@ -4028,24 +4111,6 @@ function main_func() {
         }
     }
 
-    //打赏模态框设置
-    const payModalState = localStorage.getItem('hidePayAndGroupModal') || false
-    !payModalState && window.addEventListener('load', () => {
-        setTimeout(() => {
-            showModal('#payModal')
-        }, 300);
-    })
-
-    const onClosePayModal = () => {
-        closeModal('#payModal')
-        localStorage.setItem('hidePayAndGroupModal', 'true')
-    }
-
-    const handleClosePayModal = (e) => {
-        if (e.target.id != 'payModal') return
-        onClosePayModal()
-    }
-
     //展开收起
     // 配置观察器_菜单
     (() => {
@@ -4089,278 +4154,6 @@ function main_func() {
     //展开收起
     const collapse_lkcell_stor = localStorage.getItem('collapse_lkcell') || 'open'
     collapse_lkcell_stor == 'open' ? toggleLkcellOpen(true) : toggleLkcellOpen(false)
-
-    //软件更新
-    const queryUpdate = async () => {
-        if (!(await initRequestData())) {
-            return null
-        }
-        try {
-            const res = await fetch(`${KANO_baseURL}/check_update`, {
-                method: 'get',
-                headers: common_headers
-            })
-            const { alist_res, base_uri, changelog } = await res.json()
-            const contents = alist_res?.data?.content
-            if (!contents || contents.length <= 0) return null
-            //寻找最新APK
-            const content = (contents.filter(item => item.name.includes('.apk')).sort((a, b) => {
-                return new Date(b.modified) - new Date(a.modified)
-            }))[0]
-            if (content) {
-                return {
-                    name: content.name,
-                    base_uri,
-                    changelog
-                }
-            }
-        } catch {
-            return null
-        }
-    }
-
-    //安装更新
-    const requestInstallUpdate = async () => {
-        // const changelogTextContent = document.querySelector('#ChangelogTextContent')
-        // changelogTextContent.innerHTML = ''
-        const OTATextContent = document.querySelector('#OTATextContent')
-        try {
-            OTATextContent.innerHTML = `<div>📦 ${t('install_ing')}</div>`
-            const _res = await fetch(`${KANO_baseURL}/install_apk`, {
-                method: 'POST',
-                headers: {
-                    ...common_headers,
-                }
-            })
-            const res = await _res.json()
-            if (res && res.error) throw new Error(t('install_failed') + ': ' + res.error)
-            const res_text = res.result == 'success' ? '✅ ' + t('install_success_refresh') : '❌ ' + t('install_fail_reboot')
-            OTATextContent.innerHTML = `<div>${res_text}</div><div>${res.result != 'success' ? res.result : ''}</div>`
-        } catch (e) {
-            createToast(t('install_done'), 'green')
-            let res_text = '✅ ' + t('install_success_refresh')
-            console.log(e.message);
-            if (e.message.includes(t('install_failed'))) {
-                res_text = `❌ ${t('install_failed')}，${t('reason')}${e.message.replace(t('install_failed'), '')}，${t('error_please_reboot_devices')}`
-            }
-            OTATextContent.innerHTML = `<div>${res_text}</div></div>`
-        } finally {
-            initUpdateSoftware()
-        }
-    }
-
-    //立即更新
-    let updateSoftwareInterval = null
-    const handleUpdateSoftware = async (url) => {
-        updateSoftwareInterval && updateSoftwareInterval()
-        if (!url || url.trim() == "") return
-        const doUpdateEl = document.querySelector('#doUpdate')
-        const closeUpdateBtnEl = document.querySelector('#closeUpdateBtn')
-        const updateSoftwareModal = document.querySelector('#updateSoftwareModal')
-
-        doUpdateEl.innerHTML = t('one_click_update')
-
-        // 是否启用高级功能
-        const isEnabledAdvanceFunc = await checkAdvancedFunc()
-
-        if (!isEnabledAdvanceFunc) {
-            let adb_status = await adbKeepAlive()
-            if (!adb_status) {
-                return createToast(t('adb_not_init'), 'red')
-            }
-        } else {
-            createToast(t('advanced_install'))
-            doUpdateEl.innerHTML = t('fast_installing')
-        }
-
-        // 更新时禁用按钮
-        doUpdateEl && (doUpdateEl.onclick = null)
-        doUpdateEl && (doUpdateEl.style.backgroundColor = 'var(--dark-btn-disabled-color)')
-        closeUpdateBtnEl && (closeUpdateBtnEl.onclick = null)
-        closeUpdateBtnEl && (closeUpdateBtnEl.style.backgroundColor = 'var(--dark-btn-disabled-color)')
-        updateSoftwareModal && (updateSoftwareModal.onclick = null)
-        try {
-            // const changelogTextContent = document.querySelector('#ChangelogTextContent')
-            // changelogTextContent.innerHTML = ''
-            //开始请求下载更新
-            await fetch(`${KANO_baseURL}/download_apk`, {
-                method: 'POST',
-                headers: {
-                    ...common_headers,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(
-                    {
-                        apk_url: url
-                    }
-                )
-            })
-        } catch {
-            createToast(t('download_request_failed'), 'red')
-            initUpdateSoftware()
-            return
-        }
-
-        //开启定时器，查询更新进度
-        const OTATextContent = document.querySelector('#OTATextContent')
-        updateSoftwareInterval = requestInterval(async () => {
-            try {
-                const _res = await fetch(`${KANO_baseURL}/download_apk_status`, {
-                    method: 'get',
-                    headers: common_headers
-                })
-                const res = await _res.json()
-                if (res && res.error == 'error') throw t('download_failed')
-                const status = res.status == "idle" ? `🕒 ${t("download_waiting")}` : res.status == "downloading" ? `🟢 ${t('download_ing')}` : res.status == "done" ? `✅ ${t('download_success')}` : `❌ ${t('download_failed')}`
-                OTATextContent.innerHTML = `<div>🔄 ${t('donwload_ing_ota')}...<br/>${t('download_status')}：${status}<br/>📁 ${t('download_progress')}：${res?.percent}%<br/></div>`
-                if (res.percent == 100) {
-                    updateSoftwareInterval && updateSoftwareInterval()
-                    createToast(t('toast_download_success_install'), 'green')
-                    // 执行安装
-                    requestInstallUpdate()
-                }
-            } catch (e) {
-                OTATextContent.innerHTML = t('toast_download_failed_network')
-                updateSoftwareInterval && updateSoftwareInterval()
-                initUpdateSoftware()
-            }
-        }, 500)
-    }
-
-    //仅下载更新包到本地
-    const handleDownloadSoftwareLink = async (fileLink) => {
-        createToast(t('toast_download_start'), 'green')
-        const linkEl = document.createElement('a')
-        linkEl.href = fileLink
-        linkEl.target = '_blank'
-        linkEl.style.display = 'none'
-        document.body.appendChild(linkEl)
-        setTimeout(() => {
-            linkEl.click()
-            setTimeout(() => {
-                linkEl.remove()
-            }, 100);
-        }, 50);
-    }
-
-    //检测更新
-    const checkUpdateAction = async (silent = false) => {
-        const changelogTextContent = document.querySelector('#ChangelogTextContent')
-        const OTATextContent = document.querySelector('#OTATextContent')
-        OTATextContent.innerHTML = t('checking_update')
-        !silent && (changelogTextContent.innerHTML = '')
-        !silent && showModal('#updateSoftwareModal')
-        !silent && (socatAlive())
-
-        try {
-            const content = await queryUpdate()
-            if (content) {
-                const { app_ver, app_ver_code } = await (await fetch(`${KANO_baseURL}/version_info`, { headers: common_headers })).json();
-                const { name, base_uri, changelog } = content;
-
-                const version = name.match(/V(\d+\.\d+\.\d+)/i)?.[1];
-                const appVer = app_ver.match(/(\d+\.\d+\.\d+)/i)?.[1];
-                const { date_str, formatted_date } = getApkDate(name);
-                let isLatest = false;
-
-                if (version && appVer) {
-                    const versionNew = version.trim();
-                    const versionCurrent = appVer.trim();
-
-                    // 如果新版本号大于当前版本
-                    if (versionNew > versionCurrent) {
-                        isLatest = false;
-                    }
-                    // 如果版本号相同，再比时间
-                    else if ((versionNew === versionCurrent) && formatted_date) {
-                        const newDate = Number(formatted_date);
-                        const currentDate = Number(app_ver_code);
-
-                        if (newDate > currentDate) {
-                            isLatest = false;
-                        } else {
-                            isLatest = true;
-                        }
-                    }
-                }
-
-                // 如果包含 force 标志，强制不是最新
-                if (name.includes('force')) {
-                    isLatest = false;
-                }
-
-                if (!silent) {
-                    const doUpdateEl = document.querySelector('#doUpdate')
-                    const doDownloadAPKEl = document.querySelector('#downloadAPK')
-                    if (doUpdateEl && doDownloadAPKEl) {
-                        if (!isLatest) {
-                            doUpdateEl.style.backgroundColor = 'var(--dark-btn-color)'
-                            doDownloadAPKEl.style.backgroundColor = 'var(--dark-btn-color)'
-                            doUpdateEl.onclick = () => handleUpdateSoftware(base_uri + name)
-                            doDownloadAPKEl.onclick = () => handleDownloadSoftwareLink(base_uri + name)
-                        } else {
-                            doUpdateEl.onclick = null
-                            doDownloadAPKEl.onclick = null
-                            doUpdateEl.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-                            doDownloadAPKEl.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-                        }
-                        //有强制更新字段，允许更新
-                        if (window.UFI_FORCE_ENABLE_UPDATE) {
-                            window.UFI_FORCE_ENABLE_UPDATE = false
-                            doUpdateEl.style.backgroundColor = 'var(--dark-btn-color)'
-                            doDownloadAPKEl.style.backgroundColor = 'var(--dark-btn-color)'
-                            doUpdateEl.onclick = () => handleUpdateSoftware(base_uri + name)
-                            doDownloadAPKEl.onclick = () => handleDownloadSoftwareLink(base_uri + name)
-                        }
-                    }
-                    //获取changeLog
-                    // if (!isLatest) {
-                    changelogTextContent.innerHTML = changelog
-                    // }
-                    OTATextContent.innerHTML = `${isLatest ? `<div>${t('is_latest_version')}：V${app_ver} ${app_ver_code}</div>` : `<div>${t('found_update')}:${name}<br/>${date_str ? `${t('release_date')}：${date_str}` : ''}</div>`}`
-
-                }
-                return !isLatest ? {
-                    isForceUpdate: name.includes('force'),
-                    text: version + ' ' + date_str
-                } : null
-
-            } else {
-                throw new Error(t('error'))
-            }
-        } catch (e) {
-            !silent && (OTATextContent.innerHTML = `${t('connect_update_server_failed')}<br>${e.message ? e.message : ''}`)
-            return null
-        }
-    }
-
-    const initUpdateSoftware = async () => {
-        const changelogTextContent = document.querySelector('#ChangelogTextContent')
-        changelogTextContent.innerHTML = ''
-        const btn = document.querySelector('#OTA')
-        if (!btn) return
-        const closeUpdateBtnEl = document.querySelector('#closeUpdateBtn')
-        closeUpdateBtnEl && (closeUpdateBtnEl.onclick = () => closeModal('#updateSoftwareModal'))
-        closeUpdateBtnEl && (closeUpdateBtnEl.style.backgroundColor = 'var(--dark-btn-color)')
-
-        if (!(await initRequestData())) {
-            btn.onclick = () => createToast(t('toast_please_login'), 'red')
-            btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-            return null
-        }
-        btn.style.backgroundColor = 'var(--dark-btn-color)'
-        btn.onclick = async () => {
-            const btn = document.querySelector('#OTA')
-            if (!(await initRequestData())) {
-                btn.onclick = () => createToast(t('toast_please_login'), 'red')
-                btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-                return null
-            }
-            checkUpdateAction()
-        }
-    }
-    initUpdateSoftware()
-
 
     //adb轮询
     const adbQuery = async () => {
@@ -4414,57 +4207,6 @@ function main_func() {
         }
 
     }
-
-    //开屏后检测更新
-    setTimeout(() => {
-        checkUpdateAction(true).then((res) => {
-            if (res) {
-                const { el, close } = createFixedToast('kano_new_ota', `
-                <div style="pointer-events:all;width:80vw;max-width:300px;">
-                <div class="title" style="margin:0" data-i18n="system_notice">${t('system_notice')}</div>
-                <div class="title" id="force_update_title" style="margin-top:10px;font-size:.6rem"><i data-i18n="force_update_desc">${t("force_update_desc")}</i></div>
-                <p>${`${t('found')} ${res.isForceUpdate ? t('sticky_update') : t('new_update')}：${res.text}`}</p>
-                <div style="display:flex;gap:10px">
-                    <button id="confirm_kano_new_ota_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="btn_update">${t("btn_update")}</button>
-                    <button id="close_kano_new_ota_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="cancel_btn">${t("cancel_btn")}(8)</button>
-                </div>
-                </div>
-                `, 'red')
-                const confirmBtn = el.querySelector("#confirm_kano_new_ota_toast_btn")
-                const closeBtn = el.querySelector("#close_kano_new_ota_toast_btn")
-                const forceUpdateTitle = el.querySelector("#force_update_title")
-
-                if (forceUpdateTitle) {
-                    forceUpdateTitle.style.display = res.isForceUpdate ? "" : "none"
-                }
-
-                if (confirmBtn) {
-                    let debounceTimer = null
-                    confirmBtn.onclick = () => {
-                        close()
-                        clearTimeout(debounceTimer)
-                        debounceTimer = setTimeout(() => {
-                            checkUpdateAction()
-                        }, 500);
-                    }
-                }
-                if (closeBtn) {
-                    let times = 7
-                    let interval = setInterval(() => {
-                        closeBtn.textContent = `${t("cancel_btn")}(${times--})`
-                        if (times < 0) {
-                            clearInterval(interval)
-                            close()
-                        }
-                    }, 1000);
-                    closeBtn.onclick = () => {
-                        close()
-                    }
-                }
-            }
-        })
-    }, 100);
-
 
     //初始化短信转发表单
     const initSmsForward = async (needSwitch = true, method = undefined) => {
@@ -6622,127 +6364,6 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     }
     getSELinuxStatus()
 
-    const initTerms = async () => {
-        if (!(await initRequestData())) {
-            return null
-        }
-        // 用户协议
-        const md = createModal({
-            name: "kano_terms",
-            noBlur: true,
-            isMask: true,
-            title: t('useTermsTitle'),
-            contentStyle: "font-size:12px",
-            confirmBtnText: t('accept'),
-            closeBtnText: t('decline'),
-            onClose: () => {
-                createToast(t('please_accept_terms'))
-                return false
-            },
-            onConfirm: () => {
-                const text = document.querySelector("#kano_term_confirm_text")
-                // 哎呀，你怎么又没认真看😯
-                if (text.value.trim() != t("term_confirm_text")) {
-                    createToast(t('please_read_terms'))
-                    return false
-                }
-                fetchWithTimeout(`${KANO_baseURL}/accept_terms`, {
-                    method: "post",
-                    headers: common_headers,
-                }).then(r => r.json()).then(res => {
-                    if (res.result == "success") {
-                        createToast(t('accept'))
-                    }
-                }).finally((res) => {
-                    //同意后检查弱口令
-                    initCheckWeakToken()
-                })
-                return true
-            },
-            content: `${t('useTerms')}<div style="font-size: .9rem;margin-top: 10px;"><span>${t('please_input')}:"${t('term_confirm_text')}"</span><input id="kano_term_confirm_text" type="text" style="width: 100%;margin: 6px 0;padding: 6px;"></div>`
-        })
-        const cache = localStorage.getItem('read_terms')
-        try {
-            if (await getTermsAcceptance()) {
-                if (cache != "1") {
-                    localStorage.setItem('read_terms', '1')
-                }
-                return
-            }
-            showModal(md.id)
-        } catch {
-            if (cache != "1" && cache != null && cache != undefined) {
-                showModal(md.id)
-            }
-        }
-    }
-    initTerms()
-
-    const initCheckWeakToken = async () => {
-        if (!(await initRequestData())) {
-            showModal('#tokenModal')
-            return null
-        }
-
-        // 没同意用户许可就不要显示
-        if (!(await getTermsAcceptance())) {
-            return null
-        }
-
-        if (await checkWeakToken()) {
-            const stor_name = 'weakTokenToastLater'
-            const threeDaysMill = 259200000
-            try {
-                const now_exp = localStorage.getItem(stor_name)
-                if (now_exp) {
-                    if (now_exp - Date.now() > 0) {
-                        const t = new Date(now_exp - Date.now())
-                        console.log(`弱口令弹窗还剩：${t.getTime() / 1000 / 60 / 60 / 24} 天`);
-                        //三天内不提示
-                        return
-                    }
-                } else {
-                    throw new Error("now_exp为空")
-                }
-            } catch {
-                console.error("weakTokenToastLater格式不合法,即将删除此stor");
-                localStorage.removeItem(stor_name)
-            }
-            const { el, close } = createFixedToast('weak_token_toast', `
-                <div style="pointer-events:all;width:80vw;max-width:300px;">
-                <div class="title" style="margin:0" data-i18n="system_notice">${t('system_notice')}</div>
-                <p>${t("weak_token_detected")}</p>
-                <div style="display:flex;gap:10px">
-                    <button id="close_weak_token_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="change_token_now">${t("change_token_now")}</button>
-                    <button id="close_3_days_weak_token_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="three_days_later">${t("three_days_later")}</button>
-                </div>
-                </div>
-                `, 'red')
-            const btn = el.querySelector('#close_weak_token_toast_btn')
-            const btn3Days = el.querySelector('#close_3_days_weak_token_toast_btn')
-
-            if (!btn) {
-                close()
-                return
-            }
-            btn.onclick = () => {
-                close()
-                showModal("#changeTokenModal")
-            }
-
-            if (!btn3Days) {
-                close()
-                return
-            }
-            btn3Days.onclick = () => {
-                localStorage.setItem(stor_name, Date.now() + threeDaysMill)
-                createToast(t('three_days_later_info'))
-                close()
-            }
-        }
-    }
-    initCheckWeakToken()
-
     // Remote message fetching disabled — no external server contact
     const initMessage = async () => {
         return null
@@ -7497,6 +7118,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     let stopRefreshUSBStatusInterval = null
     const initUSBStatusManagementBtn = async () => {
         const btn = document.querySelector('#USBStatusManagement')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             return null
@@ -7945,7 +7567,6 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         clearPluginText,
         pluginExport,
         closeAdvanceToolsModal,
-        syncTheme,
         switchCpuCore,
         changeRefreshRate,
         onPluginBtn,
@@ -7957,8 +7578,6 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         handleSmsForwardForm,
         handleSmsForwardDingTalkForm,
         handleShell,
-        handleDownloadSoftwareLink,
-        handleUpdateSoftware,
         enableTTYD,
         changeNetwork,
         changeUSBNetwork,
@@ -7982,21 +7601,24 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         submitCellForm,
         initClientManagementModal,
         closeClientManager,
-        resetTheme,
-        handleSubmitBg,
         disableButtonWhenExecuteFunc,
         onCloseChangePassForm,
         startTest,
         handleLoopMode,
-        onClosePayModal,
         handleTTYDFormSubmit,
         handleQosAT,
         handleSambaPath,
         handleAT,
         setOrRemoveDeviceFromBlackList,
         onSelectCellRow,
-        handleClosePayModal,
-        toggleCellInfoRefresh
+        toggleCellInfoRefresh,
+        toggleLoginLogout,
+        updateLoginIcon,
+        togglePowerMenu,
+        headerReboot,
+        headerShutdown,
+        qtToggle,
+        qtUpdateAll
     }
 
     try {

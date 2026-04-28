@@ -8,11 +8,6 @@
 .items-center { align-items: center; }
 .justify-center { justify-content: center; }
 
-.blur-px {
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
-}
-
 .fw { width: 100%; }
 .max-150 { max-width: 150px; }
 .max-120 { max-width: 120px; }
