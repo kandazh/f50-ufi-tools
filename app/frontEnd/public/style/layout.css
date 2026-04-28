@@ -368,60 +368,9 @@
   color: #e0e0e0;
 }
 
-/* Power button dropdown */
+/* Power/restart button */
 .gs-power-wrap {
   position: relative;
-}
-
-.gs-power-menu {
-  display: none;
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 130px;
-  background: rgba(20, 24, 40, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  padding: 4px;
-  z-index: 1000;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-.gs-power-menu.open {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.gs-power-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: rgba(255,255,255,0.8);
-  font-size: 0.7rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  white-space: nowrap;
-}
-
-.gs-power-item:hover {
-  background: rgba(255,255,255,0.08);
-}
-
-.gs-power-item--danger:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-}
-
-.gs-power-item svg {
-  flex-shrink: 0;
-  opacity: 0.7;
 }
 
 /* --- Device monitoring section --- */

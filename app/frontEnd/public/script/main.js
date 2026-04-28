@@ -467,7 +467,6 @@ function main_func() {
         rebootDeviceBtnInit()
         handlerCecullarStatus()
         initScheduleRebootStatus()
-        initShutdownBtn()
         initATBtn()
         initAPNManagement()
         initCellularSpeedTestBtn()
@@ -608,41 +607,22 @@ function main_func() {
         }
     }
 
-    // --- Power menu (header restart/shutdown) ---
-    const togglePowerMenu = () => {
-        const menu = document.getElementById('powerMenu')
-        if (!menu) return
-        menu.classList.toggle('open')
-        if (menu.classList.contains('open')) {
-            setTimeout(() => {
-                document.addEventListener('click', closePowerMenuOutside, { once: true })
-            }, 0)
-        }
-    }
-    const closePowerMenuOutside = (e) => {
-        const menu = document.getElementById('powerMenu')
-        const wrap = document.querySelector('.gs-power-wrap')
-        if (menu && wrap && !wrap.contains(e.target)) {
-            menu.classList.remove('open')
-        }
-    }
+    // --- Header restart button (double-click to confirm) ---
     let headerRebootCount = 0
     let headerRebootTimer = null
     const headerReboot = async () => {
-        const menu = document.getElementById('powerMenu')
+        const btn = document.getElementById('headerPowerBtn')
         headerRebootCount++
         if (headerRebootCount < 2) {
-            const items = menu?.querySelectorAll('.gs-power-item')
-            if (items?.[0]) items[0].querySelector('span').textContent = 'Confirm?'
+            if (btn) btn.title = 'Confirm?'
             clearTimeout(headerRebootTimer)
             headerRebootTimer = setTimeout(() => {
                 headerRebootCount = 0
-                if (items?.[0]) items[0].querySelector('span').textContent = 'Restart'
+                if (btn) btn.title = 'Restart'
             }, 3000)
             return
         }
         headerRebootCount = 0
-        if (menu) menu.classList.remove('open')
         if (!(await initRequestData())) {
             createToast(t('toast_please_login'), 'red')
             return
@@ -654,33 +634,6 @@ function main_func() {
             if (res.result === 'success') createToast(t('toast_rebot_success'), 'green')
             else throw new Error()
         } catch { createToast(t('toast_reboot_failed'), 'red') }
-    }
-    let headerShutdownCount = 0
-    let headerShutdownTimer = null
-    const headerShutdown = async () => {
-        const menu = document.getElementById('powerMenu')
-        headerShutdownCount++
-        if (headerShutdownCount < 2) {
-            const items = menu?.querySelectorAll('.gs-power-item')
-            if (items?.[1]) items[1].querySelector('span').textContent = 'Confirm?'
-            clearTimeout(headerShutdownTimer)
-            headerShutdownTimer = setTimeout(() => {
-                headerShutdownCount = 0
-                if (items?.[1]) items[1].querySelector('span').textContent = 'Shutdown'
-            }, 3000)
-            return
-        }
-        headerShutdownCount = 0
-        if (menu) menu.classList.remove('open')
-        if (!(await initRequestData())) {
-            createToast(t('toast_please_login'), 'red')
-            return
-        }
-        try {
-            const res = await runShellWithRoot('reboot -p', 10000)
-            if (res.success) createToast(t('toast_shutdown_success'), 'green')
-            else throw new Error()
-        } catch { createToast(t('toast_shutdown_failed'), 'red') }
     }
 
     // ── Quick Toggles ──
@@ -3193,63 +3146,6 @@ function main_func() {
             createToast(t('toast_login_failed_check_network_and_pwd'), 'red')
         }
     }
-
-    // U30AIR用关机指令
-    let shutDownBtnCount = 1
-    let shutDownBtnTimer = null
-    let initShutdownBtn = async () => {
-        const btn = document.querySelector('#SHUTDOWN')
-        if (!btn) return
-        if (!(await initRequestData())) {
-            btn.onclick = () => createToast(t('toast_please_login'), 'red')
-            btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-            return null
-        }
-
-        const { battery_value, battery_vol_percent } = await getData(new URLSearchParams({
-            cmd: 'battery_value,battery_vol_percent'
-        }))
-
-        if (battery_value && battery_vol_percent && (battery_value != '' && battery_vol_percent != '')) {
-            // 显示按钮
-            btn.style.display = ''
-
-        } else {
-            //没电池的不显示此按钮
-            btn.style.display = 'none'
-        }
-        btn.style.backgroundColor = 'var(--dark-btn-color)'
-        btn.onclick = async () => {
-            if (!(await initRequestData())) {
-                btn.onclick = () => createToast(t('toast_please_login'), 'red')
-                btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-                return null
-            }
-            shutDownBtnCount++
-            btn.innerHTML = t('confirm_shutdown')
-            shutDownBtnTimer && clearTimeout(shutDownBtnTimer)
-            shutDownBtnTimer = setTimeout(() => {
-                shutDownBtnCount = 0
-                btn.innerHTML = t('shutdown')
-            }, 3000)
-            if (shutDownBtnCount < 3) {
-                return
-            } else {
-                btn.innerHTML = t("shutting_down")
-            }
-            try {
-                const res = await runShellWithRoot('reboot -p', 10000)
-                if (res.success) {
-                    createToast(t('toast_shutdown_success'), 'green')
-                } else {
-                    createToast(t('toast_shutdown_failed'), 'red')
-                }
-            } catch {
-                createToast(t('toast_shutdown_failed'), 'red')
-            }
-        }
-    }
-    initShutdownBtn()
 
     // 启用TTYD（如果有）
     let initTTYD = async () => {
@@ -7610,9 +7506,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         toggleCellInfoRefresh,
         toggleLoginLogout,
         updateLoginIcon,
-        togglePowerMenu,
         headerReboot,
-        headerShutdown,
         qtToggle,
         qtUpdateAll
     }
