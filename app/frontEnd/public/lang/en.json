@@ -1,4 +1,9 @@
 {
+    "tab_dashboard": "Dashboard",
+    "tab_controls": "Controls",
+    "tab_network": "Network",
+    "kpi_network": "Network",
+    "kpi_data": "Data Used",
     "device": "Device",
     "func_list": "Function List",
     "login_btn": "Login/out",

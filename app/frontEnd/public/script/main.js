@@ -484,7 +484,7 @@ function main_func() {
         initSleepTime()
         initAdvanceTools()
         QOSRDPCommand("AT+CGEQOSRDP=1")
-        initTerms()
+        // initTerms() — terms bypassed
         initCheckWeakToken()
         initTTYD()
     }
@@ -920,6 +920,164 @@ function main_func() {
                 window.UFI_DATA[key] = res[key];
             });
 
+            // Update global status bar
+            (() => {
+                const gsLogo = document.getElementById('gs-carrier-logo');
+                const gsNet = document.getElementById('gs-network');
+                const gsType = document.getElementById('gs-nettype');
+                const gsSig = document.getElementById('gs-signal');
+                const gsWifi = document.getElementById('gs-wifi');
+                const gsWifiIcon = document.getElementById('gs-wifi-icon');
+                const gsLan = document.getElementById('gs-lan');
+                const gsLanIcon = document.getElementById('gs-lan-icon');
+
+                // Indian carrier logo SVGs (brand colors, simple iconic designs)
+                const carrierLogos = {
+                    'vi': `<svg viewBox="0 0 36 36"><rect width="36" height="36" rx="4" fill="#fff"/><text x="18" y="25" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial,sans-serif"><tspan fill="#E60000">V</tspan><tspan fill="#7B2D8E">i</tspan></text></svg>`,
+                    'jio': `<svg viewBox="0 0 36 36"><rect width="36" height="36" rx="4" fill="#fff"/><text x="18" y="26" text-anchor="middle" font-size="16" font-weight="900" font-family="Arial,sans-serif" fill="#0A3A7D">Jio</text></svg>`,
+                    'airtel': `<svg viewBox="0 0 36 36"><rect width="36" height="36" rx="4" fill="#fff"/><path d="M18 6c-6.6 0-12 5.4-12 12 0 4 2 7.6 5.2 9.8.4.2.8 0 .8-.4v-4.8c-2-1.4-3.2-3.6-3.2-6.2 0-4.2 3.6-7.6 8-7.6h2.4c4.4 0 8 3.4 8 7.6 0 2.6-1.2 4.8-3.2 6.2v4.8c0 .4.4.6.8.4C28 25.6 30 22 30 18c0-6.6-5.4-12-12-12z" fill="#ED1C24"/></svg>`,
+                    'bsnl': `<svg viewBox="0 0 36 36"><rect width="36" height="36" rx="4" fill="#1E3A8A"/><text x="18" y="14" text-anchor="middle" font-size="7" font-weight="900" font-family="Arial,sans-serif" fill="#FFD700">BSNL</text><circle cx="18" cy="24" r="6" fill="none" stroke="#FFD700" stroke-width="2"/><circle cx="18" cy="24" r="2" fill="#FFD700"/></svg>`,
+                    'mtnl': `<svg viewBox="0 0 36 36"><rect width="36" height="36" rx="4" fill="#003DA5"/><text x="18" y="15" text-anchor="middle" font-size="6.5" font-weight="900" font-family="Arial,sans-serif" fill="#fff">MTNL</text><path d="M10 20h16v2H10zM10 24h16v2H10zM10 28h16v2H10z" fill="#FFD700" opacity="0.8"/></svg>`,
+                };
+
+                // Match carrier name from network_provider
+                function getCarrierKey(provider) {
+                    if (!provider) return null;
+                    const p = provider.toLowerCase();
+                    if (p.includes('vi ') || p.includes('vi-') || p === 'vi' || p.includes('vodafone') || p.includes('idea')) return 'vi';
+                    if (p.includes('jio')) return 'jio';
+                    if (p.includes('airtel') || p.includes('bharti')) return 'airtel';
+                    if (p.includes('bsnl')) return 'bsnl';
+                    if (p.includes('mtnl')) return 'mtnl';
+                    return null;
+                }
+
+                if (gsNet && res.network_provider != null) {
+                    gsNet.textContent = res.network_provider || '--';
+                }
+                // Update carrier logo
+                if (gsLogo && res.network_provider != null) {
+                    const key = getCarrierKey(res.network_provider);
+                    if (key && carrierLogos[key]) {
+                        gsLogo.innerHTML = carrierLogos[key];
+                    } else {
+                        gsLogo.innerHTML = '';
+                    }
+                }
+                // Network type: 5G, LTE CA, LTE (4G), 3G, 2G
+                if (gsType) {
+                    let type = '';
+                    const nt = String(res.network_type);
+                    if (nt === '20') {
+                        type = '5G';
+                    } else if (nt === '13') {
+                        // Check for carrier aggregation
+                        type = (res.Lte_ca_status && res.Lte_ca_status !== 'off') ? 'LTE CA' : '4G';
+                    } else if (nt === '10') {
+                        type = '3G';
+                    } else if (nt === '6') {
+                        type = '2G';
+                    }
+                    gsType.textContent = type;
+                    gsType.style.display = type ? '' : 'none';
+                    // Color the badge by network type
+                    if (type === '5G') { gsType.style.background = 'rgba(99,102,241,0.25)'; gsType.style.color = '#818cf8'; }
+                    else if (type === 'LTE CA') { gsType.style.background = 'rgba(6,182,212,0.2)'; gsType.style.color = '#22d3ee'; }
+                    else if (type === '4G') { gsType.style.background = 'rgba(52,211,153,0.2)'; gsType.style.color = '#34d399'; }
+                    else if (type === '3G') { gsType.style.background = 'rgba(251,191,36,0.2)'; gsType.style.color = '#fbbf24'; }
+                    else if (type === '2G') { gsType.style.background = 'rgba(251,146,60,0.2)'; gsType.style.color = '#fb923c'; }
+                    else { gsType.style.background = 'rgba(255,255,255,0.1)'; gsType.style.color = 'inherit'; }
+                }
+                if (gsSig) {
+                    const sig = res.rssi != null ? Number(res.rssi) : (res.network_signalbar != null ? Number(res.network_signalbar) : -1);
+                    const bars = gsSig.querySelectorAll('.gs-bar');
+                    const activeBars = sig <= 0 ? 0 : sig === 1 ? 1 : sig === 2 ? 2 : sig <= 4 ? 3 : 4;
+                    const dataOn = res.ppp_status && res.ppp_status.includes('connected');
+                    gsSig.classList.toggle('data-off', !dataOn);
+                    bars.forEach((bar, i) => {
+                        bar.classList.toggle('active', i < activeBars);
+                    });
+                }
+                if (gsWifi && res.wifi_access_sta_num != null) {
+                    gsWifi.textContent = res.wifi_access_sta_num;
+                }
+                if (gsWifiIcon) {
+                    gsWifiIcon.classList.toggle('has-clients', res.wifi_access_sta_num != null && Number(res.wifi_access_sta_num) > 0);
+                }
+
+                // Poll LAN station count (piggyback on main poll cycle)
+                if (gsLan) {
+                    (async () => {
+                        try {
+                            const lanData = await getData(new URLSearchParams({ cmd: 'lan_station_list' }));
+                            const count = lanData.lan_station_list ? lanData.lan_station_list.length : 0;
+                            gsLan.textContent = count;
+                            if (gsLanIcon) gsLanIcon.classList.toggle('has-clients', count > 0);
+                        } catch(e) { /* silent */ }
+                    })();
+                }
+            })();
+
+            // Update signal history chart
+            if (typeof updateSignalChart === 'function') {
+                const rsrp = res.Z5g_rsrp != null ? res.Z5g_rsrp : (res.lte_rsrp != null ? res.lte_rsrp : null);
+                const sinr = res.Nr_snr != null ? res.Nr_snr : (res.Lte_snr != null ? res.Lte_snr : null);
+                const rsrq = res.nr_rsrq != null ? res.nr_rsrq : (res.lte_rsrq != null ? res.lte_rsrq : null);
+                const rssi = res.lte_rssi != null ? res.lte_rssi : null;
+                updateSignalChart(rsrp, sinr, rsrq, rssi);
+            }
+
+            // Update cell info strip (Band / EARFCN / BW / PCI / Cell ID)
+            {
+                const is5g = res.Nr_bands != null && res.Nr_bands !== '';
+                const band  = is5g ? 'N' + res.Nr_bands : (res.Lte_bands != null ? 'B' + res.Lte_bands : '--');
+                const freq  = is5g ? (res.Nr_fcn ?? '--') : (res.Lte_fcn ?? '--');
+                const bw    = is5g ? (res.Nr_bands_widths ?? '--') : (res.Lte_bands_widths ?? '--');
+                const pci   = is5g ? (res.Nr_pci ?? '--') : (res.Lte_pci ?? '--');
+                const cellId = is5g ? (res.Nr_cell_id ?? '--') : (res.Lte_cell_id ?? '--');
+
+                const elBand = document.getElementById('ci-band');
+                const elFreq = document.getElementById('ci-freq');
+                const elBw   = document.getElementById('ci-bw');
+                const elPci  = document.getElementById('ci-pci');
+                const elCell = document.getElementById('ci-cellid');
+                const elFreqLabel = elFreq?.previousElementSibling;
+
+                if (elBand)  elBand.textContent  = band;
+                if (elFreq)  elFreq.textContent  = freq;
+                if (elBw)    elBw.textContent    = bw;
+                if (elPci)   elPci.textContent   = pci;
+                if (elCell)  elCell.textContent  = cellId;
+                if (elFreqLabel) elFreqLabel.textContent = is5g ? 'ARFCN' : 'EARFCN';
+
+                // QCI / DL / UL from QORS_MESSAGE (skip if dash-charts poller is handling it)
+                if (!window._qosFromDashCharts) {
+                    const elQci = document.getElementById('ci-qci');
+                    const elDl  = document.getElementById('ci-dl');
+                    const elUl  = document.getElementById('ci-ul');
+                    if (QORS_MESSAGE) {
+                        const qm = QORS_MESSAGE.match(/QCI[：:]\s*(\d+)/);
+                        const dlm = QORS_MESSAGE.match(/⬇️\s*([\d.]+\s*Mbps)/);
+                        const ulm = QORS_MESSAGE.match(/⬆️\s*([\d.]+\s*Mbps)/);
+                        if (elQci) elQci.textContent = qm ? qm[1] : '--';
+                        if (elDl)  elDl.textContent  = dlm ? dlm[1] : '--';
+                        if (elUl)  elUl.textContent  = ulm ? ulm[1] : '--';
+                    } else {
+                        if (elQci) elQci.textContent = '--';
+                        if (elDl)  elDl.textContent  = '--';
+                        if (elUl)  elUl.textContent  = '--';
+                    }
+                }
+            }
+
+            // Update row 5 cards (Battery, Data Usage, Storage)
+            if (typeof updateBatteryCard === 'function') updateBatteryCard(res);
+            if (typeof updateDataCard === 'function') updateDataCard(res);
+            if (typeof updateStorageCard === 'function') updateStorageCard(res);
+
+            // Update row 7 device info
+            if (typeof updateDeviceInfo === 'function') updateDeviceInfo(res);
+
             adbQuery()
             isNotLoginOnce = false
             let html = ''
@@ -1036,9 +1194,10 @@ function main_func() {
                 external_available_storage: (notNullOrundefinedOrIsShow(res, 'external_available_storage') || notNullOrundefinedOrIsShow(res, 'external_total_storage')) ? `<strong onclick="copyText(event)" class="blue">${t('sd_storage')}：${formatBytes(res.external_used_storage)} ${t('used_storage')} / ${formatBytes(res.external_total_storage)} ${t('total_storage')}</strong>` : '',
             };
 
+            const _gsHidden = ['network_type', 'wifi_access_sta_num', 'rssi', 'cpu_temp', 'cpu_usage', 'mem_usage', 'realtime_rx_thrpt', 'QORS_MESSAGE', 'battery', 'current_now', 'voltage_now', 'monthly_tx_bytes', 'daily_data', 'realtime_time'];
             html += `<li style="padding-top: 15px;"><p>`
             showList.statusShowList.forEach(item => {
-                if (statusHtml_base[item.name] && item.isShow) {
+                if (statusHtml_base[item.name] && item.isShow && !_gsHidden.includes(item.name)) {
                     html += statusHtml_base[item.name]
                 }
             })
@@ -2696,15 +2855,26 @@ function main_func() {
     const loadTitle = async () => {
         try {
             const { app_ver, model, nickname } = await (await fetch(`${KANO_baseURL}/version_info`, { headers: common_headers })).json()
-            if (model == nickname) {
-                MODEL.innerHTML = `${model}`
-                document.querySelector('#TITLE').innerHTML = `[${model}]UFI-TOOLS v${app_ver}`
-
-            } else {
-                MODEL.innerHTML = `${model} (${nickname})`
-                document.querySelector('#TITLE').innerHTML = `[${nickname}]UFI-TOOLS v${app_ver}`
-            }
-            document.querySelector('#MAIN_TITLE').innerHTML = `UFI-TOOLS <span style="font-size:.8rem">v${app_ver}</span>`
+            const displayName = (model == nickname || !nickname) ? model : `${model} (${nickname})`;
+            MODEL.style.display = 'none';
+            document.querySelector('#MAIN_TITLE').innerHTML =
+                `<span class="device-badge">` +
+                    `<svg class="device-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">` +
+                        `<rect x="2" y="6" width="20" height="12" rx="3"/>` +
+                        `<path d="M9 2.5c1.5 1.2 1.5 2.5 0 3.5"/>` +
+                        `<path d="M12 1c2.2 1.8 2.2 3.7 0 5"/>` +
+                        `<path d="M15 2.5c-1.5 1.2-1.5 2.5 0 3.5"/>` +
+                        `<circle cx="6" cy="12" r="1" fill="currentColor" stroke="none"/>` +
+                        `<line x1="9.5" y1="10.5" x2="9.5" y2="13.5"/>` +
+                        `<line x1="11.5" y1="9.5" x2="11.5" y2="14.5"/>` +
+                        `<line x1="13.5" y1="10.5" x2="13.5" y2="13.5"/>` +
+                        `<line x1="15.5" y1="11" x2="15.5" y2="13"/>` +
+                        `<rect x="18" y="10" width="2" height="4" rx="0.5" fill="currentColor" stroke="none" opacity="0.4"/>` +
+                    `</svg>` +
+                    `<span class="device-badge-name">${displayName}</span>` +
+                    `<span class="device-badge-ver">v${app_ver}</span>` +
+                `</span>`;
+            document.querySelector('#TITLE').innerHTML = `[${displayName}] v${app_ver}`
         } catch {/*没有，不处理*/ }
     }
     loadTitle()
@@ -5003,8 +5173,10 @@ function main_func() {
     })
 
     //设备监控
-    collapseGen("#collapse_device_mon_btn", "#collapse_device_mon", 'collapse_device_mon', async (status) => {
-    })
+    if (document.querySelector('#collapse_device_mon_btn')) {
+        collapseGen("#collapse_device_mon_btn", "#collapse_device_mon", 'collapse_device_mon', async (status) => {
+        })
+    }
 
     //改变刷新频率
     const changeRefreshRate = (e) => {
@@ -5018,6 +5190,8 @@ function main_func() {
             localStorage.setItem("refreshRate", value)
         }
     }
+    // Expose globally for dash-charts listener
+    window.changeRefreshRate = changeRefreshRate;
 
     //开关小核心
     const switchCpuCore = async (flag = true) => {

@@ -1,4 +1,9 @@
 {
+    "tab_dashboard": "ダッシュボード",
+    "tab_controls": "コントロール",
+    "kpi_network": "ネットワーク",
+    "kpi_data": "データ使用量",
+    "tab_network": "ネットワーク",
     "device": "デバイス",
     "func_list": "機能一覧",
     "login_btn": "ログイン/ログアウト",

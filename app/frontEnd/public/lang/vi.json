@@ -1,4 +1,9 @@
 {
+    "tab_dashboard": "Bảng điều khiển",
+    "tab_controls": "Điều khiển",
+    "kpi_network": "Mạng",
+    "kpi_data": "Đã dùng",
+    "tab_network": "Mạng",
     "device": "Thiết bị",
     "func_list": "Danh sách chức năng",
     "login_btn": "Đăng nhập/Đăng xuất",

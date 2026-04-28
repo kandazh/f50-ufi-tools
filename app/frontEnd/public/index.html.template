@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="icon" type="image/svg+xml" href="/favicon.webp">
+    <title id="TITLE">UFI-TOOLS-WEB</title>
+    <script>
+        (() => {
+            try {
+                new Function('var obj = {}; return obj?.a;');
+            } catch (e) {
+                alert("您的浏览器版本过低，无法使用本页面，请升级浏览器版本后再试\nYour browser version is too old to use this page. Please update your browser and try again.")
+            }
+        })()
+    </script>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/style/variables.css">
+    <link rel="stylesheet" href="/style/base.css">
+    <link rel="stylesheet" href="/style/components.css">
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/pages.css">
+    <script src="/script/polyfill.min.js"></script>
+    <script src="/script/requests.js"></script>
+    <script src="/script/lib/crypto.js"></script>
+    <script src="/script/lib/sortable.js"></script>
+    <script src="/script/lib/filesaver.js"></script>
+    <script src="/script/lib/chart.js"></script>
+
+    <script>
+        const baseSize = 14;
+        const minScale = 0.9;
+        const maxScale = 1.2;
+
+        function setRem() {
+            const width = document.documentElement.clientWidth;
+            let scale = width / 375;
+            // 限制缩放范围
+            if (scale < minScale) scale = minScale;
+            if (scale > maxScale) scale = maxScale;
+            document.documentElement.style.fontSize = (baseSize * scale) + 'px';
+        }
+        setRem();
+        window.addEventListener('resize', setRem);
+    </script>
+</head>
+
+<body id="BG">
+    <div class="bg" id="BG_OVERLAY">
+        <div class="container">
+            <!-- Header -->
+            <div class="title main-title" style="align-items: end;">
+                <strong id="MAIN_TITLE" style="flex-shrink: 0;" onclick="enableTTYD()">UFI-TOOLS</strong>
+                <strong id="MODEL"
+                    style="font-size: .8rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;box-shadow: none;text-shadow: none;max-width: 400px;"
+                    onclick="nicknameSettingClick()"></strong>
+                <div class="global-status" id="globalStatus">
+                    <button class="header-refresh-btn REFRESH_BTN" id="headerRefreshBtn" title="Stop/Start refresh">
+                        <svg id="refreshBtnIcon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="10" y2="18"/><line x1="14" y1="6" x2="14" y2="18"/></svg>
+                    </button>
+                    <select class="header-refresh-select" id="refreshRateSelect">
+                        <option value="5000">5s</option>
+                        <option value="3000">3s</option>
+                        <option value="2500">2.5s</option>
+                        <option value="2000">2s</option>
+                        <option value="1900">1.9s</option>
+                        <option value="1700">1.7s</option>
+                        <option value="1500">1.5s</option>
+                        <option value="1300">1.3s</option>
+                        <option value="1000">1s</option>
+                        <option value="900">0.9s</option>
+                        <option value="800">0.8s</option>
+                        <option value="700">0.7s</option>
+                        <option value="600">0.6s</option>
+                        <option value="500">0.5s</option>
+                        <option value="400">0.4s</option>
+                        <option value="300">0.3s</option>
+                        <option value="200">0.2s</option>
+                        <option value="100">0.1s</option>
+                    </select>
+                    <span class="gs-spacer"></span>
+                    <span class="gs-carrier-logo" id="gs-carrier-logo"></span>
+                    <span class="gs-item gs-provider" id="gs-network">--</span>
+                    <span class="gs-item gs-type" id="gs-nettype"></span>
+                    <span class="gs-spacer"></span>
+                    <svg class="gs-signal-bars" id="gs-signal" viewBox="0 0 20 16" width="20" height="16">
+                        <rect class="gs-bar" x="0" y="12" width="3.5" rx="0.75" height="4"/>
+                        <rect class="gs-bar" x="5.5" y="8" width="3.5" rx="0.75" height="8"/>
+                        <rect class="gs-bar" x="11" y="4" width="3.5" rx="0.75" height="12"/>
+                        <rect class="gs-bar" x="16.5" y="0" width="3.5" rx="0.75" height="16"/>
+                    </svg>
+                    <span class="gs-spacer"></span>
+                    <svg class="gs-wifi-icon" id="gs-wifi-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                        <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                        <circle cx="12" cy="20" r="1"/>
+                    </svg>
+                    <span class="gs-item gs-wifi-count" id="gs-wifi">--</span>
+                    <span class="gs-spacer"></span>
+                    <svg class="gs-lan-icon" id="gs-lan-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="14" width="6" height="6" rx="1"/>
+                        <rect x="16" y="14" width="6" height="6" rx="1"/>
+                        <rect x="9" y="2" width="6" height="6" rx="1"/>
+                        <path d="M12 8v3M5 14v-1a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    <span class="gs-item gs-lan-count" id="gs-lan">--</span>
+                </div>
+            </div>
+
+            <!-- Tab Bar -->
+            <nav class="tab-bar">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    <span data-i18n="tab_dashboard">Dashboard</span>
+                </button>
+                <button class="tab-btn" data-tab="controls">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="tab_controls">Controls</span>
+                </button>
+                <button class="tab-btn" data-tab="network">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                    <span data-i18n="tab_network">Network</span>
+                </button>
+            </nav>
+
+            <!-- Tab: Dashboard -->
+            <div class="tab-panel" data-tab="dashboard">
+<!--#include views/tab-dashboard.html -->
+            </div>
+
+            <!-- Tab: Controls -->
+            <div class="tab-panel" data-tab="controls" style="display:none">
+<!--#include views/tab-controls.html -->
+            </div>
+
+            <!-- Tab: Network -->
+            <div class="tab-panel" data-tab="network" style="display:none">
+<!--#include views/tab-network.html -->
+            </div>
+
+            <!-- Modals (always in DOM) -->
+<!--#include views/modals.html -->
+        </div>
+    </div>
+    <div class="footer">
+        <p>Made by <a href="https://github.com/kanoqwq/UFI-TOOLS" target="_blank">MiniKano</a> with love ❤️&nbsp;<a
+                href="javascript:;" onclick="showModal('#payModal')" data-i18n="pay_title">打赏作者</a></p>
+    </div>
+
+    <div class="toolbar">
+        <div id="top_btn" class="top" onclick="scroolToTop()" style="display: none;opacity: 0;">
+            <svg width="100%" fill="var(--dark-text-color)" stroke="currentColor" height="100%" viewBox="0 0 1024 1024"
+                version="1.1" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M79.856 126.156V64.421h864.288v61.735H79.856z m61.735 432.146h30.867v-30.867h30.867v-30.867h30.867V465.7h30.867v-30.867h30.867v-30.87h30.867v-30.868h30.867V342.23h30.867v-30.867h30.867v-30.867h30.867v-30.867h30.867v-30.867h61.735v30.867h30.867v30.867h30.867v30.867h30.867v30.867h30.867v30.867h30.867v30.867h30.867v30.867h30.874v30.867h30.867v30.867h30.867v30.867h30.867v30.867h30.867v30.867h30.867v61.736H851.54v-30.867h-30.867v-30.868h-30.867V558.3H758.94v-30.867h-30.867v-30.867h-30.867v-30.867h-30.867v-30.867h-30.867v-30.868h-30.867v-30.867h-30.867V342.23H542.87v617.349h-61.738v-617.35h-30.867v30.867h-30.867v30.867h-30.867v30.867h-30.867v30.867h-30.867v30.867H295.93v30.867h-30.867v30.867h-30.867v30.867h-30.871v30.867h-30.867v30.867h-61.735v-61.735h30.867v-30.861z" />
+            </svg>
+        </div>
+        <div class="refresh" onclick="location.reload()">
+            <svg width="100%" fill="var(--dark-text-color)" stroke="currentColor" height="100%" viewBox="0 0 1024 1024"
+                version="1.1" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M815.36 184.96V128a36.48 36.48 0 0 1 10.24-26.88 37.76 37.76 0 0 1 52.48 0 40.96 40.96 0 0 1 11.52 26.88v172.16a40.32 40.32 0 0 1-37.12 37.12h-173.44a40.32 40.32 0 0 1-26.88-11.52 37.76 37.76 0 0 1 0-52.48 35.84 35.84 0 0 1 26.88-10.24h108.8a372.48 372.48 0 0 0-453.12-75.52A367.36 367.36 0 0 0 170.24 364.8a374.4 374.4 0 0 0-19.84 242.56 369.92 369.92 0 0 0 132.48 202.24A375.04 375.04 0 0 0 512 888.32a368.64 368.64 0 0 0 263.68-108.8A376.32 376.32 0 0 0 885.12 512H960A448 448 0 1 1 136.32 270.08a438.4 438.4 0 0 1 192-164.48 444.16 444.16 0 0 1 256-32 455.68 455.68 0 0 1 230.4 111.36z" />
+            </svg>
+        </div>
+    </div>
+    <div id="toastContainer"></div>
+    <script src="/script/tabs.js"></script>
+    <script src="/script/draglist.js"></script>
+    <script src="/script/i18n.js"></script>
+    <script src="/script/utils.js"></script>
+    <script src="/script/theme.js"></script>
+    <script src="/script/charts.js"></script>
+    <script src="/script/main.js"></script>
+    <script src="/script/dash-charts.js"></script>
+    <script src="/script/dashboard.js"></script>
+</body>
+
+</html>

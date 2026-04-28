@@ -1,0 +1,324 @@
+            <!-- Live Tracking Charts -->
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8,21 16,21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                            <span>CPU</span>
+                        </div>
+                        <span class="chart-card-live" id="chart-cpu-live">--</span>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="dashCpuChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card chart-card--clickable" onclick="showModal('#memInfoModal')">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 6V4"/><path d="M10 6V4"/><path d="M14 6V4"/><path d="M18 6V4"/><path d="M6 18v2"/><path d="M10 18v2"/><path d="M14 18v2"/><path d="M18 18v2"/><rect x="6" y="9" width="4" height="6" rx="0.5" fill="#34d399" opacity="0.3"/><rect x="14" y="9" width="4" height="6" rx="0.5" fill="#34d399" opacity="0.3"/></svg>
+                            <span data-i18n="mem_usage">Memory</span>
+                        </div>
+                        <span class="chart-card-live" id="chart-mem-live">--</span>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="dashMemChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><circle cx="11.5" cy="17.5" r="1.5" fill="#fbbf24" opacity="0.5"/><line x1="11.5" y1="8" x2="11.5" y2="15.5"/></svg>
+                            <span data-i18n="cpu_temp">Temperature</span>
+                        </div>
+                        <span class="chart-card-live" id="chart-temp-live">--</span>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="dashTempChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="#34d399"/></svg>
+                            <span data-i18n="network_speed">Network</span>
+                        </div>
+                        <div class="net-live-wrap" id="chart-net-live">
+                            <span class="net-badge"><span class="net-icon">&darr;</span><span class="net-val">--</span></span>
+                            <span class="net-badge"><span class="net-icon">&uarr;</span><span class="net-val">--</span></span>
+                        </div>
+                    </div>
+                    <div class="chart-card-body">
+                        <canvas id="dashNetChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card chart-card--wide">
+                    <div class="chart-card-header">
+                        <div class="chart-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+                            <span data-i18n="core_usage">Core Usage</span>
+                        </div>
+                    </div>
+                    <div class="core-grid">
+                        <div class="core-cell" id="core-chart-0"><div class="core-label">C0 <span id="chart-core0-live">--</span></div><div class="core-freq" id="core-freq-0"></div><canvas id="dashCore0Chart"></canvas></div>
+                        <div class="core-cell" id="core-chart-1"><div class="core-label">C1 <span id="chart-core1-live">--</span></div><div class="core-freq" id="core-freq-1"></div><canvas id="dashCore1Chart"></canvas></div>
+                        <div class="core-cell" id="core-chart-2"><div class="core-label">C2 <span id="chart-core2-live">--</span></div><div class="core-freq" id="core-freq-2"></div><canvas id="dashCore2Chart"></canvas></div>
+                        <div class="core-cell" id="core-chart-3"><div class="core-label">C3 <span id="chart-core3-live">--</span></div><div class="core-freq" id="core-freq-3"></div><canvas id="dashCore3Chart"></canvas></div>
+                        <div class="core-cell" id="core-chart-4"><div class="core-label">C4 <span id="chart-core4-live">--</span></div><div class="core-freq" id="core-freq-4"></div><canvas id="dashCore4Chart"></canvas></div>
+                        <div class="core-cell" id="core-chart-5"><div class="core-label">C5 <span id="chart-core5-live">--</span></div><div class="core-freq" id="core-freq-5"></div><canvas id="dashCore5Chart"></canvas></div>
+                        <div class="core-cell" id="core-chart-6"><div class="core-label">C6 <span id="chart-core6-live">--</span></div><div class="core-freq" id="core-freq-6"></div><canvas id="dashCore6Chart"></canvas></div>
+                        <div class="core-cell" id="core-chart-7"><div class="core-label">C7 <span id="chart-core7-live">--</span></div><div class="core-freq" id="core-freq-7"></div><canvas id="dashCore7Chart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Detail Cards -->
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><circle cx="11.5" cy="17.5" r="1.5" fill="#fbbf24" opacity="0.5"/><line x1="11.5" y1="8" x2="11.5" y2="15.5"/></svg>
+                            <span>Thermal Zones</span>
+                        </div>
+                    </div>
+                    <div class="info-temp-grid" id="dash-temp-list">
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 6V4"/><path d="M10 6V4"/><path d="M14 6V4"/><path d="M18 6V4"/><path d="M6 18v2"/><path d="M10 18v2"/><path d="M14 18v2"/><path d="M18 18v2"/></svg>
+                            <span>Memory Info</span>
+                        </div>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-chart-wrap">
+                            <canvas id="dashRamDonut"></canvas>
+                        </div>
+                        <div class="info-list" id="dash-ram-list">
+                            <div class="info-row"><span class="info-label">Total Memory</span><span class="info-value" id="dash-ram-total">--</span></div>
+                            <div class="info-row"><span class="info-label">Used</span><span class="info-value" id="dash-ram-used">--</span></div>
+                            <div class="info-row"><span class="info-label">Available</span><span class="info-value" id="dash-ram-avail">--</span></div>
+                            <div class="info-row info-row--sep"><span class="info-label">Total SWAP</span><span class="info-value" id="dash-swap-total">--</span></div>
+                            <div class="info-row"><span class="info-label">Used</span><span class="info-value" id="dash-swap-used">--</span></div>
+                            <div class="info-row"><span class="info-label">Available</span><span class="info-value" id="dash-swap-avail">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                            <span>Network Connections</span>
+                        </div>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-chart-wrap">
+                            <canvas id="dashConnDonut"></canvas>
+                        </div>
+                        <div class="info-list" id="dash-conn-list">
+                            <div class="info-row"><span class="info-label">TCP v4</span><span class="info-value" id="dash-conn-tcp">--</span></div>
+                            <div class="info-row"><span class="info-label">TCP v6</span><span class="info-value" id="dash-conn-tcp6">--</span></div>
+                            <div class="info-row info-row--sep"><span class="info-label">UDP v4</span><span class="info-value" id="dash-conn-udp">--</span></div>
+                            <div class="info-row"><span class="info-label">UDP v6</span><span class="info-value" id="dash-conn-udp6">--</span></div>
+                            <div class="info-row info-row--sep"><span class="info-label">UNIX</span><span class="info-value" id="dash-conn-unix">--</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 4: Signal Parameters + Cell Info (2-col like row 3) -->
+            <div class="info-grid info-grid--two">
+                <!-- Signal Parameters Card -->
+                <div class="info-card info-card--full">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                            <span data-i18n="status_section_signal">Signal Parameters</span>
+                        </div>
+                    </div>
+                    <div class="signal-chart-body">
+                        <div class="signal-chart-wrap">
+                            <canvas id="signalHistoryChart"></canvas>
+                        </div>
+                        <div class="signal-legend" id="signal-legend">
+                            <span class="signal-legend-item"><span class="signal-dot" style="background:#f87171"></span><span class="signal-lbl">RSRP</span><b id="sig-rsrp-val">--</b></span>
+                            <span class="signal-legend-item"><span class="signal-dot" style="background:#34d399"></span><span class="signal-lbl">SINR</span><b id="sig-sinr-val">--</b></span>
+                            <span class="signal-legend-item"><span class="signal-dot" style="background:#60a5fa"></span><span class="signal-lbl">RSRQ</span><b id="sig-rsrq-val">--</b></span>
+                            <span class="signal-legend-item"><span class="signal-dot" style="background:#fb923c"></span><span class="signal-lbl">RSSI</span><b id="sig-rssi-val">--</b></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Cell Info Card -->
+                <div class="info-card info-card--full">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                            <span>Cell Info</span>
+                        </div>
+                    </div>
+                    <div class="info-card-body cell-info-body">
+                        <div class="cell-info-grid" id="cell-info-strip">
+                            <div class="cell-info-row"><span class="cell-info-label">Band</span><b id="ci-band">--</b></div>
+                            <div class="cell-info-row"><span class="cell-info-label">EARFCN</span><b id="ci-freq">--</b></div>
+                            <div class="cell-info-row"><span class="cell-info-label">Bandwidth</span><b id="ci-bw">--</b></div>
+                            <div class="cell-info-row"><span class="cell-info-label">PCI</span><b id="ci-pci">--</b></div>
+                            <div class="cell-info-row"><span class="cell-info-label">Cell ID</span><b id="ci-cellid">--</b></div>
+                            <div class="cell-info-row cell-info-row--accent"><span class="cell-info-label">QCI</span><b id="ci-qci">--</b></div>
+                            <div class="cell-info-row"><span class="cell-info-label">DL Max</span><b id="ci-dl">--</b></div>
+                            <div class="cell-info-row"><span class="cell-info-label">UL Max</span><b id="ci-ul">--</b></div>
+                        </div>
+                    </div>
+                    <!-- Signal detail table (hidden) -->
+                    <div class="signal-table-section" style="display:none;">
+                        <table class="dash-table" id="DASH_SIGNAL">
+                            <tbody>
+                                <tr><td colspan="2" class="dash-table-empty"><span class="spin">🌀</span> loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 5: Battery + Data Usage + Daily History + Storage (4-col) -->
+            <div class="info-grid">
+                <!-- Battery Card -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/></svg>
+                            <span>Battery</span>
+                        </div>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-chart-wrap">
+                            <canvas id="dashBatteryGauge"></canvas>
+                        </div>
+                        <div class="info-list" id="dash-battery-list">
+                            <div class="info-row"><span class="info-label">Level</span><span class="info-value" id="dash-bat-level">--</span></div>
+                            <div class="info-row"><span class="info-label">Status</span><span class="info-value" id="dash-bat-status">--</span></div>
+                            <div class="info-row"><span class="info-label">Current</span><span class="info-value" id="dash-bat-current">--</span></div>
+                            <div class="info-row"><span class="info-label">Voltage</span><span class="info-value" id="dash-bat-voltage">--</span></div>
+                            <div class="info-divider"></div>
+                            <div class="info-row"><span class="info-label">USB Speed</span><span class="info-value" id="dash-usb-speed">--</span></div>
+                            <div class="info-row"><span class="info-label">USB Mode</span><span class="info-value" id="dash-usb-mode">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Data Usage Card -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v9h-9"/></svg>
+                            <span>Data Usage</span>
+                        </div>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-chart-wrap">
+                            <canvas id="dashDataDonut"></canvas>
+                        </div>
+                        <div class="info-list" id="dash-data-list">
+                            <div class="info-row"><span class="info-label">Data Limit</span><span class="info-value" id="dash-data-limit">--</span></div>
+                            <div class="info-row"><span class="info-label">Monthly Used</span><span class="info-value" id="dash-data-used">--</span></div>
+                            <div class="info-row"><span class="info-label">Daily</span><span class="info-value" id="dash-data-daily">--</span></div>
+                            <div class="info-row"><span class="info-label">Conn. Time</span><span class="info-value" id="dash-data-time">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Storage Card -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            <span>Storage</span>
+                        </div>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-chart-wrap">
+                            <canvas id="dashStorageDonut"></canvas>
+                        </div>
+                        <div class="info-list" id="dash-storage-list">
+                            <div class="info-row"><span class="info-label">Internal Total</span><span class="info-value" id="dash-stor-int-total">--</span></div>
+                            <div class="info-row"><span class="info-label">Internal Used</span><span class="info-value" id="dash-stor-int-used">--</span></div>
+                            <div class="info-row"><span class="info-label">SD Total</span><span class="info-value" id="dash-stor-sd-total">--</span></div>
+                            <div class="info-row"><span class="info-label">SD Used</span><span class="info-value" id="dash-stor-sd-used">--</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 6: Daily Usage History (full width) -->
+            <div class="dash-usage-history-row">
+                <div class="info-card info-card--wide">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="17" x2="7" y2="13"/><line x1="11" y1="17" x2="11" y2="9"/><line x1="15" y1="17" x2="15" y2="11"/><line x1="19" y1="17" x2="19" y2="7"/></svg>
+                            <span>Daily Usage History</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="dash-card-count" id="dash-usage-hist-avg">--</span>
+                            <select class="dash-range-select" id="dashUsageRangeSelect" onchange="window.loadDailyUsageHistory(Number(this.value))">
+                                <option value="7">7d</option>
+                                <option value="14">14d</option>
+                                <option value="30" selected>30d</option>
+                                <option value="60">60d</option>
+                                <option value="90">90d</option>
+                            </select>
+                            <button class="dash-query-btn" onclick="window.loadDailyUsageHistory()" title="Refresh data">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="info-card-body" style="flex-direction:column;padding:0;">
+                        <div class="dash-usage-chart-wrap">
+                            <canvas id="dashDailyUsageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 7: Device Info (full width) -->
+            <div class="dash-device-info-row">
+                <div class="info-card info-card--wide">
+                    <div class="info-card-header">
+                        <div class="info-card-title">
+                            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+                            <span>Device Info</span>
+                        </div>
+                    </div>
+                    <div class="dash-device-grid" id="dashDeviceGrid">
+                        <div class="dash-dev-item"><span class="dash-dev-label">Phone</span><span class="dash-dev-val" id="ddi-phone">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">Client IP</span><span class="dash-dev-val" id="ddi-client-ip">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">IPv4</span><span class="dash-dev-val dash-dev-val--mono" id="ddi-ipv4">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">IPv6</span><span class="dash-dev-val dash-dev-val--mono" id="ddi-ipv6">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">Gateway</span><span class="dash-dev-val" id="ddi-gateway">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">MAC</span><span class="dash-dev-val dash-dev-val--mono" id="ddi-mac">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">IMEI</span><span class="dash-dev-val dash-dev-val--mono" id="ddi-imei">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">IMSI</span><span class="dash-dev-val dash-dev-val--mono" id="ddi-imsi">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">ICCID</span><span class="dash-dev-val dash-dev-val--mono" id="ddi-iccid">--</span></div>
+                        <div class="dash-dev-item"><span class="dash-dev-label">Firmware</span><span class="dash-dev-val dash-dev-val--mono" id="ddi-version">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden original STATUS container — JS renders into this, observer distributes to cards -->
+            <div class="kano_function_main status-container" style="display:none;">
+                <div class="title" style="margin: 6px 0;">
+                    <strong data-i18n="base_info">基本状态</strong>
+                    <div style="display: inline-block;" id="collapse_status_btn"></div>
+                </div>
+                <div class="collapse" id="collapse_status">
+                    <div class="collapse_box">
+                        <div style="overflow: auto;position: relative">
+                            <ul class="deviceList" id="STATUS">
+                                <li style="padding-top: 15px;">
+                                    <strong class="green"
+                                        style="margin: 10px auto;margin-top: 0; display: flex;flex-direction: column;padding: 40px;">
+                                        <span style="font-size: 50px;" class="spin">🌀</span>
+                                        <span style="font-size: 16px;padding-top: 10px;">loading...</span>
+                                    </strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>

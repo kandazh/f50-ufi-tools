@@ -5,6 +5,28 @@ const JavaScriptObfuscator = require('javascript-obfuscator');
 const isDebug = process.argv.includes('--debug');
 const inputDir = path.resolve(__dirname, 'public');
 const outputDir = path.resolve(__dirname, '../src/main/assets/');
+
+// Assemble index.html from template + partials
+function assembleHTML(templatePath, publicDir) {
+    let html = fs.readFileSync(templatePath, 'utf8');
+    html = html.replace(/<!--#include\s+([\w\-\/\.]+)\s*-->/g, (match, filePath) => {
+        const fullPath = path.join(publicDir, filePath);
+        if (fs.existsSync(fullPath)) {
+            console.log(`📦 Including partial: ${filePath}`);
+            return fs.readFileSync(fullPath, 'utf8');
+        }
+        console.warn(`⚠️ Partial not found: ${fullPath}`);
+        return match;
+    });
+    return html;
+}
+
+const templatePath = path.join(inputDir, 'index.html.template');
+if (fs.existsSync(templatePath)) {
+    const assembled = assembleHTML(templatePath, inputDir);
+    fs.writeFileSync(path.join(inputDir, 'index.html'), assembled, 'utf8');
+    console.log('✔️ Assembled index.html from template + partials');
+}
 const obfuscateJsFiles = ['requests.js','main.js']
 
 const obfuscateOptions = {
@@ -42,6 +64,9 @@ function processDirectory(dir, outDir) {
     const entries = fs.readdirSync(dir);
 
     entries.forEach((entry) => {
+        // Skip template and views partials (already assembled into index.html)
+        if (entry === 'index.html.template' || entry === 'views' || entry.endsWith('.old')) return;
+
         const entryPath = path.join(dir, entry);
         const outPath = path.join(outDir, entry);
         const stat = fs.statSync(entryPath);

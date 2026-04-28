@@ -203,24 +203,36 @@ socat_guard_once() {
 }
 
 check_ttyd_running(){
+  if [ ! -x "$TTYD_PATH" ]; then
+      echo "[$(date)] ttyd binary not found or not executable: $TTYD_PATH" >> "$LOG_FILE"
+      return 1
+  fi
+  if [ ! -f "$LOGIN_PATH" ]; then
+      echo "[$(date)] login script not found: $LOGIN_PATH" >> "$LOG_FILE"
+      return 1
+  fi
   # try pgrep to check ttyd running
   if ! pgrep -f "ttyd --writable --port 1146 $LOGIN_PATH" > /dev/null; then
       # fallback to ps -ef if pgrep fails
       if ! ps -ef | grep "ttyd --writable --port 1146 $LOGIN_PATH" | grep -v grep > /dev/null; then
-          echo "[`date`] start ttyd..." >> "$LOG_FILE"
+          echo "[$(date)] start ttyd..." >> "$LOG_FILE"
           export PATH="/data/data/com.minikano.f50_sms/files:/data/data/com.termux/files/usr/bin:$PATH"
-          "$TTYD_PATH" --writable --port 1146 $LOGIN_PATH &
+          "$TTYD_PATH" --writable --port 1146 "$LOGIN_PATH" &
       fi
   fi
 }
 
 check_socat_running(){
+  if [ ! -x "$SOCAT_PATH" ]; then
+      echo "[$(date)] socat binary not found or not executable: $SOCAT_PATH" >> "$LOG_FILE"
+      return 1
+  fi
   # check socat running using pgrep
   mkdir -p "$SOCKET_DIR"
   if ! pgrep -f "$SOCKET_FILE" > /dev/null; then
       # fallback to ps -ef if pgrep fails
       if ! ps -ef | grep "$SOCKET_FILE" | grep -v grep > /dev/null; then
-          echo "[`date`] start socat..." >> "$LOG_FILE"
+          echo "[$(date)] start socat..." >> "$LOG_FILE"
           # run socat unix socket, exec /system/bin/sh
           "$SOCAT_PATH" -d -d UNIX-LISTEN:"$SOCKET_FILE",fork,reuseaddr,unlink-early EXEC:/system/bin/sh &
       fi
@@ -228,10 +240,10 @@ check_socat_running(){
 }
 
 keep_ufi_running(){
-    BOOTUP_NEED_OPEN_ACTIVITY=$1
+    BOOTUP_NEED_OPEN_ACTIVITY="${1:-0}"
     PKG=com.minikano.f50_sms
     ACT=com.minikano.f50_sms.MainActivity
-    if [ $BOOTUP_NEED_OPEN_ACTIVITY -eq 1 ]; then
+    if [ "$BOOTUP_NEED_OPEN_ACTIVITY" -eq 1 ] 2>/dev/null; then
       echo "[`date`] BOOTUP! DO WAKE UP!!!" >> "$LOG_FILE"
       am start -n "$PKG/$ACT" --ez silent true >/dev/null 2>&1 || true
     fi
@@ -244,8 +256,12 @@ keep_ufi_running(){
 
 lock_smb_conf(){
     #lock samba conf
-    chmod 777 /data/samba/etc/smb.conf
-    chattr +i /data/samba/etc/smb.conf
+    if [ -f /data/samba/etc/smb.conf ]; then
+        chmod 777 /data/samba/etc/smb.conf
+        chattr +i /data/samba/etc/smb.conf
+    else
+        echo "[$(date)] smb.conf not found, skip locking" >> "$LOG_FILE"
+    fi
 }
 
 permission_keep(){
@@ -261,7 +277,8 @@ permission_keep(){
     appops set com.minikano.f50_sms android:get_usage_stats allow >/dev/null 2>&1 || true
     appops set com.minikano.f50_sms POST_NOTIFICATION allow >/dev/null 2>&1 || true
     appops set com.minikano.f50_sms AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore >/dev/null 2>&1 || true
-    appops set --uid $(dumpsys package com.minikano.f50_sms 2>/dev/null | grep -m1 userId= | cut -d= -f2) AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore
+    _uid=$(dumpsys package com.minikano.f50_sms 2>/dev/null | grep -m1 userId= | cut -d= -f2)
+    [ -n "$_uid" ] && appops set --uid "$_uid" AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore >/dev/null 2>&1 || true
     settings put secure enabled_notification_listeners com.minikano.f50_sms/com.minikano.f50_sms.MyListenerService >/dev/null 2>&1 || true
     dumpsys deviceidle whitelist +com.minikano.f50_sms >/dev/null 2>&1 || true
     cmd app_hibernation set-state com.minikano.f50_sms false >/dev/null 2>&1 || true
@@ -271,9 +288,9 @@ permission_keep(){
 
 #net accelerate
 net_accelerate(){
-      iptables -D INPUT -j zte_fw_net_limit
-      iptables -F zte_fw_net_limit
-      iptables -X zte_fw_net_limit
+      iptables -D INPUT -j zte_fw_net_limit 2>/dev/null
+      iptables -F zte_fw_net_limit 2>/dev/null
+      iptables -X zte_fw_net_limit 2>/dev/null
       tc qdisc del dev sipa_eth0 root 2>/dev/null
       tc qdisc del dev sipa_eth0 ingress 2>/dev/null
       tc qdisc del dev br0 root 2>/dev/null
@@ -297,13 +314,13 @@ net_accelerate(){
 }
 
 disable_fota(){
-  pm disable com.zte.zdm
-  pm uninstall -k --user 0 com.zte.zdm
-  pm uninstall -k --user 0 cn.zte.aftersale
-  pm uninstall -k --user 0 com.zte.zdmdaemon
-  pm uninstall -k --user 0 com.zte.zdmdaemon.install
-  pm uninstall -k --user 0 com.zte.analytics
-  pm uninstall -k --user 0 com.zte.neopush
+  pm disable com.zte.zdm 2>/dev/null || true
+  pm uninstall -k --user 0 com.zte.zdm 2>/dev/null || true
+  pm uninstall -k --user 0 cn.zte.aftersale 2>/dev/null || true
+  pm uninstall -k --user 0 com.zte.zdmdaemon 2>/dev/null || true
+  pm uninstall -k --user 0 com.zte.zdmdaemon.install 2>/dev/null || true
+  pm uninstall -k --user 0 com.zte.analytics 2>/dev/null || true
+  pm uninstall -k --user 0 com.zte.neopush 2>/dev/null || true
 }
 
 samba_path(){
@@ -312,7 +329,7 @@ samba_path(){
 
   i=1
   for src in $SRC_LIST; do
-      tgt=$(echo $TGT_LIST | cut -d' ' -f$i)
+      tgt=$(echo "$TGT_LIST" | cut -d' ' -f"$i")
       i=$((i + 1))
 
       [ ! -d "$tgt" ] && mkdir -p "$tgt"
@@ -328,8 +345,8 @@ samba_path(){
 }
 
 close_thread_killer() {
-  settings put global settings_enable_monitor_phantom_procs false
-  settings put global max_phantom_processes 2147483647
+  settings put global settings_enable_monitor_phantom_procs false 2>/dev/null || true
+  settings put global max_phantom_processes 2147483647 2>/dev/null || true
 }
 
 #boot_script

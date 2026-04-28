@@ -1,4 +1,9 @@
 {
+    "tab_dashboard": "仪表盘",
+    "tab_controls": "控制",
+    "kpi_network": "网络",
+    "kpi_data": "数据用量",
+    "tab_network": "网络",
     "device": "设备",
     "func_list": "功能列表",
     "login_btn": "登录/登出",

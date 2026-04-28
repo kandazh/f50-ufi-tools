@@ -4,7 +4,7 @@ function gsmEncode(text) { function encodeText(text) { let encoded = []; for (le
 let KANO_baseURL = '/api'
 let KANO_PASSWORD = null
 let KANO_TOKEN = null
-let ACCEPT_TERMS = false
+let ACCEPT_TERMS = true
 let KANO_COOKIE = null
 
 let loginMethod = localStorage.getItem('login_method') == "1" ? "1" : "0"; //1新方法，0旧方法
@@ -328,7 +328,7 @@ const getUFIData = async () => {
         const params = new URLSearchParams();
         params.append('_', Date.now().toString());
 
-        const cmd = 'usb_port_switch,battery_charging,sms_received_flag,sms_unread_num,sms_sim_unread_num,sim_msisdn,data_volume_limit_switch,battery_value,battery_vol_percent,network_signalbar,network_rssi,cr_version,iccid,imei,imsi,ipv6_wan_ipaddr,lan_ipaddr,mac_address,msisdn,network_information,Lte_ca_status,rssi,Z5g_rsrp,lte_rsrp,wifi_access_sta_num,loginfo,data_volume_alert_percent,data_volume_limit_size,realtime_rx_thrpt,realtime_tx_thrpt,realtime_time,monthly_tx_bytes,monthly_rx_bytes,monthly_time,network_type,network_provider,ppp_status';
+        const cmd = 'usb_port_switch,battery_charging,sms_received_flag,sms_unread_num,sms_sim_unread_num,sim_msisdn,data_volume_limit_switch,battery_value,battery_vol_percent,network_signalbar,network_rssi,cr_version,iccid,imei,imsi,wan_ipaddr,ipv6_wan_ipaddr,lan_ipaddr,mac_address,msisdn,network_information,Lte_ca_status,rssi,Z5g_rsrp,lte_rsrp,wifi_access_sta_num,loginfo,data_volume_alert_percent,data_volume_limit_size,realtime_rx_thrpt,realtime_tx_thrpt,realtime_time,monthly_tx_bytes,monthly_rx_bytes,monthly_time,network_type,network_provider,ppp_status';
 
         const res = await fetch(`${KANO_baseURL}/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=${cmd}&${params.toString()}`, {
             headers: {
@@ -582,14 +582,10 @@ const switchAPNAuto = async ({ isAuto = true, index = 0 }) => {
     return res.json()
 }
 
-// check Terms acceptance
+// check Terms acceptance (bypassed)
 const getTermsAcceptance = async () => {
-    const res = await (await fetchWithTimeout(`${KANO_baseURL}/version_info`)).json()
-    ACCEPT_TERMS = res.accept_terms && res.accept_terms.toString() == 'true'
-    if (ACCEPT_TERMS) {
-        return true
-    }
-    return false
+    ACCEPT_TERMS = true
+    return true
 }
 
 // check sim pin

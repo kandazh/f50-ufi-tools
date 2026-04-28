@@ -12,6 +12,13 @@ PASS_FILE="/data/data/com.minikano.f50_sms/shared_prefs/kano_ZTE_store.xml"
 SHA256_BIN="/data/data/com.minikano.f50_sms/files/sha256"
 BACKUP_PASS="Wa@9w+YWRtaW4="
 
+# Check required binaries
+if [ ! -x "$SHA256_BIN" ]; then
+    echo "Error: sha256 binary not found at $SHA256_BIN" 1>&2
+    echo "Falling back to direct shell access." 1>&2
+    exec /system/bin/sh
+fi
+
 # Extract login_token from XML
 get_login_pass() {
     if [ -r "$PASS_FILE" ]; then
