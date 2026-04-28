@@ -774,7 +774,7 @@
         if ($('dash-stor-sd-total')) $('dash-stor-sd-total').textContent = fmtB(extTotal);
     };
 
-    // --- Daily Usage History Bar Chart ---
+    // --- Daily Usage History Area Chart ---
     let dailyUsageChart = null;
 
     let usageDays = 30;
@@ -782,8 +782,7 @@
     function resizeUsageChartWrap(count) {
         const wrap = document.querySelector('.dash-usage-chart-wrap');
         if (!wrap) return;
-        // Scale height: 7d→140px, 14d→160px, 30d→190px, 60d→230px, 90d→270px, 180d→420px
-        const h = Math.min(450, Math.max(140, 120 + count * 1.7));
+        const h = Math.min(300, Math.max(140, 130 + count * 0.8));
         wrap.style.height = Math.round(h) + 'px';
     }
 
@@ -819,39 +818,53 @@
             const avgEl = document.getElementById('dash-usage-hist-avg');
             if (avgEl) avgEl.textContent = 'avg ' + fmtB(avgBytes) + '/d';
 
-            const barColors = gbValues.map(v => v > 3 ? 'rgba(248,113,113,0.7)' : v > 1 ? 'rgba(251,191,36,0.7)' : 'rgba(167,139,250,0.7)');
-            const maxBar = items.length > 20 ? 10 : items.length > 10 ? 16 : 24;
             const xFontSize = items.length > 20 ? 7 : 9;
-            const skipX = items.length > 20 ? Math.ceil(items.length / 15) : 1;
 
             if (dailyUsageChart) {
                 dailyUsageChart.data.labels = labels;
                 dailyUsageChart.data.datasets[0].data = gbValues;
-                dailyUsageChart.data.datasets[0].backgroundColor = barColors;
-                dailyUsageChart.data.datasets[0].maxBarThickness = maxBar;
                 dailyUsageChart.options.scales.x.ticks.font.size = xFontSize;
                 dailyUsageChart.options.scales.x.ticks.maxTicksLimit = Math.min(items.length, 15);
                 dailyUsageChart.update('none');
             } else {
                 const ctx = canvas.getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, 'rgba(167, 139, 250, 0.35)');
+                gradient.addColorStop(0.6, 'rgba(167, 139, 250, 0.08)');
+                gradient.addColorStop(1, 'transparent');
+
                 dailyUsageChart = new Chart(ctx, {
-                    type: 'bar',
+                    type: 'line',
                     data: {
                         labels,
                         datasets: [{
                             data: gbValues,
-                            backgroundColor: barColors,
-                            borderRadius: 3,
-                            borderSkipped: false,
-                            maxBarThickness: maxBar,
+                            borderColor: '#a78bfa',
+                            backgroundColor: gradient,
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointRadius: items.length > 30 ? 0 : 2,
+                            pointHoverRadius: 4,
+                            pointBackgroundColor: '#a78bfa',
+                            pointHoverBackgroundColor: '#fff',
+                            fill: true
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.9)',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(255,255,255,0.08)',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                padding: 8,
+                                bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+                                displayColors: false,
                                 callbacks: {
                                     label: (c) => c.raw.toFixed(2) + ' GB'
                                 }
@@ -859,22 +872,26 @@
                         },
                         scales: {
                             x: {
-                                grid: { display: false },
+                                grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
                                 ticks: {
-                                    color: 'rgba(255,255,255,0.5)',
-                                    font: { size: xFontSize, family: 'var(--font-mono)' },
+                                    color: 'rgba(255,255,255,0.4)',
+                                    font: { size: xFontSize, family: "'JetBrains Mono', monospace" },
                                     maxTicksLimit: Math.min(items.length, 15),
                                     maxRotation: 45,
                                     minRotation: 0
-                                }
+                                },
+                                border: { display: false }
                             },
                             y: {
-                                grid: { color: 'rgba(255,255,255,0.06)' },
+                                grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
                                 ticks: {
-                                    color: 'rgba(255,255,255,0.4)',
-                                    font: { size: 9 },
+                                    color: 'rgba(255,255,255,0.35)',
+                                    font: { size: 9, family: "'JetBrains Mono', monospace" },
+                                    maxTicksLimit: 4,
+                                    padding: 4,
                                     callback: (v) => v + ' GB'
                                 },
+                                border: { display: false },
                                 beginAtZero: true
                             }
                         }

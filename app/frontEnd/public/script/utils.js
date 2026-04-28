@@ -59,25 +59,8 @@ const checkAdvancedFunc = async () => {
 }
 
 function requestInterval(callback, interval) {
-    let lastTime = 0;
-    let timeoutId = null;
-
-    function loop(timestamp) {
-        if (!lastTime) lastTime = timestamp; // 初始化上次时间
-        const delta = timestamp - lastTime; // 计算时间差
-
-        if (delta >= interval) {
-            callback(); // 执行任务
-            lastTime = timestamp; // 更新上次时间
-        }
-
-        timeoutId = requestAnimationFrame(loop); // 继续请求下一帧
-    }
-
-    timeoutId = requestAnimationFrame(loop); // 启动动画循环
-
-    // 返回清除函数
-    return () => cancelAnimationFrame(timeoutId);
+    const id = setInterval(callback, interval);
+    return () => clearInterval(id);
 }
 
 function copyText(e) {

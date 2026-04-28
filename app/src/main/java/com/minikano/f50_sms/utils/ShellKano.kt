@@ -37,7 +37,10 @@ class ShellKano {
                 }
 
                 reader.close()
-                process.waitFor()
+                if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                    process.destroyForcibly()
+                    Log.w("ShellKano", "Process timed out after 30s: $command")
+                }
             } catch (e: IOException) {
                 e.printStackTrace()
                 return null
@@ -67,7 +70,10 @@ class ShellKano {
                 }
 
                 reader.close()
-                process.waitFor()
+                if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                    process.destroyForcibly()
+                    Log.w("ShellKano", "Process timed out after 30s: $command")
+                }
             } catch (e: IOException) {
                 e.printStackTrace()
                 return null
@@ -529,7 +535,10 @@ class ShellKano {
                 val reader = process.inputStream.bufferedReader()
                 val output = reader.readText()
 
-                process.waitFor()
+                if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                    process.destroyForcibly()
+                    Log.w("ShellKano", "Process timed out: ${outFile.absolutePath}")
+                }
 
                 return output
             } catch (e: Exception) {

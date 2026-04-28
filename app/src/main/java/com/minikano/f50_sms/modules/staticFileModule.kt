@@ -1,6 +1,7 @@
 package com.minikano.f50_sms.modules
 
 import android.content.Context
+import android.util.LruCache
 import com.minikano.f50_sms.utils.KanoLog
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -13,9 +14,15 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import java.io.FileNotFoundException
 
-//静态资源
+//静态资源 - 带LRU缓存
 fun Route.staticFileModule(context: Context) {
     val TAG = "[$BASE_TAG]_staticFileModule"
+
+    // 4 MB LRU cache for static assets (keys = path, values = byte arrays)
+    val maxCacheSize = 4 * 1024 * 1024 // 4 MB
+    val assetCache = object : LruCache<String, ByteArray>(maxCacheSize) {
+        override fun sizeOf(key: String, value: ByteArray): Int = value.size
+    }
 
     get("{...}") {
         val rawPath = (
@@ -31,7 +38,11 @@ fun Route.staticFileModule(context: Context) {
         }
 
         try {
-            val bytes = context.assets.open(path).use { it.readBytes() }
+            val bytes = assetCache.get(path) ?: run {
+                val loaded = context.assets.open(path).use { it.readBytes() }
+                assetCache.put(path, loaded)
+                loaded
+            }
             val contentType = ContentType.defaultForFilePath(path)
             call.respondBytes(bytes, contentType)
         } catch (e: SecurityException) {

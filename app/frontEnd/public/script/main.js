@@ -698,6 +698,7 @@ function main_func() {
         btn.classList.toggle('qt-busy', !!busy)
     }
 
+    let _lastAdbnetCheck = 0
     const qtUpdateAll = () => {
         const d = window.UFI_DATA || {}
         qtSet('data', d.ppp_status && d.ppp_status !== 'ppp_disconnected')
@@ -706,12 +707,16 @@ function main_func() {
         qtSet('light', d.indicator_light_switch === '1')
         qtSet('smb', d.samba_switch === '1')
         qtSet('roam', d.roam_setting_option === 'on' || d.dial_roam_setting_option === 'on')
-        // adbnet uses a separate endpoint
-        fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
-            method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
-        }, 2000).then(r => r.json()).then(res => {
-            qtSet('adbnet', res.enabled === 'true' || res.enabled === true)
-        }).catch(() => {})
+        // adbnet uses a separate endpoint - throttle to every 10s
+        const now = Date.now()
+        if (now - _lastAdbnetCheck > 10000) {
+            _lastAdbnetCheck = now
+            fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
+            }, 2000).then(r => r.json()).then(res => {
+                qtSet('adbnet', res.enabled === 'true' || res.enabled === true)
+            }).catch(() => {})
+        }
     }
 
     const qtToggle = async (id) => {
@@ -4928,7 +4933,7 @@ function main_func() {
         const value = e.target.value
         if (value) {
             stopRefresh()
-            REFRESH_TIME = value
+            REFRESH_TIME = Number(value)
             startRefresh()
             createToast(t('toast_current_refresh_rate') + "：" + (value / 1000).toFixed(2) + "S")
             //保存

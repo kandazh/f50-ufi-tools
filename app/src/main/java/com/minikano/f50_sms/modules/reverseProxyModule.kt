@@ -8,7 +8,7 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.receiveText
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondOutputStream
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.route
 import java.net.HttpURLConnection
@@ -44,11 +44,14 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                 return@handle
             }
 
+            var conn: HttpURLConnection? = null
             try {
                 val url = URL(fullUrl)
-                val conn = (url.openConnection() as HttpURLConnection).apply {
+                conn = (url.openConnection() as HttpURLConnection).apply {
                     requestMethod = method
                     doInput = true
+                    connectTimeout = 5000
+                    readTimeout = 10000
                     setRequestProperty("Referer", null)
                     setRequestProperty("Referer", targetServer)
                     val ck = call.request.headers["Kano-Cookie"]
@@ -75,8 +78,6 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                 }
 
                 val responseCode = conn.responseCode
-                val responseStream = if (responseCode in 200..299) conn.inputStream else conn.errorStream
-                val responseBytes = responseStream.readBytes()
                 val responseContentType = conn.contentType ?: "text/plain"
 
                 conn.headerFields.forEach { (key, values) ->
@@ -91,10 +92,21 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                 call.response.headers.append("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
                 call.response.headers.append("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
 
-                call.respondBytes(responseBytes, ContentType.parse(responseContentType), HttpStatusCode.fromValue(responseCode))
+                val responseStream = if (responseCode in 200..299) conn.inputStream else conn.errorStream
+                call.respondOutputStream(ContentType.parse(responseContentType), HttpStatusCode.fromValue(responseCode)) {
+                    responseStream.use { input ->
+                        val buffer = ByteArray(4096)
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            write(buffer, 0, bytesRead)
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 KanoLog.e(TAG,"转发出错",e)
                 call.respond(HttpStatusCode.InternalServerError, "Proxy error: ${e.message}")
+            } finally {
+                conn?.disconnect()
             }
         }
     }
