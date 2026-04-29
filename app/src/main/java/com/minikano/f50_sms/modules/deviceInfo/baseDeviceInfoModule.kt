@@ -46,7 +46,7 @@ private data class DeviceMetricsCache(
     val timestamp: Long
 )
 @Volatile private var metricsCache: DeviceMetricsCache? = null
-private const val CACHE_TTL_MS = 2000L // 2 second cache
+private const val CACHE_TTL_MS = 500L // 0.5 second cache (matches min refresh rate)
 
 fun Route.baseDeviceInfoModule(context: Context) {
     val TAG = "[$BASE_TAG]_baseDeviceInfoModule"

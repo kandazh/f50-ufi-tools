@@ -1,7 +1,6 @@
 package com.minikano.f50_sms.utils
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -101,30 +100,38 @@ suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
     return@withContext json.toString()
 }
 
+// Store previous /proc/stat snapshot for delta calculation between polls
+@Volatile private var prevStats: Map<String, CpuStat>? = null
+
 suspend fun calculateCpuUsage(): String = withContext(Dispatchers.IO) {
-    // 第一次读取
-    val stats1 = readProcStat()
-    delay(100) // 等待 100ms
-    // 第二次读取
-    val stats2 = readProcStat()
+    val currentStats = readProcStat()
+    val previousStats = prevStats
 
-    val json = buildJsonObject {
-        stats1.forEach { (cpu, stat1) ->
-            val stat2 = stats2[cpu] ?: return@forEach
+    val json = if (previousStats != null) {
+        buildJsonObject {
+            currentStats.forEach { (cpu, stat2) ->
+                val stat1 = previousStats[cpu] ?: return@forEach
 
-            val totalDiff = stat2.total - stat1.total
-            val idleDiff = stat2.idle - stat1.idle
+                val totalDiff = stat2.total - stat1.total
+                val idleDiff = stat2.idle - stat1.idle
 
-            val usage = if (totalDiff == 0L) {
-                0.0
-            } else {
-                ((totalDiff - idleDiff) * 100.0) / totalDiff
+                val usage = if (totalDiff == 0L) {
+                    0.0
+                } else {
+                    ((totalDiff - idleDiff) * 100.0) / totalDiff
+                }
+
+                put(cpu, "%.1f".format(usage))
             }
-
-            put(cpu, "%.1f".format(usage))
+        }
+    } else {
+        // First call — no previous data, return 0 for all
+        buildJsonObject {
+            currentStats.forEach { (cpu, _) -> put(cpu, "0.0") }
         }
     }
 
+    prevStats = currentStats
     return@withContext json.toString()
 }
 
@@ -138,8 +145,8 @@ private fun readProcStat(): Map<String, CpuStat> {
                 // 计算总时间（所有字段之和）
                 val total = parts.subList(1, parts.size).sumOf { it.toLongOrNull() ?: 0 }
                 // 空闲时间 = idle + iowait (第4列 + 第5列)
-                val idle = parts[4].toLongOrNull() ?: (0 +
-                        (parts.getOrNull(5)?.toLongOrNull() ?: 0))
+                val idle = (parts[4].toLongOrNull() ?: 0) +
+                        (parts.getOrNull(5)?.toLongOrNull() ?: 0)
                 stats[cpuName] = CpuStat(cpuName, total, idle)
             }
         }
