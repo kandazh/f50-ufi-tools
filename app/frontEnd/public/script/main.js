@@ -4133,7 +4133,7 @@ function main_func() {
         AT_RESULT.innerHTML = t('toast_running_please_wait')
 
         try {
-            const res = await (await fetch(`${KANO_baseURL}/one_click_shell`, {
+            const res = await (await fetch(`${KANO_baseURL}/quick_shell`, {
                 headers: common_headers
             })).json()
             if (res) {

@@ -242,7 +242,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
     }
 
     //一键Shell
-    get("/api/one_click_shell") {
+    get("/api/quick_shell") {
         val pipedInput = PipedInputStream()
         val pipedOutput = PipedOutputStream(pipedInput)
 
@@ -328,7 +328,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                 var jsonResult = """{"result":"执行成功"}"""
                 try {
                     val escapedCommand =
-                        "sh /sdcard/one_click_shell.sh".replace("\"", "\\\"")
+                        "sh /sdcard/quick_shell.sh".replace("\"", "\\\"")
                     ShellKano.fillInputAndSend(
                         escapedCommand,
                         outFile_adb.absolutePath,
@@ -342,7 +342,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                 }
                 writer.write(jsonResult)
             } catch (e: Exception) {
-                writer.write("""{"error":"one_click_shell执行错误：${e.message}"}""")
+                writer.write("""{"error":"quick_shell执行错误：${e.message}"}""")
             } finally {
                 writer.flush()
                 pipedOutput.close()

@@ -377,6 +377,232 @@
                             <button type="button" class="ctrl-submit-btn" id="CTRL_REFRESH_CLIENTS" data-i18n="common_refresh_btn">Refresh</button>
                         </div>
                     </div>
+
+                    <!-- Advanced Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="advanced" style="display:none">
+                        <div class="ctrl-panel-title">
+                            <span data-i18n="advance_title">Advanced Features</span>
+                            <span class="ctrl-adv-title-warn" data-i18n="advance_warning_short">⚠️ Advanced users only</span>
+                        </div>
+
+                        <!-- System Tools section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔧</span> <span data-i18n="adv_system_tools">System Tools</span></div>
+                            <!-- Root access card -->
+                            <div class="ctrl-adv-root-card">
+                                <div class="ctrl-adv-toggle-row" id="ADV_ROOT_ROW">
+                                    <span class="ctrl-adv-indicator" id="ADV_INDICATOR"></span>
+                                    <span class="ctrl-adv-toggle-label" data-i18n="adv_root_access">Root Access</span>
+                                    <button type="button" class="ctrl-adv-toggle-btn" id="ADV_ROOT_TOGGLE">
+                                        <span class="ctrl-adv-toggle-knob"></span>
+                                    </button>
+                                </div>
+                                <details class="ctrl-adv-log-box" id="ADV_LOG_BOX">
+                                    <summary class="ctrl-adv-log-summary" data-i18n="adv_log">Log</summary>
+                                    <div class="ctrl-adv-log-content" id="ADV_RESULT"></div>
+                                </details>
+                            </div>
+                            <!-- Quick Shell Execution card -->
+                            <div class="ctrl-adv-info-card">
+                                <div class="ctrl-adv-info-header">
+                                    <span class="ctrl-adv-info-icon">⚡</span>
+                                    <span class="ctrl-adv-info-title" data-i18n="adv_quick_shell_title">Quick Shell (ADB)</span>
+                                    <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm" id="ADV_SHELL_LOAD_BTN">Load</button>
+                                    <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm" id="ADV_SHELL_SAVE_BTN">Save</button>
+                                    <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm ctrl-adv-btn-primary" id="ADV_SHELL_BTN" data-i18n="adv_quick_shell_run">Save & Run</button>
+                                </div>
+                                <div class="ctrl-adv-info-desc" data-i18n="adv_quick_shell_desc">
+                                    Edit <code>/sdcard/quick_shell.sh</code> below, then save or run via ZTE Engineer Mode. Does not require root.
+                                </div>
+                                <div class="ctrl-adv-shell-editor">
+                                    <textarea id="ADV_SHELL_EDITOR" spellcheck="false" placeholder="#!/system/bin/sh&#10;# Write your script here...&#10;sync&#10;">#!/system/bin/sh
+# Write your script here
+sync
+</textarea>
+                                </div>
+                                <details class="ctrl-adv-shell-log" id="ADV_SHELL_LOG">
+                                    <summary class="ctrl-adv-log-summary">Output</summary>
+                                    <div class="ctrl-adv-log-content" id="ADV_SHELL_RESULT"></div>
+                                </details>
+                                <details class="ctrl-adv-info-details">
+                                    <summary data-i18n="adv_quick_shell_how">How it works</summary>
+                                    <ol class="ctrl-adv-info-steps">
+                                        <li data-i18n="adv_qs_step1">Create a script at <code>/sdcard/quick_shell.sh</code></li>
+                                        <li data-i18n="adv_qs_step2">Click <strong>Run</strong> — the app opens Engineer Mode via ADB</li>
+                                        <li data-i18n="adv_qs_step3">It navigates to DEBUG&LOG → ADB Shell automatically</li>
+                                        <li data-i18n="adv_qs_step4">Your script is typed and executed as the <code>shell</code> user</li>
+                                    </ol>
+                                    <div class="ctrl-adv-info-usecases">
+                                        <strong data-i18n="adv_qs_usecases_title">Use cases:</strong>
+                                        <ul>
+                                            <li data-i18n="adv_qs_use1">Grant app permissions before root is available</li>
+                                            <li data-i18n="adv_qs_use2">Enable ADB over WiFi on a fresh device</li>
+                                            <li data-i18n="adv_qs_use3">Automate device settings without root</li>
+                                        </ul>
+                                    </div>
+                                    <div class="ctrl-adv-info-sample">
+                                        <strong data-i18n="adv_qs_sample_title">Example script:</strong>
+                                        <pre class="ctrl-adv-code-block">#!/system/bin/sh
+# Enable WiFi ADB
+setprop service.adb.tcp.port 5555
+stop adbd; start adbd
+
+# Grant UFI Tools permissions
+pm grant com.minikano.f50_sms android.permission.READ_SMS
+pm grant com.minikano.f50_sms android.permission.SEND_SMS
+pm grant com.minikano.f50_sms android.permission.READ_PHONE_STATE
+
+# Keep screen on for 5 min
+settings put system screen_off_timeout 300000</pre>
+                                    </div>
+                                </details>
+                            </div>
+                            <!-- Other system tools -->
+                            <div class="ctrl-adv-grid">
+                                <button type="button" class="ctrl-adv-btn" id="ADV_DISABLE_FOTA_BTN" data-i18n="advance_disable_update">Disable ZTE Update</button>
+                                <button type="button" class="ctrl-adv-btn" id="ADV_EDIT_BOOT_BTN" data-i18n="edit_boot_script">Edit Boot Script</button>
+                                <button type="button" class="ctrl-adv-btn" id="ADV_DISABLE_CORE_BTN" data-i18n="advance_disable_little_core">Disable Little Cores</button>
+                                <button type="button" class="ctrl-adv-btn" id="ADV_ENABLE_CORE_BTN" data-i18n="advance_enable_little_core">Enable Little Cores</button>
+                                <button type="button" class="ctrl-adv-btn" id="ADV_DUMP_BOOT_BTN" data-i18n="advance_dump_boot">Extract Boot</button>
+                            </div>
+                        </div>
+
+                        <!-- NAT / UPnP section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🌍</span> <span data-i18n="adv_nat_section">NAT & UPnP</span></div>
+                            <div class="ctrl-form">
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_nat_mode">NAT Mode</span>
+                                    <select class="ctrl-select" id="ADV_NAT_MODE">
+                                        <option value="0" data-i18n="adv_nat_cone">Cone (Open)</option>
+                                        <option value="1" data-i18n="adv_nat_symmetric">Symmetric (Strict)</option>
+                                    </select>
+                                </label>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_upnp">UPnP</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_UPNP_SWITCH"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DMZ section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🛡️</span> DMZ</div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_dmz_enable">DMZ Enable</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_DMZ_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <label class="ctrl-field" id="ADV_DMZ_IP_FIELD">
+                                    <span class="ctrl-label" data-i18n="adv_dmz_ip">DMZ Host IP</span>
+                                    <input class="ctrl-input" id="ADV_DMZ_IP" type="text" placeholder="192.168.0.100" maxlength="15">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- System Security section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔒</span> <span data-i18n="adv_security_section">System Security</span></div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_remote_mgmt">Remote Management</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_REMOTE_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_wan_ping">WAN Ping Response</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_WANPING_SWITCH"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Port Forwarding section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔀</span> <span data-i18n="adv_port_forward_section">Port Forwarding</span></div>
+                            <div class="ctrl-adv-pf-table-wrap" id="ADV_PF_TABLE_WRAP">
+                                <table class="ctrl-adv-pf-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="adv_pf_ip">IP Address</th>
+                                            <th data-i18n="adv_pf_port_start">Start Port</th>
+                                            <th data-i18n="adv_pf_port_end">End Port</th>
+                                            <th data-i18n="adv_pf_protocol">Protocol</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ADV_PF_TBODY"></tbody>
+                                </table>
+                                <div class="ctrl-adv-pf-empty" id="ADV_PF_EMPTY" data-i18n="adv_pf_no_rules">No port forwarding rules</div>
+                            </div>
+                            <div class="ctrl-form" style="margin-top:10px">
+                                <div class="ctrl-field-row">
+                                    <input class="ctrl-input" id="ADV_PF_IP" type="text" placeholder="192.168.0.x" maxlength="15" style="flex:2">
+                                    <input class="ctrl-input" id="ADV_PF_PORT_START" type="number" placeholder="Start" min="1" max="65535" style="flex:1">
+                                    <input class="ctrl-input" id="ADV_PF_PORT_END" type="number" placeholder="End" min="1" max="65535" style="flex:1">
+                                    <select class="ctrl-select" id="ADV_PF_PROTO" style="flex:1">
+                                        <option value="TCP">TCP</option>
+                                        <option value="UDP">UDP</option>
+                                        <option value="TCP&UDP">Both</option>
+                                    </select>
+                                    <button type="button" class="ctrl-adv-btn" id="ADV_PF_ADD_BTN" data-i18n="adv_pf_add">Add</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FOTA / OTA Update section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📡</span> <span data-i18n="adv_fota_section">Firmware Update (FOTA)</span></div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_fota_auto">Auto Update</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_FOTA_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <label class="ctrl-field" id="ADV_FOTA_INTERVAL_FIELD">
+                                    <span class="ctrl-label" data-i18n="adv_fota_interval">Check Interval (days)</span>
+                                    <input class="ctrl-input" id="ADV_FOTA_INTERVAL" type="number" min="1" max="365" value="7" style="width:80px">
+                                </label>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_fota_roaming">Update on Roaming</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_FOTA_ROAM_SWITCH"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Device Options section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">💡</span> <span data-i18n="adv_device_section">Device Options</span></div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_indicator_light">Indicator Light</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_LIGHT_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="adv_performance_mode">Performance Mode</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_PERF_SWITCH"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save button for router settings -->
+                        <div class="ctrl-actions">
+                            <button type="button" class="ctrl-submit-btn" id="ADV_SAVE_BTN" data-i18n="submit_btn">Save Changes</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

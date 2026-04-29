@@ -166,7 +166,7 @@ Content-Type: application/json
 | ---- | ---------------------- | --------------------------------- | ---------------------------- | -------- |
 | GET  | `/api/smbPath`         | 更改 Samba 分享地址为根目录       | `enable=1/0` 开启或关闭      | 是       |
 | GET  | `/api/hasTTYD`         | 判断是否存在 ttyd 服务            | `port=端口号`                | 是       |
-| GET  | `/api/one_click_shell` | 启动一键进入工程模式 + 执行脚本   | 无参数                       | 是       |
+| GET  | `/api/quick_shell` | 启动一键进入工程模式 + 执行脚本   | 无参数                       | 是       |
 | POST | `/api/root_shell`      | 发送指令到 Root Shell Socket 执行 | JSON: `{ "command": "..." }` | 是       |
 
 ------

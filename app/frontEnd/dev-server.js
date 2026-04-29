@@ -8,6 +8,7 @@ const publicDir = path.join(__dirname, 'public');
 
 // Mutable toggle state (updated by goform POST, read by goform GET)
 const toggleState = {
+  _advancedEnabled: false,
   ppp_status: 'ppp_connected',
   usb_port_switch: '1',
   performance_mode: '0',
@@ -51,6 +52,23 @@ const toggleState = {
   dhcpLease_hour: '24h',
   mtu: '1500',
   tcp_mss: '1460',
+  // Advanced router settings
+  nat_mode: '0',
+  upnpEnabled: '1',
+  DMZEnable: '0',
+  DMZIPAddress: '192.168.0.100',
+  RemoteManagement: '0',
+  WANPingFilter: '1',
+  // Port Forwarding
+  portForwardRules: '192.168.0.10,8080,8080,TCP;192.168.0.20,3000,3100,UDP',
+  portForwardRulesCount: '2',
+  // FOTA
+  UpgMode: '1',
+  UpgIntervalDay: '7',
+  UpgRoamPermission: '0',
+  // Device options
+  indicator_light_switch: '0',
+  performance_mode: '1',
 };
 
 // Assemble index.html from template + partials
@@ -67,6 +85,69 @@ function assembleHTML() {
   });
   return html;
 }
+
+// Mock /api/smbPath (Add/Remove Advanced Features)
+app.use('/api/smbPath', (req, res) => {
+  const enable = req.query.enable;
+  setTimeout(() => {
+    if (enable === '1') {
+      toggleState._advancedEnabled = true;
+      res.json({ result: 'Execution successful, please wait 1–2 minutes for it to take effect!' });
+    } else {
+      toggleState._advancedEnabled = false;
+      res.json({ result: 'Advanced features removed. Reboot to apply.' });
+    }
+  }, 800); // Simulate delay
+});
+
+// Mock /api/root_shell (used by checkAdvancedFunc -> runShellWithRoot('whoami'))
+app.use('/api/root_shell', (req, res) => {
+  if (req.method === 'POST') {
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => {
+      try {
+        const { command } = JSON.parse(body);
+        const cmd = (command || '').trim();
+        if (cmd === 'whoami') {
+          res.json({ result: toggleState._advancedEnabled ? 'root' : '' });
+        } else if (cmd.includes('cat') && cmd.includes('quick_shell')) {
+          res.json({ result: '#!/system/bin/sh\n# Example script from device\necho "Hello from quick_shell.sh"\nsync\n' });
+        } else if (cmd.includes('ls ') && cmd.includes('/files/')) {
+          // saveConfig: verify uploaded file exists
+          res.json({ result: cmd.split('/files/')[1] || 'mock_uploaded_file.sh' });
+        } else if (cmd.includes('mv ')) {
+          // saveConfig: move file to target path
+          res.json({ result: '' });
+        } else {
+          res.json({ result: 'mock: ' + cmd });
+        }
+      } catch (e) {
+        res.json({ result: toggleState._advancedEnabled ? 'root' : '' });
+      }
+    });
+    return;
+  }
+  res.json({ result: '' });
+});
+
+// Mock /api/upload_img (file upload → returns mock filename)
+app.post('/api/upload_img', (req, res) => {
+  // Just return a fake filename; the saveConfig flow then calls root_shell to mv it
+  res.json({ url: 'mock_uploaded_file.sh' });
+});
+
+// Mock /api/quick_shell (ADB UI automation)
+app.get('/api/quick_shell', (req, res) => {
+  setTimeout(() => {
+    res.json({ result: 'quick_shell.sh executed successfully.\nOutput:\n+ setprop service.adb.tcp.port 5555\n+ stop adbd\n+ start adbd\nDone.' });
+  }, 1500);
+});
+
+// Mock /api/adb_alive (ADB keep-alive check)
+app.get('/api/adb_alive', (req, res) => {
+  res.json({ result: 'true' });
+});
 
 // Mock /api/adb_wifi_setting for local development
 app.use('/api/adb_wifi_setting', (req, res) => {
@@ -278,6 +359,48 @@ app.use('/api/goform', (req, res) => {
           if (params.get('mtu')) toggleState.mtu = params.get('mtu');
           if (params.get('tcp_mss')) toggleState.tcp_mss = params.get('tcp_mss');
         }
+        if (goformId === 'NAT_SETTING') {
+          if (params.get('nat_mode') !== null) toggleState.nat_mode = params.get('nat_mode');
+        }
+        if (goformId === 'UPNP_SETTING') {
+          if (params.get('upnpEnabled') !== null) toggleState.upnpEnabled = params.get('upnpEnabled');
+        }
+        if (goformId === 'DMZ_SETTING') {
+          if (params.get('DMZEnable') !== null) toggleState.DMZEnable = params.get('DMZEnable');
+          if (params.get('DMZIPAddress')) toggleState.DMZIPAddress = params.get('DMZIPAddress');
+        }
+        if (goformId === 'FW_SYS') {
+          if (params.get('RemoteManagement') !== null) toggleState.RemoteManagement = params.get('RemoteManagement');
+          if (params.get('WANPingFilter') !== null) toggleState.WANPingFilter = params.get('WANPingFilter');
+        }
+        if (goformId === 'ADD_PORT_FORWARD_RULE') {
+          var ip = params.get('portForwardIP') || '';
+          var ps = params.get('portForwardPortStart') || '';
+          var pe = params.get('portForwardPortEnd') || ps;
+          var pr = params.get('portForwardProtocol') || 'TCP';
+          var existing = toggleState.portForwardRules ? toggleState.portForwardRules.split(';').filter(Boolean) : [];
+          existing.push(ip + ',' + ps + ',' + pe + ',' + pr);
+          toggleState.portForwardRules = existing.join(';');
+          toggleState.portForwardRulesCount = String(existing.length);
+        }
+        if (goformId === 'DEL_PORT_FORWARD_RULE') {
+          var idx = parseInt(params.get('id') || '0');
+          var rules = toggleState.portForwardRules ? toggleState.portForwardRules.split(';').filter(Boolean) : [];
+          rules.splice(idx, 1);
+          toggleState.portForwardRules = rules.join(';');
+          toggleState.portForwardRulesCount = String(rules.length);
+        }
+        if (goformId === 'SetUpgAutoSetting') {
+          if (params.get('UpgMode') !== null) toggleState.UpgMode = params.get('UpgMode');
+          if (params.get('UpgIntervalDay')) toggleState.UpgIntervalDay = params.get('UpgIntervalDay');
+          if (params.get('UpgRoamPermission') !== null) toggleState.UpgRoamPermission = params.get('UpgRoamPermission');
+        }
+        if (goformId === 'INDICATOR_LIGHT_SETTING') {
+          if (params.get('indicator_light_switch') !== null) toggleState.indicator_light_switch = params.get('indicator_light_switch');
+        }
+        if (goformId === 'PERFORMANCE_MODE_SETTING') {
+          if (params.get('performance_mode') !== null) toggleState.performance_mode = params.get('performance_mode');
+        }
         res.json({ result: '0' });
       });
       return;
@@ -387,6 +510,23 @@ app.use('/api/goform', (req, res) => {
     mtu: toggleState.mtu,
     tcp_mss: toggleState.tcp_mss,
     client_ip: '192.168.0.135',
+    // Advanced router settings
+    nat_mode: toggleState.nat_mode,
+    upnpEnabled: toggleState.upnpEnabled,
+    DMZEnable: toggleState.DMZEnable,
+    DMZIPAddress: toggleState.DMZIPAddress,
+    RemoteManagement: toggleState.RemoteManagement,
+    WANPingFilter: toggleState.WANPingFilter,
+    // Port Forwarding
+    portForwardRules: toggleState.portForwardRules,
+    portForwardRulesCount: toggleState.portForwardRulesCount,
+    // FOTA
+    UpgMode: toggleState.UpgMode,
+    UpgIntervalDay: toggleState.UpgIntervalDay,
+    UpgRoamPermission: toggleState.UpgRoamPermission,
+    // Device options
+    indicator_light_switch: toggleState.indicator_light_switch,
+    performance_mode: toggleState.performance_mode,
     // Signal (LTE)
     lte_rsrp: jitter(-101, 10),
     Lte_snr: jitter(14, 8),
