@@ -335,6 +335,16 @@
             if (value['cpu' + i] && coreFreqs[i]) {
                 const cur = value['cpu' + i].cur;
                 if (cur != null) coreFreqs[i].textContent = cur + ' MHz';
+                // Update core label with cluster prefix (L/M/B)
+                const cluster = value['cpu' + i].cluster;
+                if (cluster) {
+                    const labelEl = document.querySelector('#core-chart-' + i + ' .core-label');
+                    if (labelEl) {
+                        const liveSpan = labelEl.querySelector('span');
+                        const liveHtml = liveSpan ? ' ' + liveSpan.outerHTML : '';
+                        labelEl.innerHTML = cluster + i + liveHtml;
+                    }
+                }
             }
         }
     }

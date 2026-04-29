@@ -47,22 +47,47 @@ private fun buildThermalJson(zones: List<ThermalZone>): String {
     return "[${jsonParts.joinToString(",")}]"
 }
 
-//获取json格式的cpu频率
+//获取json格式的cpu频率（含集群信息：LITTLE/MID/BIG）
 suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
     val json = JSONObject()
-    val cpuDir = File("/sys/devices/system/cpu")
 
+    // Detect cluster mapping from cpufreq policies
+    val clusterMap = mutableMapOf<Int, String>() // coreIndex -> "L"/"M"/"B"
+    val policyDir = File("/sys/devices/system/cpu/cpufreq")
+    val policies = policyDir.listFiles { _, name -> name.startsWith("policy") }
+        ?.sortedBy { it.name.removePrefix("policy").toIntOrNull() ?: 0 }
+    if (policies != null) {
+        val clusterNames = when (policies.size) {
+            1 -> listOf("C")
+            2 -> listOf("L", "B")
+            else -> listOf("L", "M", "B")
+        }
+        policies.forEachIndexed { index, policy ->
+            val label = clusterNames.getOrElse(index) { "C" }
+            val relatedCpus = File(policy, "related_cpus").takeIf { it.exists() }
+                ?.readText()?.trim()?.split("\\s+".toRegex()) ?: emptyList()
+            relatedCpus.forEach { cpuStr ->
+                cpuStr.toIntOrNull()?.let { clusterMap[it] = label }
+            }
+        }
+    }
+
+    val cpuDir = File("/sys/devices/system/cpu")
     cpuDir.listFiles { _, name -> name.matches(Regex("cpu[0-9]+")) }?.forEach { coreDir ->
         val coreName = coreDir.name
+        val coreIndex = coreName.removePrefix("cpu").toIntOrNull() ?: -1
         val cur = File(coreDir, "cpufreq/scaling_cur_freq").takeIf { it.exists() }
             ?.readText()?.trim()?.toIntOrNull()?.div(1000) ?: 0
 
         val max = File(coreDir, "cpufreq/cpuinfo_max_freq").takeIf { it.exists() }
             ?.readText()?.trim()?.toIntOrNull()?.div(1000) ?: 0
 
+        val cluster = clusterMap[coreIndex] ?: "C"
+
         json.put(coreName, JSONObject().apply {
             put("cur", cur)
             put("max", max)
+            put("cluster", cluster)
         })
     }
     return@withContext json.toString()

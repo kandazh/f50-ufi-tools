@@ -22,6 +22,7 @@ const chartUpdater = (prop, value) => {
                     let cur = String(value[`cpu${i}`].cur)
                     let cur_origin = String(value[`cpu${i}`].cur)
                     let max = String(value[`cpu${i}`].max)
+                    let cluster = value[`cpu${i}`].cluster || 'C'
                     // 通过使用率表判断核心启用状态
                     let usgList = window.UFI_DATA.cpuUsageInfo
                     if (usgList) {
