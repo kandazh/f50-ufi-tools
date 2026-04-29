@@ -407,8 +407,8 @@ function createSwitch({ text, value, className = '', onChange, fontSize = 14 }) 
     });
 
     label.appendChild(span);
-    label.appendChild(switchDiv);
     label.appendChild(input);
+    label.appendChild(switchDiv);
     container.appendChild(label);
 
     // 添加 update 方法到容器上，供外部使用

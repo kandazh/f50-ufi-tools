@@ -50,6 +50,39 @@ app.use('/api/adb_wifi_setting', (req, res) => {
   res.json({ enabled: toggleState.adb_wifi_enabled, port: 5555 });
 });
 
+// Mock WiFi QR code image
+app.get('/mock_wifi_qr.svg', (req, res) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+    <rect width="200" height="200" fill="#fff" rx="12"/>
+    <rect x="20" y="20" width="60" height="60" fill="#000" rx="4"/>
+    <rect x="28" y="28" width="44" height="44" fill="#fff" rx="2"/>
+    <rect x="36" y="36" width="28" height="28" fill="#000" rx="2"/>
+    <rect x="120" y="20" width="60" height="60" fill="#000" rx="4"/>
+    <rect x="128" y="28" width="44" height="44" fill="#fff" rx="2"/>
+    <rect x="136" y="36" width="28" height="28" fill="#000" rx="2"/>
+    <rect x="20" y="120" width="60" height="60" fill="#000" rx="4"/>
+    <rect x="28" y="128" width="44" height="44" fill="#fff" rx="2"/>
+    <rect x="36" y="136" width="28" height="28" fill="#000" rx="2"/>
+    <rect x="90" y="90" width="20" height="20" fill="#000" rx="2"/>
+    <rect x="120" y="120" width="12" height="12" fill="#000"/>
+    <rect x="140" y="120" width="12" height="12" fill="#000"/>
+    <rect x="160" y="120" width="12" height="12" fill="#000"/>
+    <rect x="120" y="140" width="12" height="12" fill="#000"/>
+    <rect x="160" y="140" width="12" height="12" fill="#000"/>
+    <rect x="120" y="160" width="12" height="12" fill="#000"/>
+    <rect x="140" y="160" width="12" height="12" fill="#000"/>
+    <rect x="160" y="160" width="12" height="12" fill="#000"/>
+    <rect x="90" y="20" width="12" height="12" fill="#000"/>
+    <rect x="90" y="44" width="12" height="12" fill="#000"/>
+    <rect x="90" y="68" width="12" height="12" fill="#000"/>
+    <rect x="20" y="90" width="12" height="12" fill="#000"/>
+    <rect x="44" y="90" width="12" height="12" fill="#000"/>
+    <rect x="68" y="90" width="12" height="12" fill="#000"/>
+  </svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(svg);
+});
+
 // Mock /api/connInfo for local development
 app.use('/api/connInfo', (req, res) => {
   res.json({
@@ -154,9 +187,43 @@ app.use('/api/goform', (req, res) => {
   }
   // Handle goform_get_cmd_process
   const cmd = req.query.cmd || '';
+  // WiFi module & AP info
+  if (cmd.includes('queryWiFiModuleSwitch') || cmd.includes('queryAccessPointInfo')) {
+    return res.json({
+      WiFiModuleSwitch: '1',
+      ResponseList: [{
+        AccessPointSwitchStatus: '1',
+        AccessPointIndex: '0',
+        ChipIndex: '0',
+        SSID: 'UFI-F50-MOCK',
+        Password: btoa('password123'),
+        AuthMode: 'WPA2PSK',
+        ApBroadcastDisabled: '0',
+        ApMaxStationNumber: '10',
+        ApIsolate: '0',
+        QrImageUrl: '/mock_wifi_qr.svg'
+      }]
+    });
+  }
   // LD for login hash
   if (cmd === 'LD') {
     return res.json({ LD: 'mock_ld_value_12345' });
+  }
+  // APN settings
+  if (cmd.includes('apn_mode') || cmd.includes('APN_config')) {
+    return res.json({
+      apn_mode: 'manual',
+      apn_Current_index: '1',
+      apn_num_preset: '2',
+      APN_config0: 'Default($)internet($)($)($)none($)($)($)IP($)($)($)',
+      APN_config1: 'MyISP($)data.isp.com($)($)($)chap($)user1($)pass123($)IPv4v6($)($)($)',
+      APN_config2: 'Custom($)custom.apn($)($)($)pap($)admin($)secret($)IPv6($)($)($)',
+      APN_config3: '$',
+      APN_config4: '$', APN_config5: '$', APN_config6: '$', APN_config7: '$',
+      APN_config8: '$', APN_config9: '$', APN_config10: '$', APN_config11: '$',
+      APN_config12: '$', APN_config13: '$', APN_config14: '$', APN_config15: '$',
+      APN_config16: '$', APN_config17: '$', APN_config18: '$', APN_config19: '$'
+    });
   }
   // RD for postData AD calculation
   if (cmd === 'RD') {
@@ -169,6 +236,21 @@ app.use('/api/goform', (req, res) => {
   // lan_station_list: separate response
   if (cmd === 'lan_station_list') {
     return res.json({ lan_station_list: [] });
+  }
+  // Connected devices (station_list + lan_station_list + blacklist)
+  if (cmd.includes('station_list') && cmd.includes('queryDeviceAccessControlList')) {
+    return res.json({
+      station_list: [
+        { hostname: 'iPhone-15', ip_addr: '192.168.0.101', mac_addr: 'A4:B1:C2:D3:E4:F5' },
+        { hostname: 'Galaxy-S24', ip_addr: '192.168.0.102', mac_addr: 'B6:C7:D8:E9:F0:A1' }
+      ],
+      lan_station_list: [
+        { hostname: 'Desktop-PC', ip_addr: '192.168.0.100', mac_addr: 'C2:D3:E4:F5:A6:B7' }
+      ],
+      BlackMacList: 'D8:E9:F0:A1:B2:C3',
+      BlackNameList: 'Blocked-Laptop',
+      AclMode: '1'
+    });
   }
   const jitter = (base, range) => (base + (Math.random() - 0.5) * range).toFixed(0);
   const rx = Math.floor(Math.random() * 50000);
@@ -186,7 +268,14 @@ app.use('/api/goform', (req, res) => {
     wan_ipaddr: '100.82.45.193',
     ipv6_wan_ipaddr: '2402:3a80:183d:b503:74d2:d4ff:fe1c:343f',
     lan_ipaddr: '192.168.0.1',
+    lan_netmask: '255.255.255.0',
     mac_address: '10:3c:59:c3:0b:12',
+    dhcpEnabled: '1',
+    dhcpStart: '192.168.0.100',
+    dhcpEnd: '192.168.0.200',
+    dhcpLease_hour: '24h',
+    mtu: '1500',
+    tcp_mss: '1460',
     client_ip: '192.168.0.135',
     // Signal (LTE)
     lte_rsrp: jitter(-101, 10),

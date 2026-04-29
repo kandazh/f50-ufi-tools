@@ -1599,7 +1599,7 @@ function main_func() {
 
     // init()
     let smsBtn = document.querySelector('#SMS')
-    smsBtn.onclick = init
+    if (smsBtn) smsBtn.onclick = init
 
     let clearBtn = document.querySelector('#CLEAR')
     if (clearBtn) clearBtn.onclick = async () => {
@@ -2856,7 +2856,8 @@ function main_func() {
     });
 
     //无线设备管理
-    document.querySelector('#ClientManagement').onclick = async () => {
+    const _clientMgmtEl = document.querySelector('#ClientManagement');
+    if (_clientMgmtEl) _clientMgmtEl.onclick = async () => {
         if (!(await initRequestData())) {
             createToast(t('toast_please_login'), 'red')
             out()
@@ -3422,7 +3423,8 @@ function main_func() {
 
     let initATBtn = async () => {
         const el = document.querySelector('#AT')
-        if (!(await initRequestData()) || !el) {
+        if (!el) return null
+        if (!(await initRequestData())) {
             el.onclick = () => createToast(t('toast_please_login'), 'red')
             el.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
@@ -3562,7 +3564,8 @@ function main_func() {
     //初始化高级功能按钮
     let initAdvanceTools = async () => {
         const el = document.querySelector('#ADVANCE')
-        if (!(await initRequestData()) || !el) {
+        if (!el) return null
+        if (!(await initRequestData())) {
             el.onclick = () => createToast(t('toast_please_login'), 'red')
             el.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
@@ -3629,7 +3632,8 @@ function main_func() {
     //更改密码
     initChangePassData = async () => {
         const el = document.querySelector("#CHANGEPWD")
-        if (!(await initRequestData()) || !el) {
+        if (!el) return null
+        if (!(await initRequestData())) {
             el.onclick = () => createToast(t('toast_please_login'), 'red')
             el.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
@@ -3813,6 +3817,7 @@ function main_func() {
     //NFC切换
     let initNFCSwitch = async () => {
         const btn = document.querySelector('#NFC')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -4053,16 +4058,19 @@ function main_func() {
     //展开收起
     // 配置观察器_菜单
     (() => {
-        const { el: collapseMenuEl } = createCollapseObserver(document.querySelector(".collapse_menu"))
-        collapseMenuEl.dataset.name = localStorage.getItem('collapse_menu') || 'open'
+        const collapseMenuEl = document.querySelector(".collapse_menu")
+        if (!collapseMenuEl) return
+        const { el } = createCollapseObserver(collapseMenuEl)
+        el.dataset.name = localStorage.getItem('collapse_menu') || 'open'
         const collapseBtn = document.querySelector('#collapseBtn_menu')
+        if (!collapseBtn) return
         const switchComponent = createSwitch({
-            value: collapseMenuEl.dataset.name == 'open',
+            value: el.dataset.name == 'open',
             className: 'collapse_menu',
             onChange: (newVal) => {
-                if (collapseMenuEl && collapseMenuEl.dataset) {
-                    collapseMenuEl.dataset.name = newVal ? 'open' : 'close'
-                    localStorage.setItem('collapse_menu', collapseMenuEl.dataset.name)
+                if (el && el.dataset) {
+                    el.dataset.name = newVal ? 'open' : 'close'
+                    localStorage.setItem('collapse_menu', el.dataset.name)
                 }
             }
         });
@@ -4283,6 +4291,7 @@ function main_func() {
     //初始化短信转发模态框
     const initSmsForwardModal = async () => {
         const btn = document.querySelector('#smsForward')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -4670,44 +4679,7 @@ function main_func() {
 
     //内网设置
     const initLANSettings = async () => {
-        const btn = document.querySelector('#LANManagement')
-        if (!(await initRequestData())) {
-            btn.onclick = () => createToast(t('toast_please_login'), 'red')
-            btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-            return null
-        }
-        btn.style.backgroundColor = 'var(--dark-btn-color)'
-        btn.onclick = async () => {
-            //获取当前局域网设置
-            try {
-                const res = await getData(new URLSearchParams({
-                    cmd: 'lan_ipaddr,lan_netmask,mac_address,dhcpEnabled,dhcpStart,dhcpEnd,dhcpLease_hour,mtu,tcp_mss'
-                }))
-                if (res) {
-                    const { lan_ipaddr, lan_netmask, dhcpEnabled, dhcpStart, dhcpEnd, dhcpLease_hour } = res
-                    const form = document.querySelector('#LANManagementForm')
-                    form.querySelector('input[name="lanIp"]').value = lan_ipaddr || ''
-                    form.querySelector('input[name="lanNetmask"]').value = lan_netmask || ''
-                    form.querySelector('input[name="dhcpStart"]').value = dhcpStart || ''
-                    form.querySelector('input[name="dhcpEnd"]').value = dhcpEnd || ''
-                    form.querySelector('input[name="dhcpLease"]').value = dhcpLease_hour.replace('h', '') || ''
-                    form.querySelector('input[name="lanDhcpType"]').value = dhcpEnabled == '1' ? 'SERVER' : 'DISABLE'
-                    // 设置开关状态
-                    const collapse_dhcp = document.querySelector('#collapse_dhcp')
-                    if (collapse_dhcp.dataset.name == 'open' && dhcpEnabled != '1') {
-                        collapse_dhcp.dataset.name = 'close'
-                    } else if (collapse_dhcp.dataset.name == 'close' && dhcpEnabled == '1') {
-                        collapse_dhcp.dataset.name = 'open'
-                    }
-
-                } else {
-                    createToast(t('toast_get_lan_setting_failed'), 'red')
-                }
-            } catch (e) {
-                createToast(t('toast_get_lan_setting_failed'), 'red')
-            }
-            showModal('#LANManagementModal')
-        }
+        // LAN settings now handled inline by ctrl-tabs.js
     }
     initLANSettings()
 
@@ -4834,9 +4806,7 @@ function main_func() {
 
             if (res.result == 'success') {
                 createToast(t('toast_set_success_reboot'), 'green')
-                closeModal('#LANManagementModal')
                 setTimeout(() => {
-                    //循环等待
                     let newURL = 'http://' + data.lanIp + ':2333'
                     window.location.href = newURL
                 }, 30000);
@@ -4923,6 +4893,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const initScheduledTask = async () => {
         const btn = document.querySelector('#ScheduledTaskManagement')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -5576,6 +5547,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const initPluginSetting = async () => {
         const btn = document.querySelector('#PLUGIN_SETTING')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
@@ -5927,6 +5899,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const initCellularSpeedTestBtn = async () => {
         const btn = document.querySelector('#CellularSpeedTestBtn')
+        if (!btn) return null
         const stor = localStorage.getItem("cellularTestUrl")
         if (stor) {
             const CellularTestUrl = document.querySelector('#CellularTestUrl')
@@ -6761,6 +6734,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     // APN设置
     const initAPNManagement = async () => {
         const btn = document.querySelector('#APNManagement')
+        if (!btn) return null
         if (!(await initRequestData())) {
             btn.onclick = () => createToast(t('toast_please_login'), 'red')
             btn.style.background = "var(--dark-btn-disabled-color)"

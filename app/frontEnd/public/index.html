@@ -486,88 +486,108 @@
 
                     </div>
                     <div class="tab-panel" data-tab="controls" style="display:none">
-﻿            <!-- 操作按钮 -->
-            <div class="kano_function_main func_list_container">
-                <div class="title" id="collapseBtn_menu"
-                    style="align-self: start;justify-self: start;margin: 6px;margin-left: 0;margin-top: 0;">
-                    <strong style="white-space: nowrap;" data-i18n="func_list">功能列表</strong>
+            <!-- Controls: sidebar + content layout -->
+            <div class="ctrl-layout">
+                <!-- Left sidebar: function list -->
+                <div class="ctrl-sidebar">
+                    <div class="ctrl-sidebar-title" data-i18n="func_list">Function List</div>
+                    <div class="ctrl-nav">
+                        <button class="ctrl-nav-btn" data-ctrl-tab="lan" data-i18n="lan_mgmt">LAN Settings</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="wifi" data-i18n="wifi_mgmt">WiFi Settings</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="changepwd" data-i18n="change_password">Change Password</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot" data-i18n="schedule_reboot">Scheduled Reboot</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="plugin" data-i18n="plugin_setting">Plugin</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="sms" data-i18n="sms">SMS</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="data_mgmt" data-i18n="data_mgmt">Data Management</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="speedtest" data-i18n="speed_test">Speed Test</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="cellular_speedtest" data-i18n="cellular_speed_test">Cellular Speed Test</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="clients" data-i18n="client_mgmt">Connected Devices</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="at" data-i18n="at_cmd">AT Commands</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="advanced" data-i18n="advanced">Advanced</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="sms_forward" data-i18n="sms_forward">SMS Forwarding</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="scheduled_task" data-i18n="scheduled_task">Scheduled Task</button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="apn" data-i18n="apn_setting">APN Settings</button>
+                    </div>
+                    <div class="ctrl-selects">
+                        <select class="select" id="NET_TYPE" onchange="changeNetwork(event)">
+                            <option value="WL_AND_5G" data-i18n="net_auto">5G/4G/3G</option>
+                            <option value="LTE_AND_5G" data-i18n="net_nsa">5G NSA</option>
+                            <option value="Only_5G" data-i18n="net_sa">5G SA</option>
+                            <option value="WCDMA_AND_LTE" data-i18n="net_4g_3g">4G/3G</option>
+                            <option value="Only_LTE" data-i18n="net_4g">4G Only</option>
+                            <option value="Only_WCDMA" data-i18n="net_3g">3G Only</option>
+                        </select>
+                        <select class="select" id="USB_TYPE" onchange="changeUSBNetwork(event)">
+                            <option value="0" data-i18n="usb_auto">USB: Auto</option>
+                            <option value="1" data-i18n="usb_rndis">RNDIS</option>
+                            <option value="2" data-i18n="usb_cdc">CDC-ECM</option>
+                        </select>
+                        <select class="select" id="SIM_CARD_TYPE" style="display:none" onchange="changeSimCard(event)">
+                            <option value="0" data-i18n="sim1">SIM1</option>
+                            <option value="1" data-i18n="sim2">SIM2</option>
+                        </select>
+                        <select class="select" id="SIM_CARD_TYPE_V50" style="display:none" onchange="changeSimCard(event)">
+                            <option value="0" data-i18n="sim1_v50">Mobile</option>
+                            <option value="1" data-i18n="sim2_v50">Telecom</option>
+                            <option value="2" data-i18n="sim3_v50">Unicom</option>
+                            <option value="11" data-i18n="sim4_v50">External</option>
+                        </select>
+                        <select class="select" id="SLEEP_TIME" style="display:none" onchange="changeSleepTime(event)">
+                            <option value="-1" data-i18n="sleep_never">Never Sleep</option>
+                            <option value="5" data-i18n="sleep_5_min">5 min</option>
+                            <option value="10" data-i18n="sleep_10_min">10 min</option>
+                            <option value="20" data-i18n="sleep_20_min">20 min</option>
+                            <option value="30" data-i18n="sleep_30_min">30 min</option>
+                            <option value="60" data-i18n="sleep_1_hr">1 hr</option>
+                            <option value="120" data-i18n="sleep_2_hr">2 hr</option>
+                        </select>
+                        <select class="select" id="LANG"></select>
+                    </div>
                 </div>
-                <div class="functions-container actions collapse collapse_menu" data-name="close">
-                    <div style="margin: auto;">
-                        <div class="collapse_box actions-buttons">
-                            <button id="CHANGEPWD" class="btn" data-i18n="change_password"
-                                onclick="createToast(t('please_login'),'red')">更改密码</button>
-                            <button id="SCHEDULE_REBOOT" class="btn" data-i18n="schedule_reboot"
-                                onclick="createToast(t('please_login'),'red')">定时重启</button>
-                            <button id="PLUGIN_SETTING" class="btn" data-i18n="plugin_setting"
-                                onclick="createToast(t('please_login'),'red')">插件功能</button>
-                            <div style="display: inline-block;position: relative;">
-                                <div class="tip" style="display: none;" id="UNREAD_SMS">0</div>
-                                <button id="SMS" class="btn" data-i18n="sms">短信收发</button>
+                <div class="ctrl-content" id="ctrlContent">
+                    <div class="ctrl-empty" id="ctrlEmpty">
+                        <span data-i18n="ctrl_select_hint">Select a function from the list</span>
+                    </div>
+                    <div class="ctrl-panel" data-ctrl-panel="lan" style="display:none">
+                        <div class="ctrl-panel-title" data-i18n="lan_title">LAN Settings</div>
+                        <form id="LANManagementForm" onsubmit="onLANModalSubmit(event)">
+                            <div class="ctrl-form">
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="lan_ip_label">Gateway IP</span>
+                                    <input class="ctrl-input" name="lanIp" type="text" data-i18n-placeholder="lan_ip_placeholder" placeholder="Gateway IP address">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="lan_netmask_label">Subnet Mask</span>
+                                    <input class="ctrl-input" name="lanNetmask" type="text" data-i18n-placeholder="lan_netmask_placeholder" placeholder="Subnet mask">
+                                </label>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="lan_dhcp_label">DHCP</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="collapse_dhcp_switch"></div>
+                                        <input style="display:none" id="enableDHCP" name="lanDhcpType" type="text" value="SERVER">
+                                    </div>
+                                </div>
+                                <div id="collapse_dhcp" class="collapse">
+                                    <div class="collapse_box">
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label" data-i18n="lan_dhcp_range_label">DHCP IP Range</span>
+                                            <div style="display:flex;gap:8px;align-items:center;flex:1">
+                                                <input class="ctrl-input" name="dhcpStart" type="text" data-i18n-placeholder="lan_dhcp_start_placeholder" placeholder="Start IP">
+                                                <span>→</span>
+                                                <input class="ctrl-input" name="dhcpEnd" type="text" data-i18n-placeholder="lan_dhcp_end_placeholder" placeholder="End IP">
+                                            </div>
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label" data-i18n="lan_dhcp_lease_label">DHCP Lease</span>
+                                            <input class="ctrl-input" name="dhcpLease" type="number" min="1" data-i18n-placeholder="lan_dhcp_lease_placeholder" placeholder="Hours (e.g. 24)">
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="ctrl-actions">
+                                    <button type="submit" class="btn" data-i18n="submit_btn">Save</button>
+                                </div>
                             </div>
-                            <button id="DataManagement" class="btn" data-i18n="data_mgmt">流量管理</button>
-                            <button id="SpeedTestBtn" class="btn" data-i18n="speed_test"
-                                onclick="showModal('#speedTestModal')">内网测速</button>
-                            <button id="CellularSpeedTestBtn" class="btn" data-i18n="cellular_speed_test"
-                                onclick="createToast(t('please_login'),'red')">流量测速</button>
-                            <button id="ClientManagement" class="btn" data-i18n="client_mgmt">接入设备</button>
-                            <button id="WIFIManagement" class="btn" data-i18n="wifi_mgmt">WIFI设置</button>
-                            <button id="LANManagement" class="btn" data-i18n="lan_mgmt">内网设置</button>
-                            <button id="AT" class="btn" data-i18n="at_cmd"
-                                onclick="createToast(t('please_login'),'red')">AT指令</button>
-                            <button id="ADVANCE" class="btn" data-i18n="advanced"
-                                onclick="createToast(t('please_login'),'red')">高级功能</button>
-                            <button id="NFC" style="display: none;" class="btn" data-i18n="nfc"
-                                onclick="createToast(t('please_login'),'red')">NFC</button>
-                            <button id="smsForward" class="btn" data-i18n="sms_forward"
-                                onclick="createToast(t('please_login'),'red')">短信转发</button>
-                            <button id="ScheduledTaskManagement" class="btn" data-i18n="scheduled_task"
-                                onclick="createToast(t('please_login'),'red')">定时任务</button>
-                            <button id="APNManagement" data-i18n="apn_setting" class="btn"
-                                onclick="createToast(t('please_login'),'red')">APN设置</button>
-
-                            <select class="select" style="display: none;" id="SLEEP_TIME"
-                                onchange="changeSleepTime(event)">
-                                <option value="-1" data-i18n="sleep_never">从不休眠</option>
-                                <option value="5" data-i18n="sleep_5_min">5分钟</option>
-                                <option value="10" data-i18n="sleep_10_min">10分钟</option>
-                                <option value="20" data-i18n="sleep_20_min">20分钟</option>
-                                <option value="30" data-i18n="sleep_30_min">30分钟</option>
-                                <option value="60" data-i18n="sleep_1_hr">1小时</option>
-                                <option value="120" data-i18n="sleep_2_hr">2小时</option>
-                            </select>
-
-                            <select class="select" id="NET_TYPE" onchange="changeNetwork(event)">
-                                <option value="WL_AND_5G" data-i18n="net_auto">5G/4G/3G</option>
-                                <option value="LTE_AND_5G" data-i18n="net_nsa">5G NSA</option>
-                                <option value="Only_5G" data-i18n="net_sa">5G SA</option>
-                                <option value="WCDMA_AND_LTE" data-i18n="net_4g_3g">4G/3G</option>
-                                <option value="Only_LTE" data-i18n="net_4g">仅4G</option>
-                                <option value="Only_WCDMA" data-i18n="net_3g">仅3G</option>
-                            </select>
-
-                            <select class="select" id="USB_TYPE" onchange="changeUSBNetwork(event)">
-                                <option value="0" data-i18n="usb_auto">USB上网:自动</option>
-                                <option value="1" data-i18n="usb_rndis">RNDIS</option>
-                                <option value="2" data-i18n="usb_cdc">CDC-ECM</option>
-                            </select>
-
-                            <select class="select" id="SIM_CARD_TYPE" style="display: none;"
-                                onchange="changeSimCard(event)">
-                                <option value="0" data-i18n="sim1">SIM1</option>
-                                <option value="1" data-i18n="sim2">SIM2</option>
-                            </select>
-
-                            <select class="select" id="SIM_CARD_TYPE_V50" style="display: none;"
-                                onchange="changeSimCard(event)">
-                                <option value="0" data-i18n="sim1_v50">移动</option>
-                                <option value="1" data-i18n="sim2_v50">电信</option>
-                                <option value="2" data-i18n="sim3_v50">联通</option>
-                                <option value="11" data-i18n="sim4_v50">外置</option>
-                            </select>
-
-                            <select class="select" id="LANG"></select>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -2379,6 +2399,21 @@
     </script>
     <script src="/script/dash-charts.js"></script>
     <script src="/script/dashboard.js"></script>
+    <!-- Common utilities -->
+    <script src="/script/common/escape-html.js"></script>
+    <script src="/script/common/toast.js"></script>
+    <!-- Reusable UI components -->
+    <script src="/script/components/stepper.js"></script>
+    <script src="/script/components/ip-input.js"></script>
+    <script src="/script/components/toggle.js"></script>
+    <script src="/script/components/eye-toggle.js"></script>
+    <!-- Controls page modules -->
+    <script src="/script/controls/tabs.js"></script>
+    <script src="/script/controls/lan.js"></script>
+    <script src="/script/controls/wifi.js"></script>
+    <script src="/script/controls/apn.js"></script>
+    <script src="/script/controls/clients.js"></script>
+    <script src="/script/memory-cleaner.js"></script>
 </body>
 
 </html>

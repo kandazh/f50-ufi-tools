@@ -182,6 +182,22 @@
     </script>
     <script src="/script/dash-charts.js"></script>
     <script src="/script/dashboard.js"></script>
+    <script src="/script/custom-dropdown.js"></script>
+    <!-- Common utilities -->
+    <script src="/script/common/escape-html.js"></script>
+    <script src="/script/common/toast.js"></script>
+    <!-- Reusable UI components -->
+    <script src="/script/components/stepper.js"></script>
+    <script src="/script/components/ip-input.js"></script>
+    <script src="/script/components/toggle.js"></script>
+    <script src="/script/components/eye-toggle.js"></script>
+    <!-- Controls page modules -->
+    <script src="/script/controls/tabs.js"></script>
+    <script src="/script/controls/lan.js"></script>
+    <script src="/script/controls/wifi.js"></script>
+    <script src="/script/controls/apn.js"></script>
+    <script src="/script/controls/clients.js"></script>
+    <script src="/script/memory-cleaner.js"></script>
 </body>
 
 </html>

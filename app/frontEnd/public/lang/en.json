@@ -202,7 +202,7 @@
     "bg_setting_opacity": "Theme opacity",
     "reset_theme_btn": "Reset Theme",
     "reset_theme_confirm": "Confirm reset?",
-    "submit_btn": "Submit",
+    "submit_btn": "Save",
     "close_btn": "Close",
     "plugin_modal_title": "Plugin Features",
     "plugin_modal_tip": "The entered content supports scripts, styles, and meta elements. The total size of all plugins must not exceed 4MB. Click the plugin name to edit, enable or disable. Drag on the left to sort, delete plugins on the right.",
