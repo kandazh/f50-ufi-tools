@@ -34,10 +34,13 @@
           var name = d.hostname || 'Unknown';
           var isWifi = wifiClients.includes(d);
           return '<div class="ctrl-device-item">' +
-            '<div class="ctrl-device-icon">' + (isWifi ? '\u{1F4F1}' : '\u{1F5A5}\uFE0F') + '</div>' +
+            '<div class="ctrl-device-icon">' + (isWifi ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>') + '</div>' +
             '<div class="ctrl-device-info">' +
               '<div class="ctrl-device-name">' + escapeHtml(name) + '</div>' +
-              '<div class="ctrl-device-meta">' + escapeHtml(d.ip_addr || '') + ' \u00B7 ' + escapeHtml(d.mac_addr || '') + '</div>' +
+              '<div class="ctrl-device-meta">' +
+                '<span class="ctrl-device-ip">' + escapeHtml(d.ip_addr || '') + '</span>' +
+                '<span class="ctrl-device-mac">' + escapeHtml(d.mac_addr || '') + '</span>' +
+              '</div>' +
             '</div>' +
             '<div class="ctrl-device-actions">' +
               '<button class="ctrl-device-btn danger" onclick="blockDevice(\'' + escapeHtml(d.mac_addr) + '\',\'' + escapeHtml(name) + '\')">Block</button>' +
@@ -56,10 +59,12 @@
         blackList.innerHTML = blackMacs.map(function (mac, i) {
           var name = blackNames[i] || mac;
           return '<div class="ctrl-device-item">' +
-            '<div class="ctrl-device-icon">\u{1F4BB}</div>' +
+            '<div class="ctrl-device-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg></div>' +
             '<div class="ctrl-device-info">' +
               '<div class="ctrl-device-name">' + escapeHtml(name) + '</div>' +
-              '<div class="ctrl-device-meta">' + escapeHtml(mac) + '</div>' +
+              '<div class="ctrl-device-meta">' +
+                '<span class="ctrl-device-mac">' + escapeHtml(mac) + '</span>' +
+              '</div>' +
             '</div>' +
             '<div class="ctrl-device-actions">' +
               '<button class="ctrl-device-btn" onclick="unblockDevice(\'' + escapeHtml(mac) + '\')">Unblock</button>' +

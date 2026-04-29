@@ -652,14 +652,14 @@ select.ctrl-input:focus-visible {
   border-color: rgba(168, 130, 255, 0.2);
 }
 .ctrl-device-icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   background: rgba(56, 189, 248, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  color: rgba(56, 189, 248, 0.85);
   flex-shrink: 0;
 }
 .ctrl-device-info {
@@ -667,31 +667,44 @@ select.ctrl-input:focus-visible {
   min-width: 0;
 }
 .ctrl-device-name {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: #f1f5f9;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 6px;
 }
 .ctrl-device-meta {
-  font-size: 11px;
-  color: rgba(148, 163, 184, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.ctrl-device-ip {
+  font-size: 11.5px;
+  color: rgba(56, 189, 248, 0.8);
   font-family: var(--font-mono);
-  margin-top: 2px;
+  font-weight: 500;
+}
+.ctrl-device-mac {
+  font-size: 10.5px;
+  color: rgba(148, 163, 184, 0.5);
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
 }
 .ctrl-device-actions {
   display: flex;
   gap: 6px;
 }
 .ctrl-device-btn {
-  padding: 4px 10px;
-  font-size: 10px;
-  font-weight: 500;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
   border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  background: rgba(148, 163, 184, 0.05);
-  color: rgba(226, 232, 240, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(148, 163, 184, 0.06);
+  color: rgba(226, 232, 240, 0.7);
   cursor: pointer;
   transition: all 0.2s;
 }
