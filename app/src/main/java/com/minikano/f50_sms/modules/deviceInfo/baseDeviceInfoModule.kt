@@ -30,6 +30,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import androidx.core.content.edit
 import com.minikano.f50_sms.utils.readNetConnCount
 import io.ktor.server.request.receiveText
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.JsonObject
 import org.json.JSONArray
 import org.json.JSONObject
@@ -37,6 +39,16 @@ import org.json.JSONObject
 data class MyStorageInfo(
     val path: String, val totalBytes: Long, val availableBytes: Long
 )
+
+// Cache for frequently polled device metrics (CPU/thermal/memory)
+private data class DeviceMetricsCache(
+    val cpuTempRes: String?, val cpuTempMax: String?,
+    val cpuFreqInfo: String?, val cpuUsageInfo: String?, val memInfo: String?,
+    val cpuUsageRes: Double?, val memUsageRes: Double?,
+    val timestamp: Long
+)
+@Volatile private var metricsCache: DeviceMetricsCache? = null
+private const val CACHE_TTL_MS = 2000L // 2 second cache
 
 fun Route.baseDeviceInfoModule(context: Context) {
     val TAG = "[$BASE_TAG]_baseDeviceInfoModule"
@@ -59,157 +71,114 @@ fun Route.baseDeviceInfoModule(context: Context) {
             ipRes = null
         }
 
-        //cpu温度
-        var cpuTempRes: String? = null
-        var cpuTempMax:String? = null
-        try {
-            val (maxTemp,temp) = readThermalZones()
-            cpuTempMax = maxTemp.toString()
-            KanoLog.d(TAG, "获取CPU温度成功: $temp")
-            cpuTempRes = temp
-            cpuTempRes = cpuTempRes.replace("\n", "")
+        // Run CPU/thermal/memory, storage, and battery in parallel
+        val results = coroutineScope {
+            val cpuMemDeferred = async {
+                val now = System.currentTimeMillis()
+                val cached = metricsCache
+                if (cached != null && (now - cached.timestamp) < CACHE_TTL_MS) {
+                    return@async cached
+                }
+                try {
+                    val usage = calculateCpuUsage()
+                    val freq = getCpuFreqJson()
+                    val mem = getMemoryUsage()
+                    val (maxTemp, temp) = readThermalZones()
 
-        } catch (e: Exception) {
-            KanoLog.d(TAG, "获取CPU温度出错： ${e.message}")
-            cpuTempRes = null
+                    val cpuUsageRes = try {
+                        Json.parseToJsonElement(usage).jsonObject["cpu"]?.jsonPrimitive?.double
+                    } catch (_: Exception) { null }
+                    val memUsageRes = try {
+                        Json.parseToJsonElement(mem).jsonObject["mem_usage_percent"]?.jsonPrimitive?.double
+                    } catch (_: Exception) { null }
+
+                    val result = DeviceMetricsCache(
+                        cpuTempRes = temp.replace("\n", ""),
+                        cpuTempMax = maxTemp.toString(),
+                        cpuFreqInfo = freq,
+                        cpuUsageInfo = usage,
+                        memInfo = mem,
+                        cpuUsageRes = cpuUsageRes,
+                        memUsageRes = memUsageRes,
+                        timestamp = now
+                    )
+                    metricsCache = result
+                    result
+                } catch (e: Exception) {
+                    KanoLog.d(TAG, "获取cpu/thermal/memory信息出错： ${e.message}")
+                    DeviceMetricsCache(null, null, null, null, null, null, null, now)
+                }
+            }
+
+            data class StorageResult(
+                val dailyData: Long?, val monthlyData: Long?,
+                val availableSize: Long?, val usedSize: Long?, val totalSize: Long?,
+                val externalTotal: Long?, val externalUsed: Long?, val externalAvailable: Long?
+            )
+            val storageDeferred = async {
+                try {
+                    val internalStorage = context.filesDir
+                    val statFs = StatFs(internalStorage.absolutePath)
+                    val totalSize = statFs.blockSizeLong * statFs.blockCountLong
+                    val availableSize = statFs.blockSizeLong * statFs.availableBlocksLong
+                    val usedSize = totalSize - availableSize
+                    val dailyDataRes = KanoUtils.getCachedTodayUsage(context)
+                    val monthlyDataRes = KanoUtils.getCachedMonthlyUsage(context)
+                    val exStorageInfo = KanoUtils.getCachedRemovableStorageInfo(context)
+                    val externalTotal = exStorageInfo?.totalBytes ?: 0
+                    val externalAvailable = exStorageInfo?.availableBytes ?: 0
+                    val externalUsed = externalTotal - externalAvailable
+                    StorageResult(dailyDataRes, monthlyDataRes, availableSize, usedSize, totalSize, externalTotal, externalUsed, externalAvailable)
+                } catch (e: Exception) {
+                    KanoLog.d(TAG, "存储与日流量信息出错： ${e.message}")
+                    StorageResult(null, null, null, null, null, null, null, null)
+                }
+            }
+
+            data class BatteryResult(
+                val versionName: String?, val versionCode: Int?, val model: String?,
+                val batteryLevel: Int?, val currentNow: Int?, val voltageNow: Int?
+            )
+            val batteryDeferred = async {
+                try {
+                    val batteryLevel: Int = KanoUtils.getBatteryPercentage(context)
+                    val batteryStatus = readBatteryStatus()
+                    BatteryResult(AppMeta.versionName, AppMeta.versionCode, AppMeta.model, batteryLevel, batteryStatus.current_uA, batteryStatus.voltage_uV)
+                } catch (e: Exception) {
+                    KanoLog.d(TAG, "获取型号与电量信息出错：${e.message}")
+                    BatteryResult(null, null, null, null, null, null)
+                }
+            }
+
+            Triple(cpuMemDeferred.await(), storageDeferred.await(), batteryDeferred.await())
         }
 
-        //cpu 内存信息
-        var cpuFreqInfo: String? = null
-        var cpuUsageInfo: String? = null
-        var memInfo: String? = null
-        var cpuUsageRes: Double? = null
-        var memUsageRes: Double? = null
-
-        try {
-            val usage = calculateCpuUsage()
-            val freq = getCpuFreqJson()
-            val mem = getMemoryUsage()
-
-            KanoLog.d(TAG, "CPU频率数据：${freq}")
-            KanoLog.d(TAG, "CPU使用数据：${usage}")
-            KanoLog.d(TAG, "Mem使用数据：${mem}")
-            cpuUsageRes = Json.parseToJsonElement(usage)
-                .jsonObject["cpu"]
-                ?.jsonPrimitive
-                ?.double
-            memUsageRes = Json.parseToJsonElement(mem)
-                .jsonObject["mem_usage_percent"]
-                ?.jsonPrimitive
-                ?.double
-            cpuFreqInfo = freq
-            cpuUsageInfo = usage
-            memInfo = mem
-        } catch (e: Exception) {
-            cpuFreqInfo = null
-            cpuUsageInfo = null
-            memInfo = null
-            KanoLog.d(TAG, "获取cpu内存信息出错： ${e.message}")
-        }
-
-        //存储与日流量获取
-        var dailyDataRes: Long? = null
-        var monthlyDataRes: Long? = null
-        var availableSizeRes: Long? = null
-        var usedSizeRes: Long? = null
-        var totalSizeRes: Long? = null
-        var externalTotalRes: Long? = null
-        var externalUsedRes: Long? = null
-        var externalAvailableRes: Long? = null
-        try {
-            // 内部存储
-            val internalStorage = context.filesDir
-            val statFs = StatFs(internalStorage.absolutePath)
-            val totalSize = statFs.blockSizeLong * statFs.blockCountLong
-            val availableSize = statFs.blockSizeLong * statFs.availableBlocksLong
-            val usedSize = totalSize - availableSize
-
-            // 获取日用、月用流量
-            dailyDataRes = KanoUtils.getCachedTodayUsage(context)
-            monthlyDataRes = KanoUtils.getCachedMonthlyUsage(context)
-
-            // 外部存储（可移动设备）
-            val exStorageInfo = KanoUtils.getCachedRemovableStorageInfo(context)
-            val externalTotal = exStorageInfo?.totalBytes ?: 0
-            val externalAvailable = exStorageInfo?.availableBytes ?: 0
-            val externalUsed = externalTotal - externalAvailable
-
-            KanoLog.d(TAG, "日用流量：$dailyDataRes")
-            KanoLog.d(TAG, "月用流量：$monthlyDataRes")
-            KanoLog.d(TAG, "内部存储：$usedSize/$totalSize")
-            KanoLog.d(TAG, "外部存储：$externalAvailable/$externalTotal")
-
-            availableSizeRes = availableSize
-            usedSizeRes = usedSize
-            totalSizeRes = totalSize
-            externalTotalRes = externalTotal
-            externalUsedRes = externalUsed
-            externalAvailableRes = externalAvailable
-
-        } catch (e: Exception) {
-            KanoLog.d(TAG, "存储与日流量信息出错： ${e.message}")
-            dailyDataRes = null
-            availableSizeRes = null
-            usedSizeRes = null
-            totalSizeRes = null
-            externalTotalRes = null
-            externalUsedRes = null
-            externalAvailableRes = null
-        }
-
-
-        //型号与电量获取
-        var versionNameRes: String? = null
-        var versionCodeRes: Int? = null
-        var modelRes: String? = null
-        var batteryLevelRes: Int? = null
-        var currentNow :Int? = null
-        var votageNow :Int? = null
-        try {
-            val batteryLevel: Int = KanoUtils.getBatteryPercentage(context)
-            val batteryStatus = readBatteryStatus()
-            currentNow = batteryStatus.current_uA
-            votageNow = batteryStatus.voltage_uV
-
-            KanoLog.d(TAG, "型号与电量：${AppMeta.model} $batteryLevel")
-
-            versionNameRes = AppMeta.versionName
-            versionCodeRes = AppMeta.versionCode
-            modelRes = AppMeta.model
-            batteryLevelRes = batteryLevel
-
-        } catch (e: Exception) {
-            KanoLog.d(TAG, "获取型号与电量信息出错：${e.message}")
-            versionNameRes = null
-            versionCodeRes = null
-            modelRes = null
-            batteryLevelRes = null
-        }
+        val (metrics, storage, battery) = results
 
         val jsonResult = """
             {
-                "app_ver": "$versionNameRes",
-                "app_ver_code": "$versionCodeRes",
-                "model": "$modelRes",
-                "battery": "$batteryLevelRes",
-                "daily_data": $dailyDataRes,
-                "monthly_data": $monthlyDataRes,
-                "internal_available_storage": $availableSizeRes,
-                "internal_used_storage": $usedSizeRes,
-                "internal_total_storage": $totalSizeRes,
-                "external_total_storage": $externalTotalRes,
-                "external_used_storage": $externalUsedRes,
-                "external_available_storage": $externalAvailableRes,
-                "cpu_temp_list":$cpuTempRes,
-                "cpu_temp":$cpuTempMax,
+                "app_ver": "${battery.versionName}",
+                "app_ver_code": "${battery.versionCode}",
+                "model": "${battery.model}",
+                "battery": "${battery.batteryLevel}",
+                "daily_data": ${storage.dailyData},
+                "monthly_data": ${storage.monthlyData},
+                "internal_available_storage": ${storage.availableSize},
+                "internal_used_storage": ${storage.usedSize},
+                "internal_total_storage": ${storage.totalSize},
+                "external_total_storage": ${storage.externalTotal},
+                "external_used_storage": ${storage.externalUsed},
+                "external_available_storage": ${storage.externalAvailable},
+                "cpu_temp_list":${metrics.cpuTempRes},
+                "cpu_temp":${metrics.cpuTempMax},
                 "client_ip":"$ipRes",
-                "cpu_usage":$cpuUsageRes,
-                "mem_usage":$memUsageRes,
-                "cpuFreqInfo":$cpuFreqInfo,
-                "cpuUsageInfo":$cpuUsageInfo,
-                "memInfo":$memInfo,
-                "current_now":$currentNow,
-                "voltage_now":$votageNow
+                "cpu_usage":${metrics.cpuUsageRes},
+                "mem_usage":${metrics.memUsageRes},
+                "cpuFreqInfo":${metrics.cpuFreqInfo},
+                "cpuUsageInfo":${metrics.cpuUsageInfo},
+                "memInfo":${metrics.memInfo},
+                "current_now":${battery.currentNow},
+                "voltage_now":${battery.voltageNow}
             }
         """.trimIndent()
         call.response.headers.append("Access-Control-Allow-Origin", "*")

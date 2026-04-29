@@ -11,9 +11,12 @@ import io.ktor.server.application.call
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import java.io.File
 
 fun Route.atModule(context: Context) {
     val TAG = "[$BASE_TAG]_atModule"
+    // Cache the sendat binary path to avoid copying on every AT call
+    var cachedSendatFile: File? = null
 
     //AT指令
     get("/api/AT") {
@@ -28,9 +31,14 @@ fun Route.atModule(context: Context) {
                 throw Exception("解析失败，AT指令需要以 “AT” 开头")
             }
 
-            val outFileAt = KanoUtils.copyFileToFilesDir(context, "shell/sendat")
-                ?: throw Exception("复制 sendat 到 filesDir 失败")
-            outFileAt.setExecutable(true)
+            val outFileAt = cachedSendatFile?.takeIf { it.exists() && it.canExecute() }
+                ?: run {
+                    val f = KanoUtils.copyFileToFilesDir(context, "shell/sendat")
+                        ?: throw Exception("复制 sendat 到 filesDir 失败")
+                    f.setExecutable(true)
+                    cachedSendatFile = f
+                    f
+                }
 
             val atCommand = "${outFileAt.absolutePath} -n $slot -c '${command.trim()}'"
             val result = ShellKano.runShellCommand(atCommand, true)
