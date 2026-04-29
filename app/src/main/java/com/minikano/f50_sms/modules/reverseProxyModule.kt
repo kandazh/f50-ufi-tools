@@ -8,31 +8,13 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.receiveText
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondBytes
+import io.ktor.server.response.respondOutputStream
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.route
-import okhttp3.ConnectionPool
-import okhttp3.Dispatcher
-import okhttp3.Headers
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import java.util.concurrent.TimeUnit
+import java.net.HttpURLConnection
+import java.net.URL
 
 const val TAG = "[$BASE_TAG]_reverseProxyModule"
-
-private val reverseProxyClient: OkHttpClient = OkHttpClient.Builder()
-    .connectTimeout(5, TimeUnit.SECONDS)
-    .readTimeout(10, TimeUnit.SECONDS)
-    .writeTimeout(5, TimeUnit.SECONDS)
-    .retryOnConnectionFailure(false)
-    .connectionPool(ConnectionPool(2, 30, TimeUnit.SECONDS))
-    .dispatcher(Dispatcher().apply {
-        maxRequests = 4
-        maxRequestsPerHost = 2
-    })
-    .build()
 
 //反向代理官方后端
 fun Route.reverseProxyModule(targetServerIP:String) {
@@ -62,38 +44,47 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                 return@handle
             }
 
+            var conn: HttpURLConnection? = null
             try {
-                val headersBuilder = Headers.Builder()
-                headersBuilder.add("Referer", targetServer)
-                val ck = call.request.headers["Kano-Cookie"]
-                if (!ck.isNullOrBlank()) {
-                    headersBuilder.add("Cookie", ck)
-                }
-                call.request.headers.forEach { key, values ->
-                    if (!key.equals("host", ignoreCase = true) &&
-                        !key.equals("referer", ignoreCase = true) &&
-                        !key.equals("cookie", true)
-                    ) {
-                        headersBuilder.add(key, values.joinToString(","))
+                val url = URL(fullUrl)
+                conn = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = method
+                    doInput = true
+                    connectTimeout = 5000
+                    readTimeout = 10000
+                    setRequestProperty("Referer", null)
+                    setRequestProperty("Referer", targetServer)
+                    val ck = call.request.headers["Kano-Cookie"]
+                    if(!ck.isNullOrBlank()) {
+                        setRequestProperty("Cookie", ck)
+                    }
+
+                    call.request.headers.forEach { key, values ->
+                        // 忽略客户端 Referer host
+                        if (!key.equals("host", ignoreCase = true) &&
+                            !key.equals("referer", ignoreCase = true) &&
+                            !key.equals("cookie", true)
+                            ) {
+                            setRequestProperty(key, values.joinToString(","))
+                        }
+                    }
+
+                    if (method == "POST" || method == "PUT") {
+                        val body = call.receiveText()
+                        doOutput = true
+                        setRequestProperty("Content-Length", body.toByteArray().size.toString())
+                        outputStream.use { it.write(body.toByteArray()) }
                     }
                 }
 
-                val requestBody = if (method == "POST" || method == "PUT") {
-                    val body = call.receiveText()
-                    body.toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
-                } else null
+                val responseCode = conn.responseCode
+                val responseContentType = conn.contentType ?: "text/plain"
 
-                val request = Request.Builder()
-                    .url(fullUrl)
-                    .method(method, requestBody)
-                    .headers(headersBuilder.build())
-                    .build()
-
-                val response = reverseProxyClient.newCall(request).execute()
-
-                response.headers.forEach { (key, value) ->
-                    if (key.equals("Set-Cookie", ignoreCase = true)) {
-                        call.response.headers.append("kano-cookie", value)
+                conn.headerFields.forEach { (key, values) ->
+                    if (key != null && key.equals("Set-Cookie", ignoreCase = true)) {
+                        values?.forEach { cookie ->
+                            call.response.headers.append("kano-cookie", cookie)
+                        }
                     }
                 }
 
@@ -101,12 +92,21 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                 call.response.headers.append("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
                 call.response.headers.append("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
 
-                val responseContentType = response.header("Content-Type") ?: "text/plain"
-                val responseBytes = response.body?.bytes() ?: ByteArray(0)
-                call.respondBytes(responseBytes, ContentType.parse(responseContentType), HttpStatusCode.fromValue(response.code))
+                val responseStream = if (responseCode in 200..299) conn.inputStream else conn.errorStream
+                call.respondOutputStream(ContentType.parse(responseContentType), HttpStatusCode.fromValue(responseCode)) {
+                    responseStream.use { input ->
+                        val buffer = ByteArray(4096)
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            write(buffer, 0, bytesRead)
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 KanoLog.e(TAG,"转发出错",e)
                 call.respond(HttpStatusCode.InternalServerError, "Proxy error: ${e.message}")
+            } finally {
+                conn?.disconnect()
             }
         }
     }
