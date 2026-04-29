@@ -2393,12 +2393,13 @@ function main_func() {
     }
 
     const startRefresh = () => {
+        stopRefresh()
         StopStatusRenderTimer = requestInterval(() => handlerStatusRender(), REFRESH_TIME)
         QORSTimer = requestInterval(() => { QOSRDPCommand("AT+CGEQOSRDP=1") }, 10000)
     }
     const stopRefresh = () => {
-        StopStatusRenderTimer && StopStatusRenderTimer()
-        QORSTimer && QORSTimer()
+        if (StopStatusRenderTimer) { StopStatusRenderTimer(); StopStatusRenderTimer = null }
+        if (QORSTimer) { QORSTimer(); QORSTimer = null }
     }
 
     //暂停开始刷新
@@ -4868,12 +4869,22 @@ function main_func() {
             stopRefresh()
             REFRESH_TIME = Number(value)
             startRefresh()
-            createToast(t('toast_current_refresh_rate') + "：" + (value / 1000).toFixed(2) + "S")
+            // Sync button state to running
+            const headerBtn = document.querySelector('#headerRefreshBtn')
+            if (headerBtn) {
+                headerBtn.innerHTML = pauseIcon
+                headerBtn.classList.add('is-running')
+                headerBtn.classList.remove('is-paused')
+                headerBtn.title = 'Stop refresh'
+            }
+            createToast(t('toast_current_refresh_rate') + "：" + (value / 1000).toFixed(2) + "S", 'green')
             //保存
             localStorage.setItem("refreshRate", value)
         }
     }
-    // Expose globally for dash-charts listener
+    // Wire refresh rate select and expose globally
+    const rrSel = document.getElementById('refreshRateSelect');
+    if (rrSel) rrSel.addEventListener('change', changeRefreshRate);
     window.changeRefreshRate = changeRefreshRate;
 
     //开关小核心

@@ -314,20 +314,17 @@
 /* --- KPI Responsive --- */
 
 @media (max-width: 900px) {
-  .chart-grid { grid-template-columns: repeat(2, 1fr); }
-  .chart-card--wide { grid-column: span 2; }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 600px) {
-  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .kpi-row { grid-template-columns: 1fr; }
+  .kpi-card { flex-direction: row; align-items: center; padding: 12px 14px; gap: 12px; }
   .kpi-value { font-size: 1.25rem; }
-  .chart-grid { grid-template-columns: 1fr; }
-  .chart-card--wide { grid-column: span 1; }
 }
 
 @media (max-width: 360px) {
-  .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .kpi-card { padding: 12px; gap: 8px; }
+  .kpi-card { padding: 10px 12px; gap: 10px; }
   .kpi-icon-wrap { width: 30px; height: 30px; }
   .kpi-value { font-size: 1.1rem; }
 }
@@ -395,6 +392,19 @@
   line-height: 1;
 }
 
+@media (max-width: 600px) {
+  .quick-toggles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 360px) {
+  .quick-toggles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* --- Live Tracking Charts --- */
 
 .chart-grid {
@@ -429,6 +439,16 @@
 .chart-card--wide {
   grid-column: span 4;
   padding-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .chart-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-card--wide { grid-column: span 2; }
+}
+
+@media (max-width: 600px) {
+  .chart-grid { grid-template-columns: 1fr; }
+  .chart-card--wide { grid-column: span 1; }
 }
 
 .chart-card--wide .chart-card-header {

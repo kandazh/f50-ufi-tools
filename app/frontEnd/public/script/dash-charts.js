@@ -967,49 +967,6 @@
         if (deviceInfoVersion) set('ddi-version', deviceInfoVersion);
     };
 
-    // --- Refresh rate select listener (works even before main.js init completes) ---
-    const rrSel = document.getElementById('refreshRateSelect');
-    if (rrSel) {
-        rrSel.addEventListener('change', function() {
-            if (typeof window.changeRefreshRate === 'function') {
-                window.changeRefreshRate({ target: this });
-            } else {
-                localStorage.setItem('refreshRate', this.value);
-            }
-        });
-    }
-
-    // --- Header refresh stop/start button ---
-    const hRefBtn = document.getElementById('headerRefreshBtn');
-    const hRefIcon = document.getElementById('refreshBtnIcon');
-    const pauseSvg = '<line x1="10" y1="6" x2="10" y2="18"/><line x1="14" y1="6" x2="14" y2="18"/>';
-    const playSvg = '<polygon points="6 4 20 12 6 20 6 4"/>';
-    if (hRefBtn) {
-        hRefBtn.addEventListener('click', function() {
-            // Delegate to main.js REFRESH_BTN handler if wired
-            const mainBtns = document.querySelectorAll('.REFRESH_BTN');
-            const isPaused = hRefBtn.classList.contains('is-paused');
-            if (isPaused) {
-                // Start
-                hRefBtn.classList.remove('is-paused');
-                if (hRefIcon) hRefIcon.innerHTML = pauseSvg;
-                if (typeof window.changeRefreshRate === 'function') {
-                    // Trigger a re-start by "changing" to current value
-                    const sel = document.getElementById('refreshRateSelect');
-                    if (sel) window.changeRefreshRate({ target: sel });
-                }
-            } else {
-                // Stop
-                hRefBtn.classList.add('is-paused');
-                if (hRefIcon) hRefIcon.innerHTML = playSvg;
-            }
-            // Also trigger main.js REFRESH_BTN click if it exists
-            mainBtns.forEach(b => {
-                if (b !== hRefBtn && b.onclick) b.onclick({ target: b });
-            });
-        });
-    }
-
     // --- QCI / DL Max / UL Max poller (independent of main.js QOSRDPCommand) ---
     async function pollQoS() {
         try {

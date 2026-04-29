@@ -740,6 +740,17 @@
     margin-left: 0;
     padding-bottom: 56px;
   }
+  .main-title {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 6px;
+  }
+  .global-status {
+    position: static;
+    width: 100%;
+    flex-wrap: wrap;
+    border-radius: 8px;
+  }
 }
 
 /* --- Responsive breakpoints --- */
