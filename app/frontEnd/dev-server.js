@@ -16,6 +16,40 @@ const toggleState = {
   roam_setting_option: 'off',
   dial_roam_setting_option: 'off',
   adb_wifi_enabled: false,
+  BlackMacList: 'D8:E9:F0:A1:B2:C3',
+  BlackNameList: 'Blocked-Laptop',
+  AclMode: '1',
+  apn_mode: 'manual',
+  apn_Current_index: '1',
+  apn_configs: {
+    0: 'Default($)internet($)($)($)none($)($)($)IP($)($)($)',
+    1: 'MyISP($)data.isp.com($)($)($)chap($)user1($)pass123($)IPv4v6($)($)($)',
+    2: 'Custom($)custom.apn($)($)($)pap($)admin($)secret($)IPv6($)($)($)',
+  },
+  // WiFi AP settings
+  wifi_module_switch: '1',
+  wifi_chip: 'chip1',
+  wifi_ap: {
+    AccessPointSwitchStatus: '1',
+    AccessPointIndex: '0',
+    ChipIndex: '0',
+    SSID: 'UFI-F50-MOCK',
+    Password: btoa('password123'),
+    AuthMode: 'WPA2PSK',
+    ApBroadcastDisabled: '0',
+    ApMaxStationNumber: '10',
+    ApIsolate: '0',
+    QrImageUrl: '/mock_wifi_qr.svg'
+  },
+  // LAN settings
+  lan_ipaddr: '192.168.0.1',
+  lan_netmask: '255.255.255.0',
+  dhcpEnabled: '1',
+  dhcpStart: '192.168.0.100',
+  dhcpEnd: '192.168.0.200',
+  dhcpLease_hour: '24h',
+  mtu: '1500',
+  tcp_mss: '1460',
 };
 
 // Assemble index.html from template + partials
@@ -51,7 +85,7 @@ app.use('/api/adb_wifi_setting', (req, res) => {
 });
 
 // Mock WiFi QR code image
-app.get('/mock_wifi_qr.svg', (req, res) => {
+app.get(['/mock_wifi_qr.svg', '/api/mock_wifi_qr.svg'], (req, res) => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
     <rect width="200" height="200" fill="#fff" rx="12"/>
     <rect x="20" y="20" width="60" height="60" fill="#000" rx="4"/>
@@ -179,6 +213,57 @@ app.use('/api/goform', (req, res) => {
           toggleState.roam_setting_option = params.get('roam_setting_option') || toggleState.roam_setting_option;
           toggleState.dial_roam_setting_option = params.get('dial_roam_setting_option') || toggleState.dial_roam_setting_option;
         }
+        if (goformId === 'setDeviceAccessControlList') {
+          toggleState.BlackMacList = params.get('BlackMacList') || '';
+          toggleState.BlackNameList = params.get('BlackNameList') || '';
+          toggleState.AclMode = params.get('AclMode') || '1';
+        }
+        if (goformId === 'APN_PROC_EX') {
+          var apnMode = params.get('apn_mode');
+          if (apnMode) toggleState.apn_mode = apnMode;
+          var action = params.get('apn_action');
+          var idx = params.get('index') || '0';
+          if (action === 'save') {
+            var name = params.get('profile_name') || '';
+            var apn = params.get('apn_wan_apn') || '';
+            var auth = params.get('apn_ppp_auth_mode') || 'none';
+            var user = params.get('apn_ppp_username') || '';
+            var pass = params.get('apn_ppp_passwd') || '';
+            var pdp = params.get('apn_pdp_type') || 'IP';
+            toggleState.apn_configs[idx] = name+'($)'+apn+'($)($)($)'+auth+'($)'+user+'($)'+pass+'($)'+pdp+'($)($)($)';
+            toggleState.apn_Current_index = idx;
+          } else if (action === 'delete') {
+            delete toggleState.apn_configs[idx];
+          }
+        }
+        if (goformId === 'setAccessPointInfo') {
+          var ap = toggleState.wifi_ap;
+          if (params.get('SSID')) ap.SSID = params.get('SSID');
+          if (params.get('AuthMode')) ap.AuthMode = params.get('AuthMode');
+          if (params.get('Password')) ap.Password = params.get('Password');
+          if (params.has('ApBroadcastDisabled')) ap.ApBroadcastDisabled = params.get('ApBroadcastDisabled');
+          if (params.has('ApMaxStationNumber')) ap.ApMaxStationNumber = params.get('ApMaxStationNumber');
+          if (params.has('ApIsolate')) ap.ApIsolate = params.get('ApIsolate');
+          if (params.has('ChipIndex')) ap.ChipIndex = params.get('ChipIndex');
+          if (params.has('AccessPointIndex')) ap.AccessPointIndex = params.get('AccessPointIndex');
+        }
+        if (goformId === 'switchWiFiModule') {
+          toggleState.wifi_module_switch = params.get('SwitchOption') === '0' ? '0' : '1';
+        }
+        if (goformId === 'switchWiFiChip') {
+          var chip = params.get('ChipEnum') || 'chip1';
+          toggleState.wifi_chip = chip;
+          toggleState.wifi_ap.ChipIndex = chip === 'chip2' ? '1' : '0';
+          toggleState.wifi_module_switch = '1';
+        }
+        if (goformId === 'DHCP_SETTING') {
+          if (params.get('lanIp')) toggleState.lan_ipaddr = params.get('lanIp');
+          if (params.get('lanNetmask')) toggleState.lan_netmask = params.get('lanNetmask');
+          toggleState.dhcpEnabled = params.get('lanDhcpType') === 'SERVER' ? '1' : '0';
+          if (params.get('dhcpStart')) toggleState.dhcpStart = params.get('dhcpStart');
+          if (params.get('dhcpEnd')) toggleState.dhcpEnd = params.get('dhcpEnd');
+          if (params.get('dhcpLease')) toggleState.dhcpLease_hour = params.get('dhcpLease') + 'h';
+        }
         res.json({ result: '0' });
       });
       return;
@@ -190,19 +275,8 @@ app.use('/api/goform', (req, res) => {
   // WiFi module & AP info
   if (cmd.includes('queryWiFiModuleSwitch') || cmd.includes('queryAccessPointInfo')) {
     return res.json({
-      WiFiModuleSwitch: '1',
-      ResponseList: [{
-        AccessPointSwitchStatus: '1',
-        AccessPointIndex: '0',
-        ChipIndex: '0',
-        SSID: 'UFI-F50-MOCK',
-        Password: btoa('password123'),
-        AuthMode: 'WPA2PSK',
-        ApBroadcastDisabled: '0',
-        ApMaxStationNumber: '10',
-        ApIsolate: '0',
-        QrImageUrl: '/mock_wifi_qr.svg'
-      }]
+      WiFiModuleSwitch: toggleState.wifi_module_switch,
+      ResponseList: [toggleState.wifi_ap]
     });
   }
   // LD for login hash
@@ -211,19 +285,15 @@ app.use('/api/goform', (req, res) => {
   }
   // APN settings
   if (cmd.includes('apn_mode') || cmd.includes('APN_config')) {
-    return res.json({
-      apn_mode: 'manual',
-      apn_Current_index: '1',
+    var apnResp = {
+      apn_mode: toggleState.apn_mode,
+      apn_Current_index: toggleState.apn_Current_index,
       apn_num_preset: '2',
-      APN_config0: 'Default($)internet($)($)($)none($)($)($)IP($)($)($)',
-      APN_config1: 'MyISP($)data.isp.com($)($)($)chap($)user1($)pass123($)IPv4v6($)($)($)',
-      APN_config2: 'Custom($)custom.apn($)($)($)pap($)admin($)secret($)IPv6($)($)($)',
-      APN_config3: '$',
-      APN_config4: '$', APN_config5: '$', APN_config6: '$', APN_config7: '$',
-      APN_config8: '$', APN_config9: '$', APN_config10: '$', APN_config11: '$',
-      APN_config12: '$', APN_config13: '$', APN_config14: '$', APN_config15: '$',
-      APN_config16: '$', APN_config17: '$', APN_config18: '$', APN_config19: '$'
-    });
+    };
+    for (var i = 0; i < 20; i++) {
+      apnResp['APN_config' + i] = toggleState.apn_configs[i] || '$';
+    }
+    return res.json(apnResp);
   }
   // RD for postData AD calculation
   if (cmd === 'RD') {
@@ -237,19 +307,32 @@ app.use('/api/goform', (req, res) => {
   if (cmd === 'lan_station_list') {
     return res.json({ lan_station_list: [] });
   }
+  // queryDeviceAccessControlList alone (used by block/unblock)
+  if (cmd.includes('queryDeviceAccessControlList') && !cmd.includes('station_list')) {
+    return res.json({
+      BlackMacList: toggleState.BlackMacList,
+      BlackNameList: toggleState.BlackNameList,
+      AclMode: toggleState.AclMode
+    });
+  }
   // Connected devices (station_list + lan_station_list + blacklist)
   if (cmd.includes('station_list') && cmd.includes('queryDeviceAccessControlList')) {
+    // Filter out blocked devices from connected list
+    var blockedMacs = (toggleState.BlackMacList || '').split(';').filter(Boolean);
+    var allDevices = [
+      { hostname: 'iPhone-15', ip_addr: '192.168.0.101', mac_addr: 'A4:B1:C2:D3:E4:F5' },
+      { hostname: 'Galaxy-S24', ip_addr: '192.168.0.102', mac_addr: 'B6:C7:D8:E9:F0:A1' },
+      { hostname: 'Blocked-Laptop', ip_addr: '192.168.0.103', mac_addr: 'D8:E9:F0:A1:B2:C3' },
+    ];
+    var lanDevices = [
+      { hostname: 'Desktop-PC', ip_addr: '192.168.0.100', mac_addr: 'C2:D3:E4:F5:A6:B7' }
+    ];
     return res.json({
-      station_list: [
-        { hostname: 'iPhone-15', ip_addr: '192.168.0.101', mac_addr: 'A4:B1:C2:D3:E4:F5' },
-        { hostname: 'Galaxy-S24', ip_addr: '192.168.0.102', mac_addr: 'B6:C7:D8:E9:F0:A1' }
-      ],
-      lan_station_list: [
-        { hostname: 'Desktop-PC', ip_addr: '192.168.0.100', mac_addr: 'C2:D3:E4:F5:A6:B7' }
-      ],
-      BlackMacList: 'D8:E9:F0:A1:B2:C3',
-      BlackNameList: 'Blocked-Laptop',
-      AclMode: '1'
+      station_list: allDevices.filter(function(d) { return blockedMacs.indexOf(d.mac_addr) === -1; }),
+      lan_station_list: lanDevices.filter(function(d) { return blockedMacs.indexOf(d.mac_addr) === -1; }),
+      BlackMacList: toggleState.BlackMacList,
+      BlackNameList: toggleState.BlackNameList,
+      AclMode: toggleState.AclMode
     });
   }
   const jitter = (base, range) => (base + (Math.random() - 0.5) * range).toFixed(0);
@@ -267,15 +350,15 @@ app.use('/api/goform', (req, res) => {
     // Network addressing
     wan_ipaddr: '100.82.45.193',
     ipv6_wan_ipaddr: '2402:3a80:183d:b503:74d2:d4ff:fe1c:343f',
-    lan_ipaddr: '192.168.0.1',
-    lan_netmask: '255.255.255.0',
+    lan_ipaddr: toggleState.lan_ipaddr,
+    lan_netmask: toggleState.lan_netmask,
     mac_address: '10:3c:59:c3:0b:12',
-    dhcpEnabled: '1',
-    dhcpStart: '192.168.0.100',
-    dhcpEnd: '192.168.0.200',
-    dhcpLease_hour: '24h',
-    mtu: '1500',
-    tcp_mss: '1460',
+    dhcpEnabled: toggleState.dhcpEnabled,
+    dhcpStart: toggleState.dhcpStart,
+    dhcpEnd: toggleState.dhcpEnd,
+    dhcpLease_hour: toggleState.dhcpLease_hour,
+    mtu: toggleState.mtu,
+    tcp_mss: toggleState.tcp_mss,
     client_ip: '192.168.0.135',
     // Signal (LTE)
     lte_rsrp: jitter(-101, 10),

@@ -36,24 +36,22 @@
     });
   });
 
-  // Restore last tab — deferred so page modules register listeners first
+  // Restore last tab (default to 'lan') — deferred so page modules register listeners first
   try {
-    var saved = localStorage.getItem(KEY);
-    if (saved) {
-      // Show panel immediately (visual), but defer the data-load event
-      document.querySelectorAll('.ctrl-nav-btn').forEach(function (b) {
-        b.classList.toggle('active', b.dataset.ctrlTab === saved);
-      });
-      document.querySelectorAll('.ctrl-panel').forEach(function (p) {
-        p.style.display = p.dataset.ctrlPanel === saved ? '' : 'none';
-      });
-      var empty = document.getElementById('ctrlEmpty');
-      if (empty) empty.style.display = 'none';
-      activeTab = saved;
-      // Fire event after all scripts have loaded
-      window.addEventListener('load', function () {
-        document.dispatchEvent(new CustomEvent('ctrl-panel-show', { detail: { tab: saved } }));
-      });
-    }
+    var saved = localStorage.getItem(KEY) || 'lan';
+    // Show panel immediately (visual), but defer the data-load event
+    document.querySelectorAll('.ctrl-nav-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.ctrlTab === saved);
+    });
+    document.querySelectorAll('.ctrl-panel').forEach(function (p) {
+      p.style.display = p.dataset.ctrlPanel === saved ? '' : 'none';
+    });
+    var empty = document.getElementById('ctrlEmpty');
+    if (empty) empty.style.display = 'none';
+    activeTab = saved;
+    // Fire event after all scripts have loaded
+    window.addEventListener('load', function () {
+      document.dispatchEvent(new CustomEvent('ctrl-panel-show', { detail: { tab: saved } }));
+    });
   } catch (e) {}
 })();

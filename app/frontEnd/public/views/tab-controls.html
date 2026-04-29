@@ -176,7 +176,7 @@
                                 <div class="ctrl-form">
                                     <label class="ctrl-field">
                                         <span class="ctrl-label" data-i18n="wifi_switch_label">WiFi Band：</span>
-                                        <select class="ctrl-select" id="WIFI_SWITCH_CTRL" onchange="changeWIFISwitch(event)">
+                                        <select class="ctrl-select" id="WIFI_SWITCH_CTRL">
                                             <option value="0" data-i18n="wifi_option_off">WiFi: Off</option>
                                             <option value="chip1" data-i18n="wifi_option_24g">WiFi: 2.4G</option>
                                             <option value="chip2" data-i18n="wifi_option_5g">WiFi: 5G</option>
@@ -314,6 +314,7 @@
                             </div>
                             <!-- Actions -->
                             <div class="ctrl-actions">
+                                <button type="button" class="ctrl-submit-btn" id="APN_NEW_BTN" style="background:#2563eb" data-i18n="apn_new_btn">New</button>
                                 <button type="submit" class="ctrl-submit-btn" data-i18n="apn_save_btn">Save</button>
                                 <button type="button" class="ctrl-delete-btn" id="APN_DELETE_BTN" data-i18n="apn_delete_btn">Delete</button>
                             </div>

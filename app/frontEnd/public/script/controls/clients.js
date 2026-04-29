@@ -77,40 +77,51 @@
 
   // Block/Unblock device actions (global for onclick handlers)
   window.blockDevice = async function (mac, name) {
-    var res = await getData(new URLSearchParams({ cmd: 'queryDeviceAccessControlList' }));
-    var macs = (res && res.BlackMacList || '').split(';').filter(Boolean);
-    var names = (res && res.BlackNameList || '').split(';').filter(Boolean);
-    macs.push(mac);
-    names.push(name);
-    await postData(new URLSearchParams({
-      goformId: 'setDeviceAccessControlList',
-      BlackMacList: macs.join(';'),
-      BlackNameList: names.join(';'),
-      AclMode: (res && res.AclMode) || '1'
-    }));
-    showCtrlToast('Blocked');
-    loadClientsData();
+    try {
+      var cookie = await login();
+      if (!cookie) return showCtrlToast('Login failed', 'error');
+      var res = await getData(new URLSearchParams({ cmd: 'queryDeviceAccessControlList' }));
+      var macs = (res && res.BlackMacList || '').split(';').filter(Boolean);
+      var names = (res && res.BlackNameList || '').split(';').filter(Boolean);
+      macs.push(mac);
+      names.push(name);
+      await postData(cookie, {
+        goformId: 'setDeviceAccessControlList',
+        BlackMacList: macs.join(';'),
+        BlackNameList: names.join(';'),
+        AclMode: (res && res.AclMode) || '1'
+      });
+      showCtrlToast('Blocked');
+      loadClientsData();
+    } catch (err) { showCtrlToast('Block failed', 'error'); }
   };
 
   window.unblockDevice = async function (mac) {
-    var res = await getData(new URLSearchParams({ cmd: 'queryDeviceAccessControlList' }));
-    var macs = (res && res.BlackMacList || '').split(';').filter(Boolean);
-    var names = (res && res.BlackNameList || '').split(';').filter(Boolean);
-    var idx = macs.indexOf(mac);
-    if (idx > -1) { macs.splice(idx, 1); names.splice(idx, 1); }
-    await postData(new URLSearchParams({
-      goformId: 'setDeviceAccessControlList',
-      BlackMacList: macs.join(';'),
-      BlackNameList: names.join(';'),
-      AclMode: (res && res.AclMode) || '1'
-    }));
-    showCtrlToast('Unblocked');
-    loadClientsData();
+    try {
+      var cookie = await login();
+      if (!cookie) return showCtrlToast('Login failed', 'error');
+      var res = await getData(new URLSearchParams({ cmd: 'queryDeviceAccessControlList' }));
+      var macs = (res && res.BlackMacList || '').split(';').filter(Boolean);
+      var names = (res && res.BlackNameList || '').split(';').filter(Boolean);
+      var idx = macs.indexOf(mac);
+      if (idx > -1) { macs.splice(idx, 1); names.splice(idx, 1); }
+      await postData(cookie, {
+        goformId: 'setDeviceAccessControlList',
+        BlackMacList: macs.join(';'),
+        BlackNameList: names.join(';'),
+        AclMode: (res && res.AclMode) || '1'
+      });
+      showCtrlToast('Unblocked');
+      loadClientsData();
+    } catch (err) { showCtrlToast('Unblock failed', 'error'); }
   };
 
   // Refresh button
   var refreshBtn = document.getElementById('CTRL_REFRESH_CLIENTS');
-  if (refreshBtn) refreshBtn.addEventListener('click', loadClientsData);
+  if (refreshBtn) refreshBtn.addEventListener('click', function () {
+    showCtrlToast('Refreshing...');
+    loadClientsData();
+  });
 
   // Listen for panel show event
   document.addEventListener('ctrl-panel-show', function (e) {

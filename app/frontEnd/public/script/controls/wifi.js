@@ -67,7 +67,7 @@
       var qrImg = document.getElementById('WifiQRCodeImg');
       if (qrImg && ap.QrImageUrl) {
         if (qrSection) qrSection.style.display = '';
-        var qrUrl = ap.QrImageUrl.startsWith('http') ? ap.QrImageUrl : (location.origin + ap.QrImageUrl);
+        var qrUrl = ap.QrImageUrl.startsWith('http') ? ap.QrImageUrl : ('/api' + ap.QrImageUrl);
         fetch(qrUrl, { headers: common_headers })
           .then(function (res) { return res.blob(); })
           .then(function (blob) {
@@ -127,6 +127,29 @@
         showCtrlToast('Saved');
         loadWiFiData();
       } catch (err) { showCtrlToast('Error', 'error'); }
+    });
+  }
+
+  // Band switch handler for controls page (no red toast, direct login)
+  var bandSelect = document.getElementById('WIFI_SWITCH_CTRL');
+  if (bandSelect) {
+    bandSelect.addEventListener('change', async function (e) {
+      var value = e.target.value.trim();
+      if (!value) return;
+      bandSelect.disabled = true;
+      try {
+        var cookie = await login();
+        if (!cookie) { bandSelect.disabled = false; return; }
+        if (value === '0') {
+          await (await postData(cookie, { goformId: 'switchWiFiModule', SwitchOption: 0 })).json();
+        } else {
+          await (await postData(cookie, { goformId: 'switchWiFiChip', ChipEnum: value, GuestEnable: 0 })).json();
+        }
+        showCtrlToast('WiFi switching, please reconnect', 'success');
+        setTimeout(function () { bandSelect.disabled = false; loadWiFiData(); }, 3000);
+      } catch (err) {
+        bandSelect.disabled = false;
+      }
     });
   }
 

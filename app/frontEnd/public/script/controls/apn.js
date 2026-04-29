@@ -87,40 +87,44 @@
   if (apnForm) {
     apnForm.addEventListener('submit', async function (e) {
       e.preventDefault();
-      var form = e.target;
-      var mode = form.querySelector('[name="apn_mode"]');
-      mode = mode ? mode.value : 'manual';
-      var profileEl = document.getElementById('APN_PROFILE_CTRL');
-      var idx = profileEl ? profileEl.value : '0';
+      try {
+        var cookie = await login();
+        if (!cookie) return showCtrlToast('Login failed', 'error');
+        var form = e.target;
+        var mode = form.querySelector('[name="apn_mode"]');
+        mode = mode ? mode.value : 'manual';
+        var profileEl = document.getElementById('APN_PROFILE_CTRL');
+        var idx = profileEl ? profileEl.value : '0';
 
-      if (mode === 'auto') {
-        await postData(new URLSearchParams({ goformId: 'APN_PROC_EX', apn_mode: 'auto' }));
-      } else {
-        var data = {
-          goformId: 'APN_PROC_EX',
-          apn_mode: 'manual',
-          apn_action: 'save',
-          index: idx,
-          profile_name: (form.querySelector('[name="profile_name"]') || {}).value || '',
-          wan_dial: '*99#',
-          apn_wan_dial: '*99#',
-          apn_select: 'manual',
-          apn_wan_apn: (form.querySelector('[name="apn"]') || {}).value || '',
-          apn_ppp_auth_mode: (form.querySelector('[name="auth_method"]') || {}).value || 'none',
-          apn_ppp_username: (form.querySelector('[name="username"]') || {}).value || '',
-          apn_ppp_passwd: (form.querySelector('[name="password"]') || {}).value || '',
-          apn_pdp_type: (form.querySelector('[name="pdp_method"]') || {}).value || 'IP',
-          pdp_type: (form.querySelector('[name="pdp_method"]') || {}).value || 'IP',
-          pdp_select: 'auto',
-          pdp_addr: '',
-          dns_mode: 'auto',
-          prefer_dns_manual: '',
-          standby_dns_manual: ''
-        };
-        await postData(new URLSearchParams(data));
-      }
-      showCtrlToast('Saved');
-      loadAPNData();
+        if (mode === 'auto') {
+          await (await postData(cookie, { goformId: 'APN_PROC_EX', apn_mode: 'auto' })).json();
+        } else {
+          var data = {
+            goformId: 'APN_PROC_EX',
+            apn_mode: 'manual',
+            apn_action: 'save',
+            index: idx,
+            profile_name: (form.querySelector('[name="profile_name"]') || {}).value || '',
+            wan_dial: '*99#',
+            apn_wan_dial: '*99#',
+            apn_select: 'manual',
+            apn_wan_apn: (form.querySelector('[name="apn"]') || {}).value || '',
+            apn_ppp_auth_mode: (form.querySelector('[name="auth_method"]') || {}).value || 'none',
+            apn_ppp_username: (form.querySelector('[name="username"]') || {}).value || '',
+            apn_ppp_passwd: (form.querySelector('[name="password"]') || {}).value || '',
+            apn_pdp_type: (form.querySelector('[name="pdp_method"]') || {}).value || 'IP',
+            pdp_type: (form.querySelector('[name="pdp_method"]') || {}).value || 'IP',
+            pdp_select: 'auto',
+            pdp_addr: '',
+            dns_mode: 'auto',
+            prefer_dns_manual: '',
+            standby_dns_manual: ''
+          };
+          await (await postData(cookie, data)).json();
+        }
+        showCtrlToast('Saved');
+        loadAPNData();
+      } catch (err) { showCtrlToast('Save failed', 'error'); }
     });
   }
 
@@ -128,17 +132,60 @@
   var delBtn = document.getElementById('APN_DELETE_BTN');
   if (delBtn) {
     delBtn.addEventListener('click', async function () {
+      try {
+        var cookie = await login();
+        if (!cookie) return showCtrlToast('Login failed', 'error');
+        var profileEl = document.getElementById('APN_PROFILE_CTRL');
+        if (!profileEl) return;
+        var idx = profileEl.value;
+        await (await postData(cookie, {
+          goformId: 'APN_PROC_EX',
+          apn_mode: 'manual',
+          apn_action: 'delete',
+          index: idx
+        })).json();
+        showCtrlToast('Deleted');
+        loadAPNData();
+      } catch (err) { showCtrlToast('Delete failed', 'error'); }
+    });
+  }
+
+  // APN new profile
+  var newBtn = document.getElementById('APN_NEW_BTN');
+  if (newBtn) {
+    newBtn.addEventListener('click', function () {
+      // Find next free index
+      var nextIdx = 0;
+      for (var i = 0; i < 20; i++) {
+        var taken = apnProfiles.some(function (p) { return p.index === i; });
+        if (!taken) { nextIdx = i; break; }
+      }
+      // Clear form fields for new entry
+      var set = function (id, val) { var el = document.getElementById(id); if (el) el.value = val; };
+      set('APN_NAME_CTRL', '');
+      set('APN_APN_CTRL', '');
+      set('APN_USER_CTRL', '');
+      set('APN_PASS_CTRL', '');
+      set('APN_AUTH_CTRL', 'none');
+      set('APN_PDP_CTRL', 'IP');
+      // Add temp option to profile selector
       var profileEl = document.getElementById('APN_PROFILE_CTRL');
-      if (!profileEl) return;
-      var idx = profileEl.value;
-      await postData(new URLSearchParams({
-        goformId: 'APN_PROC_EX',
-        apn_mode: 'manual',
-        apn_action: 'delete',
-        index: idx
-      }));
-      showCtrlToast('Deleted');
-      loadAPNData();
+      if (profileEl) {
+        var opt = document.createElement('option');
+        opt.value = nextIdx;
+        opt.textContent = 'New Profile';
+        opt.selected = true;
+        profileEl.appendChild(opt);
+        profileEl.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      // Ensure manual mode & details visible
+      var modeEl = document.getElementById('APN_MODE_CTRL');
+      if (modeEl) { modeEl.value = 'manual'; modeEl.dispatchEvent(new Event('change', { bubbles: true })); }
+      toggleAPNMode('manual');
+      // Focus name field
+      var nameEl = document.getElementById('APN_NAME_CTRL');
+      if (nameEl) nameEl.focus();
+      showCtrlToast('Fill in details and click Save');
     });
   }
 
