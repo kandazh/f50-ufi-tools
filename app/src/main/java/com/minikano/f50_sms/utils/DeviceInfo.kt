@@ -47,12 +47,12 @@ private fun buildThermalJson(zones: List<ThermalZone>): String {
     return "[${jsonParts.joinToString(",")}]"
 }
 
-//获取json格式的cpu频率（含集群信息：LITTLE/MID/BIG）
-suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
-    val json = JSONObject()
+// Cached cluster mapping (CPU topology never changes at runtime)
+@Volatile private var cachedClusterMap: Map<Int, String>? = null
 
-    // Detect cluster mapping from cpufreq policies
-    val clusterMap = mutableMapOf<Int, String>() // coreIndex -> "L"/"M"/"B"
+private fun getClusterMap(): Map<Int, String> {
+    cachedClusterMap?.let { return it }
+    val clusterMap = mutableMapOf<Int, String>()
     val policyDir = File("/sys/devices/system/cpu/cpufreq")
     val policies = policyDir.listFiles { _, name -> name.startsWith("policy") }
         ?.sortedBy { it.name.removePrefix("policy").toIntOrNull() ?: 0 }
@@ -71,6 +71,14 @@ suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
             }
         }
     }
+    cachedClusterMap = clusterMap
+    return clusterMap
+}
+
+//获取json格式的cpu频率（含集群信息：LITTLE/MID/BIG）
+suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
+    val json = JSONObject()
+    val clusterMap = getClusterMap()
 
     val cpuDir = File("/sys/devices/system/cpu")
     cpuDir.listFiles { _, name -> name.matches(Regex("cpu[0-9]+")) }?.forEach { coreDir ->

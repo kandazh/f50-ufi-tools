@@ -27,10 +27,10 @@ private val reverseProxyClient: OkHttpClient = OkHttpClient.Builder()
     .readTimeout(10, TimeUnit.SECONDS)
     .writeTimeout(5, TimeUnit.SECONDS)
     .retryOnConnectionFailure(false)
-    .connectionPool(ConnectionPool(8, 2, TimeUnit.MINUTES))
+    .connectionPool(ConnectionPool(2, 30, TimeUnit.SECONDS))
     .dispatcher(Dispatcher().apply {
-        maxRequests = 16
-        maxRequestsPerHost = 8
+        maxRequests = 4
+        maxRequestsPerHost = 2
     })
     .build()
 
