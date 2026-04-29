@@ -33,3 +33,4 @@ app/frontEnd/node_modules/*
 release.keystore
 *.keystore
 *.jks
+apk-download/
