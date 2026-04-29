@@ -24,6 +24,16 @@
       form.querySelector('input[name="dhcpLease"]').value = (dhcpLease_hour || '').replace('h', '');
       form.querySelector('input[name="lanDhcpType"]').value = dhcpEnabled == '1' ? 'SERVER' : 'DISABLE';
 
+      // MAC Address (read-only display)
+      var macEl = document.getElementById('LAN_MAC_ADDR');
+      if (macEl) macEl.textContent = res.mac_address || '--';
+
+      // MTU / MSS
+      var mtuInput = form.querySelector('input[name="mtu"]');
+      var mssInput = form.querySelector('input[name="tcp_mss"]');
+      if (mtuInput) mtuInput.value = res.mtu || '';
+      if (mssInput) mssInput.value = res.tcp_mss || '';
+
       var collapseDhcp = document.getElementById('collapse_dhcp');
       if (collapseDhcp) {
         if (collapseDhcp.dataset.name === 'open' && dhcpEnabled !== '1') {
@@ -45,31 +55,71 @@
         var cookie = await login();
         if (!cookie) return showCtrlToast('Login failed', 'error');
         var formData = new FormData(e.target);
+
+        var lanIp = (formData.get('lanIp') || '').trim();
+        var lanNetmask = (formData.get('lanNetmask') || '').trim();
+        var lanDhcpType = formData.get('lanDhcpType') === 'SERVER';
+        var dhcpStart = (formData.get('dhcpStart') || '').trim();
+        var dhcpEnd = (formData.get('dhcpEnd') || '').trim();
+        var dhcpLease = (formData.get('dhcpLease') || '').trim();
+        var mtuVal = (formData.get('mtu') || '').trim();
+        var mssVal = (formData.get('tcp_mss') || '').trim();
+
+        // Validate IP format
+        var ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+        if (lanIp && !ipRegex.test(lanIp)) return showCtrlToast('Invalid gateway IP', 'error');
+        if (lanNetmask && !ipRegex.test(lanNetmask)) return showCtrlToast('Invalid subnet mask', 'error');
+
+        // Validate DHCP fields
+        if (lanDhcpType) {
+          if (!dhcpStart || !ipRegex.test(dhcpStart)) return showCtrlToast('Invalid DHCP start IP', 'error');
+          if (!dhcpEnd || !ipRegex.test(dhcpEnd)) return showCtrlToast('Invalid DHCP end IP', 'error');
+          // Start must be <= End (last octet)
+          var startOctet = parseInt(dhcpStart.split('.')[3], 10);
+          var endOctet = parseInt(dhcpEnd.split('.')[3], 10);
+          if (startOctet >= endOctet) return showCtrlToast('DHCP start must be less than end', 'error');
+          // Lease: 1–65535
+          var leaseNum = parseInt(dhcpLease, 10);
+          if (!dhcpLease || isNaN(leaseNum) || leaseNum < 1 || leaseNum > 65535) return showCtrlToast('Lease time must be 1–65535', 'error');
+        }
+
+        // Validate MTU: 1300–1500
+        if (mtuVal) {
+          var mtuNum = parseInt(mtuVal, 10);
+          if (isNaN(mtuNum) || mtuNum < 1300 || mtuNum > 1500) return showCtrlToast('MTU must be 1300–1500', 'error');
+        }
+        // Validate MSS: 1260–1460
+        if (mssVal) {
+          var mssNum = parseInt(mssVal, 10);
+          if (isNaN(mssNum) || mssNum < 1260 || mssNum > 1460) return showCtrlToast('MSS must be 1260–1460', 'error');
+        }
+        // MTU - MSS must be >= 40
+        if (mtuVal && mssVal) {
+          if (parseInt(mtuVal, 10) - parseInt(mssVal, 10) < 40) return showCtrlToast('MTU minus MSS must be at least 40', 'error');
+        }
+
+        // Save DHCP settings
         var data = {
           goformId: 'DHCP_SETTING',
-          lanIp: '192.168.0.1',
-          lanNetmask: '255.255.255.0',
-          lanDhcpType: 'DISABLE',
-          dhcpStart: '',
-          dhcpEnd: '',
-          dhcpLease: '',
+          lanIp: lanIp || '192.168.0.1',
+          lanNetmask: lanNetmask || '255.255.255.0',
+          lanDhcpType: lanDhcpType ? 'SERVER' : 'DISABLE',
+          dhcpStart: lanDhcpType ? dhcpStart : '',
+          dhcpEnd: lanDhcpType ? dhcpEnd : '',
+          dhcpLease: lanDhcpType ? dhcpLease : '',
           dhcp_reboot_flag: '1',
-          mac_ip_reset: '0'
+          mac_ip_reset: lanDhcpType ? '1' : '0'
         };
-        var lanDhcpType = formData.get('lanDhcpType') === 'SERVER';
-        data.lanDhcpType = lanDhcpType ? 'SERVER' : 'DISABLE';
-        data.mac_ip_reset = lanDhcpType ? '1' : '0';
-        for (var [key, value] of formData.entries()) {
-          var val = value.trim();
-          switch (key) {
-            case 'lanIp': val && (data[key] = val); break;
-            case 'lanNetmask': val && (data[key] = val); break;
-            case 'dhcpStart': if (lanDhcpType && val) data[key] = val; break;
-            case 'dhcpEnd': if (lanDhcpType && val) data[key] = val; break;
-            case 'dhcpLease': if (lanDhcpType && val) data[key] = val; break;
-          }
-        }
         await (await postData(cookie, data)).json();
+
+        // Save MTU/MSS separately if provided
+        if (mtuVal || mssVal) {
+          var mtuData = { goformId: 'SET_DEVICE_MTU' };
+          if (mtuVal) mtuData.mtu = mtuVal;
+          if (mssVal) mtuData.tcp_mss = mssVal;
+          await (await postData(cookie, mtuData)).json();
+        }
+
         showCtrlToast('Saved');
         loadLANData();
       } catch (err) { showCtrlToast('Error', 'error'); }

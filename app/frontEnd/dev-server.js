@@ -16,9 +16,10 @@ const toggleState = {
   roam_setting_option: 'off',
   dial_roam_setting_option: 'off',
   adb_wifi_enabled: false,
-  BlackMacList: 'D8:E9:F0:A1:B2:C3',
-  BlackNameList: 'Blocked-Laptop',
+  BlackMacList: 'D8:E9:F0:A1:B2:C3;E2:F3:A4:B5:C6:D7;D1:E2:F3:A4:B5:C6;C1:D2:E3:F4:A5:B6',
+  BlackNameList: 'Blocked-Laptop;Smart-TV;Xiaomi-14;OnePlus-12',
   AclMode: '1',
+  hostname_overrides: {},
   apn_mode: 'manual',
   apn_Current_index: '1',
   apn_configs: {
@@ -216,7 +217,15 @@ app.use('/api/goform', (req, res) => {
         if (goformId === 'setDeviceAccessControlList') {
           toggleState.BlackMacList = params.get('BlackMacList') || '';
           toggleState.BlackNameList = params.get('BlackNameList') || '';
-          toggleState.AclMode = params.get('AclMode') || '1';
+          toggleState.WhiteMacList = params.get('WhiteMacList') || '';
+          toggleState.WhiteNameList = params.get('WhiteNameList') || '';
+          toggleState.AclMode = params.get('AclMode') || '2';
+        }
+        if (goformId === 'EDIT_HOSTNAME') {
+          var mac = params.get('mac');
+          var hostname = params.get('hostname');
+          if (mac && hostname) toggleState.hostname_overrides[mac] = hostname;
+          console.log('EDIT_HOSTNAME:', mac, '->', hostname);
         }
         if (goformId === 'APN_PROC_EX') {
           var apnMode = params.get('apn_mode');
@@ -225,12 +234,13 @@ app.use('/api/goform', (req, res) => {
           var idx = params.get('index') || '0';
           if (action === 'save') {
             var name = params.get('profile_name') || '';
-            var apn = params.get('apn_wan_apn') || '';
-            var auth = params.get('apn_ppp_auth_mode') || 'none';
-            var user = params.get('apn_ppp_username') || '';
-            var pass = params.get('apn_ppp_passwd') || '';
-            var pdp = params.get('apn_pdp_type') || 'IP';
+            var apn = params.get('wan_apn') || '';
+            var auth = params.get('ppp_auth_mode') || 'none';
+            var user = params.get('ppp_username') || '';
+            var pass = params.get('ppp_passwd') || '';
+            var pdp = params.get('pdp_type') || 'IP';
             toggleState.apn_configs[idx] = name+'($)'+apn+'($)($)($)'+auth+'($)'+user+'($)'+pass+'($)'+pdp+'($)($)($)';
+          } else if (action === 'set_default') {
             toggleState.apn_Current_index = idx;
           } else if (action === 'delete') {
             delete toggleState.apn_configs[idx];
@@ -263,6 +273,10 @@ app.use('/api/goform', (req, res) => {
           if (params.get('dhcpStart')) toggleState.dhcpStart = params.get('dhcpStart');
           if (params.get('dhcpEnd')) toggleState.dhcpEnd = params.get('dhcpEnd');
           if (params.get('dhcpLease')) toggleState.dhcpLease_hour = params.get('dhcpLease') + 'h';
+        }
+        if (goformId === 'SET_DEVICE_MTU') {
+          if (params.get('mtu')) toggleState.mtu = params.get('mtu');
+          if (params.get('tcp_mss')) toggleState.tcp_mss = params.get('tcp_mss');
         }
         res.json({ result: '0' });
       });
@@ -312,7 +326,9 @@ app.use('/api/goform', (req, res) => {
     return res.json({
       BlackMacList: toggleState.BlackMacList,
       BlackNameList: toggleState.BlackNameList,
-      AclMode: toggleState.AclMode
+      WhiteMacList: toggleState.WhiteMacList || '',
+      WhiteNameList: toggleState.WhiteNameList || '',
+      AclMode: toggleState.AclMode || '2'
     });
   }
   // Connected devices (station_list + lan_station_list + blacklist)
@@ -323,16 +339,27 @@ app.use('/api/goform', (req, res) => {
       { hostname: 'iPhone-15', ip_addr: '192.168.0.101', mac_addr: 'A4:B1:C2:D3:E4:F5' },
       { hostname: 'Galaxy-S24', ip_addr: '192.168.0.102', mac_addr: 'B6:C7:D8:E9:F0:A1' },
       { hostname: 'Blocked-Laptop', ip_addr: '192.168.0.103', mac_addr: 'D8:E9:F0:A1:B2:C3' },
-    ];
+      { hostname: 'MacBook-Air', ip_addr: '192.168.0.104', mac_addr: 'E1:F2:A3:B4:C5:D6' },
+      { hostname: 'iPad-Pro', ip_addr: '192.168.0.105', mac_addr: 'F1:A2:B3:C4:D5:E6' },
+      { hostname: 'Pixel-8', ip_addr: '192.168.0.106', mac_addr: 'A1:B2:C3:D4:E5:F6' },
+      { hostname: 'Surface-Go', ip_addr: '192.168.0.107', mac_addr: 'B1:C2:D3:E4:F5:A6' },
+      { hostname: 'OnePlus-12', ip_addr: '192.168.0.108', mac_addr: 'C1:D2:E3:F4:A5:B6' },
+      { hostname: 'Xiaomi-14', ip_addr: '192.168.0.109', mac_addr: 'D1:E2:F3:A4:B5:C6' },
+      { hostname: 'Smart-TV', ip_addr: '192.168.0.110', mac_addr: 'E2:F3:A4:B5:C6:D7' },
+    ].map(function(d) { return { ...d, hostname: toggleState.hostname_overrides[d.mac_addr] || d.hostname }; });
     var lanDevices = [
-      { hostname: 'Desktop-PC', ip_addr: '192.168.0.100', mac_addr: 'C2:D3:E4:F5:A6:B7' }
-    ];
+      { hostname: 'Desktop-PC', ip_addr: '192.168.0.100', mac_addr: 'C2:D3:E4:F5:A6:B7' },
+      { hostname: 'NAS-Server', ip_addr: '192.168.0.111', mac_addr: 'F2:A3:B4:C5:D6:E7' },
+    ].map(function(d) { return { ...d, hostname: toggleState.hostname_overrides[d.mac_addr] || d.hostname }; });
     return res.json({
       station_list: allDevices.filter(function(d) { return blockedMacs.indexOf(d.mac_addr) === -1; }),
       lan_station_list: lanDevices.filter(function(d) { return blockedMacs.indexOf(d.mac_addr) === -1; }),
       BlackMacList: toggleState.BlackMacList,
       BlackNameList: toggleState.BlackNameList,
-      AclMode: toggleState.AclMode
+      WhiteMacList: toggleState.WhiteMacList || '',
+      WhiteNameList: toggleState.WhiteNameList || '',
+      AclMode: toggleState.AclMode || '2',
+      user_ip_addr: '192.168.0.64'
     });
   }
   const jitter = (base, range) => (base + (Math.random() - 0.5) * range).toFixed(0);

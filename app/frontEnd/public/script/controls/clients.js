@@ -3,16 +3,31 @@
  * Listens for 'ctrl-panel-show' event with tab='clients'.
  */
 (function () {
+  var userIp = '';
+
+  // Check if WPS is active on any chip
+  async function isWpsActive() {
+    try {
+      var wps = await getData(new URLSearchParams({ cmd: 'queryWpsStatus' }));
+      if (wps && Array.isArray(wps.ResponseList)) {
+        return wps.ResponseList.some(function (c) { return c.WpsStatus === '1'; });
+      }
+    } catch (e) {}
+    return false;
+  }
+
   async function loadClientsData() {
     var connList = document.getElementById('CTRL_CONN_LIST');
     var blackList = document.getElementById('CTRL_BLACK_LIST');
     if (!connList) return;
     try {
       var res = await getData(new URLSearchParams({
-        cmd: 'station_list,lan_station_list,queryDeviceAccessControlList',
+        cmd: 'station_list,lan_station_list,queryDeviceAccessControlList,user_ip_addr',
         multi_data: '1'
       }));
       if (!res) return;
+
+      userIp = res.user_ip_addr || '';
 
       // Merge WiFi + LAN clients
       var wifiClients = Array.isArray(res.station_list) ? res.station_list : [];
@@ -33,17 +48,26 @@
         connList.innerHTML = allClients.map(function (d) {
           var name = d.hostname || 'Unknown';
           var isWifi = wifiClients.includes(d);
+          var deviceIcon = isWifi
+            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'
+            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+          var connIcon = isWifi
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>';
+          var badge = isWifi
+            ? '<span class="ctrl-device-badge wifi">' + connIcon + ' WiFi</span>'
+            : '<span class="ctrl-device-badge cable">' + connIcon + ' Cable</span>';
           return '<div class="ctrl-device-item">' +
-            '<div class="ctrl-device-icon">' + (isWifi ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>') + '</div>' +
+            '<div class="ctrl-device-icon">' + deviceIcon + '</div>' +
             '<div class="ctrl-device-info">' +
-              '<div class="ctrl-device-name">' + escapeHtml(name) + '</div>' +
+              '<div class="ctrl-device-name" onclick="ctrlEditHostName(\'' + escapeHtml(d.mac_addr) + '\',this)" title="Tap to rename">' + escapeHtml(name) + ' ' + badge + '</div>' +
               '<div class="ctrl-device-meta">' +
                 '<span class="ctrl-device-ip">' + escapeHtml(d.ip_addr || '') + '</span>' +
                 '<span class="ctrl-device-mac">' + escapeHtml(d.mac_addr || '') + '</span>' +
               '</div>' +
             '</div>' +
             '<div class="ctrl-device-actions">' +
-              '<button class="ctrl-device-btn danger" onclick="blockDevice(\'' + escapeHtml(d.mac_addr) + '\',\'' + escapeHtml(name) + '\')">Block</button>' +
+              '<button class="ctrl-device-btn danger" onclick="blockDevice(\'' + escapeHtml(d.mac_addr) + '\',\'' + escapeHtml(name) + '\',\'' + escapeHtml(d.ip_addr || '') + '\')">Block</button>' +
             '</div>' +
           '</div>';
         }).join('');
@@ -76,20 +100,26 @@
   }
 
   // Block/Unblock device actions (global for onclick handlers)
-  window.blockDevice = async function (mac, name) {
+  window.blockDevice = async function (mac, name, ip) {
+    if (ip && userIp && ip === userIp) return showCtrlToast('Cannot block your own device', 'error');
+    if (await isWpsActive()) return showCtrlToast('Cannot modify blacklist while WPS is active', 'error');
     try {
       var cookie = await login();
       if (!cookie) return showCtrlToast('Login failed', 'error');
       var res = await getData(new URLSearchParams({ cmd: 'queryDeviceAccessControlList' }));
       var macs = (res && res.BlackMacList || '').split(';').filter(Boolean);
       var names = (res && res.BlackNameList || '').split(';').filter(Boolean);
+      if (macs.indexOf(mac) !== -1) return; // already blocked
+      if (macs.length >= 32) return showCtrlToast('Blacklist is full (max 32)', 'error');
       macs.push(mac);
-      names.push(name);
+      names.push(name || '');
       await postData(cookie, {
         goformId: 'setDeviceAccessControlList',
-        BlackMacList: macs.join(';'),
-        BlackNameList: names.join(';'),
-        AclMode: (res && res.AclMode) || '1'
+        AclMode: '2',
+        BlackMacList: macs.join(';') + ';',
+        BlackNameList: names.join(';') + ';',
+        WhiteMacList: (res && res.WhiteMacList) || '',
+        WhiteNameList: (res && res.WhiteNameList) || ''
       });
       showCtrlToast('Blocked');
       loadClientsData();
@@ -97,6 +127,7 @@
   };
 
   window.unblockDevice = async function (mac) {
+    if (await isWpsActive()) return showCtrlToast('Cannot modify blacklist while WPS is active', 'error');
     try {
       var cookie = await login();
       if (!cookie) return showCtrlToast('Login failed', 'error');
@@ -107,13 +138,99 @@
       if (idx > -1) { macs.splice(idx, 1); names.splice(idx, 1); }
       await postData(cookie, {
         goformId: 'setDeviceAccessControlList',
-        BlackMacList: macs.join(';'),
-        BlackNameList: names.join(';'),
-        AclMode: (res && res.AclMode) || '1'
+        AclMode: '2',
+        BlackMacList: macs.length ? macs.join(';') + ';' : '',
+        BlackNameList: names.length ? names.join(';') + ';' : '',
+        WhiteMacList: (res && res.WhiteMacList) || '',
+        WhiteNameList: (res && res.WhiteNameList) || ''
       });
       showCtrlToast('Unblocked');
       loadClientsData();
     } catch (err) { showCtrlToast('Unblock failed', 'error'); }
+  };
+
+  // Inline hostname editing — name transforms into input in-place
+  window.ctrlEditHostName = function (mac, el) {
+    if (el.querySelector('input')) return; // already editing
+    var current = el.childNodes[0].textContent.trim();
+    if (current === 'Unknown') current = '';
+    var badge = el.querySelector('.ctrl-device-badge');
+    var badgeHTML = badge ? badge.outerHTML : '';
+    el.innerHTML = '<input type="text" class="ctrl-hostname-input" value="' + escapeHtml(current) + '" maxlength="32" placeholder="Enter name">' + badgeHTML;
+    var input = el.querySelector('input');
+    input.focus();
+    input.select();
+
+    function save() {
+      var newName = input.value.trim();
+      if (!newName || newName === current) {
+        el.innerHTML = escapeHtml(current || 'Unknown') + ' ' + badgeHTML;
+        return;
+      }
+      el.innerHTML = escapeHtml(newName) + ' ' + badgeHTML;
+      login().then(function (cookie) {
+        if (!cookie) return;
+        postData(cookie, { goformId: 'EDIT_HOSTNAME', mac: mac, hostname: newName }).then(function () {
+          showCtrlToast('Renamed');
+          loadClientsData();
+        });
+      });
+    }
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { el.innerHTML = escapeHtml(current || 'Unknown') + ' ' + badgeHTML; }
+    });
+  };
+
+  // Manual block — inline expandable form
+  window.showManualBlockForm = function () {
+    var form = document.getElementById('CTRL_ADD_BLACK_FORM');
+    var btn = document.getElementById('CTRL_ADD_BLACK_BTN');
+    if (form) {
+      form.classList.add('open');
+      setTimeout(function () {
+        var macInput = document.getElementById('CTRL_ADD_BLACK_MAC');
+        if (macInput) { macInput.value = ''; macInput.focus(); }
+        var nameInput = document.getElementById('CTRL_ADD_BLACK_NAME');
+        if (nameInput) nameInput.value = '';
+      }, 150);
+    }
+    if (btn) btn.style.display = 'none';
+    setTimeout(function () { document.addEventListener('click', _closeBlockFormOutside); }, 50);
+  };
+
+  function _closeBlockFormOutside(e) {
+    var form = document.getElementById('CTRL_ADD_BLACK_FORM');
+    var btn = document.getElementById('CTRL_ADD_BLACK_BTN');
+    if (form && !form.contains(e.target) && e.target !== btn) {
+      var mac = document.getElementById('CTRL_ADD_BLACK_MAC');
+      var name = document.getElementById('CTRL_ADD_BLACK_NAME');
+      var hasValues = (mac && mac.value.trim()) || (name && name.value.trim());
+      if (!hasValues) hideManualBlockForm();
+    }
+  }
+
+  window.hideManualBlockForm = function () {
+    var form = document.getElementById('CTRL_ADD_BLACK_FORM');
+    var btn = document.getElementById('CTRL_ADD_BLACK_BTN');
+    if (form) form.classList.remove('open');
+    if (btn) btn.style.display = '';
+    document.removeEventListener('click', _closeBlockFormOutside);
+  };
+
+  window.confirmManualBlock = async function () {
+    var macInput = document.getElementById('CTRL_ADD_BLACK_MAC');
+    var nameInput = document.getElementById('CTRL_ADD_BLACK_NAME');
+    var mac = (macInput ? macInput.value : '').trim().toUpperCase();
+    var name = (nameInput ? nameInput.value : '').trim();
+    if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac)) {
+      return showCtrlToast('Invalid MAC format (AA:BB:CC:DD:EE:FF)', 'error');
+    }
+    if (await isWpsActive()) return showCtrlToast('Cannot modify blacklist while WPS is active', 'error');
+    hideManualBlockForm();
+    await window.blockDevice(mac, name || '', '');
   };
 
   // Refresh button

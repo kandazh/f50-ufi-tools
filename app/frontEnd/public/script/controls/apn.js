@@ -99,28 +99,71 @@
         if (mode === 'auto') {
           await (await postData(cookie, { goformId: 'APN_PROC_EX', apn_mode: 'auto' })).json();
         } else {
+          var pdpType = (form.querySelector('[name="pdp_method"]') || {}).value || 'IP';
+          var profileName = (form.querySelector('[name="profile_name"]') || {}).value || '';
+          var apnVal = (form.querySelector('[name="apn"]') || {}).value || '';
+          var authVal = (form.querySelector('[name="auth_method"]') || {}).value || 'none';
+          var userVal = (form.querySelector('[name="username"]') || {}).value || '';
+          var passVal = (form.querySelector('[name="password"]') || {}).value || '';
+
+          if (!profileName.trim()) return showCtrlToast('Profile Name is required', 'error');
+          if (!apnVal.trim()) return showCtrlToast('APN is required', 'error');
           var data = {
             goformId: 'APN_PROC_EX',
-            apn_mode: 'manual',
             apn_action: 'save',
-            index: idx,
-            profile_name: (form.querySelector('[name="profile_name"]') || {}).value || '',
+            apn_mode: 'manual',
+            profile_name: profileName,
             wan_dial: '*99#',
-            apn_wan_dial: '*99#',
             apn_select: 'manual',
-            apn_wan_apn: (form.querySelector('[name="apn"]') || {}).value || '',
-            apn_ppp_auth_mode: (form.querySelector('[name="auth_method"]') || {}).value || 'none',
-            apn_ppp_username: (form.querySelector('[name="username"]') || {}).value || '',
-            apn_ppp_passwd: (form.querySelector('[name="password"]') || {}).value || '',
-            apn_pdp_type: (form.querySelector('[name="pdp_method"]') || {}).value || 'IP',
-            pdp_type: (form.querySelector('[name="pdp_method"]') || {}).value || 'IP',
+            pdp_type: pdpType,
             pdp_select: 'auto',
             pdp_addr: '',
-            dns_mode: 'auto',
-            prefer_dns_manual: '',
-            standby_dns_manual: ''
+            index: idx
           };
+          // Send fields based on PDP type (matches native firmware expectations)
+          if (pdpType === 'IP') {
+            data.wan_apn = apnVal;
+            data.ppp_auth_mode = authVal;
+            data.ppp_username = userVal;
+            data.ppp_passwd = passVal;
+            data.dns_mode = 'auto';
+            data.prefer_dns_manual = '';
+            data.standby_dns_manual = '';
+          } else if (pdpType === 'IPv6') {
+            data.ipv6_wan_apn = apnVal;
+            data.ipv6_ppp_auth_mode = authVal;
+            data.ipv6_ppp_username = userVal;
+            data.ipv6_ppp_passwd = passVal;
+            data.ipv6_dns_mode = 'auto';
+            data.ipv6_prefer_dns_manual = '';
+            data.ipv6_standby_dns_manual = '';
+          } else {
+            // IPv4v6: send both sets
+            data.wan_apn = apnVal;
+            data.ppp_auth_mode = authVal;
+            data.ppp_username = userVal;
+            data.ppp_passwd = passVal;
+            data.dns_mode = 'auto';
+            data.prefer_dns_manual = '';
+            data.standby_dns_manual = '';
+            data.ipv6_wan_apn = apnVal;
+            data.ipv6_ppp_auth_mode = authVal;
+            data.ipv6_ppp_username = userVal;
+            data.ipv6_ppp_passwd = passVal;
+            data.ipv6_dns_mode = 'auto';
+            data.ipv6_prefer_dns_manual = '';
+            data.ipv6_standby_dns_manual = '';
+          }
           await (await postData(cookie, data)).json();
+          // Set as default profile
+          await (await postData(cookie, {
+            goformId: 'APN_PROC_EX',
+            apn_mode: 'manual',
+            apn_action: 'set_default',
+            set_default_flag: '1',
+            pdp_type: pdpType,
+            index: idx
+          })).json();
         }
         showCtrlToast('Saved');
         loadAPNData();

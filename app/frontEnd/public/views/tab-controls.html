@@ -79,7 +79,7 @@
                                 <div class="ctrl-section-title"><span class="ctrl-section-icon">🌐</span> <span data-i18n="lan_network_section">Network</span></div>
                                 <div class="ctrl-form">
                                     <label class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="lan_ip_label">Gateway Address：</span>
+                                        <span class="ctrl-label" data-i18n="lan_ip_label">Gateway Address <span class="ctrl-required">*</span></span>
                                         <div class="ctrl-ip-input" data-name="lanIp">
                                             <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="192">
                                             <span class="ctrl-ip-dot">.</span>
@@ -92,7 +92,7 @@
                                         </div>
                                     </label>
                                     <label class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="lan_netmask_label">Subnet Mask：</span>
+                                        <span class="ctrl-label" data-i18n="lan_netmask_label">Subnet Mask <span class="ctrl-required">*</span></span>
                                         <div class="ctrl-ip-input" data-name="lanNetmask">
                                             <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="255">
                                             <span class="ctrl-ip-dot">.</span>
@@ -104,11 +104,15 @@
                                             <input type="hidden" name="lanNetmask">
                                         </div>
                                     </label>
+                                    <div class="ctrl-field">
+                                        <span class="ctrl-label">MAC Address</span>
+                                        <span class="ctrl-value" id="LAN_MAC_ADDR">--</span>
+                                    </div>
                                 </div>
                             </div>
                             <!-- DHCP section -->
                             <div class="ctrl-section">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🔀</span> <span data-i18n="lan_dhcp_section">DHCP Server</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🔀</span> <span data-i18n="lan_dhcp_section">DHCP Server</span> <span class="ctrl-required">*</span></div>
                                 <div class="ctrl-form">
                                     <div class="ctrl-field">
                                         <span class="ctrl-label" data-i18n="lan_dhcp_label">DHCP Switch：</span>
@@ -155,6 +159,20 @@
                                             </label>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            <!-- MTU / MSS section -->
+                            <div class="ctrl-section">
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📐</span> MTU / MSS</div>
+                                <div class="ctrl-form">
+                                    <label class="ctrl-field">
+                                        <span class="ctrl-label">MTU <span class="ctrl-required">*</span></span>
+                                        <input class="ctrl-input" name="mtu" type="number" min="1300" max="1500" placeholder="1500" required>
+                                    </label>
+                                    <label class="ctrl-field">
+                                        <span class="ctrl-label">MSS <span class="ctrl-required">*</span></span>
+                                        <input class="ctrl-input" name="tcp_mss" type="number" min="1260" max="1460" placeholder="1460" required>
+                                    </label>
                                 </div>
                             </div>
                             <div class="ctrl-actions">
@@ -227,7 +245,7 @@
                                             <span class="ctrl-label" data-i18n="wifi_max_client_label">Max Clients：</span>
                                             <div class="ctrl-stepper">
                                                 <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">−</button>
-                                                <input class="ctrl-input ctrl-stepper-input" name="ApMaxStationNumber" type="number" min="1" max="32" value="10">
+                                                <input class="ctrl-input ctrl-stepper-input" name="ApMaxStationNumber" type="number" min="1" max="10" value="10">
                                                 <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">+</button>
                                             </div>
                                         </label>
@@ -274,12 +292,12 @@
                             <div class="ctrl-section" id="apnCtrlDetails">
                                 <div class="ctrl-section-title"><span class="ctrl-section-icon">📝</span> <span data-i18n="apn_details_section">Profile Details</span></div>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_name_label">Name：</span>
-                                    <input class="ctrl-input" id="APN_NAME_CTRL" name="profile_name" type="text" placeholder="Profile name">
+                                    <span class="ctrl-label" data-i18n="apn_name_label">Name <span class="ctrl-required">*</span>：</span>
+                                    <input class="ctrl-input" id="APN_NAME_CTRL" name="profile_name" type="text" placeholder="Profile name" required>
                                 </label>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_apn_label">APN：</span>
-                                    <input class="ctrl-input" id="APN_APN_CTRL" name="apn" type="text" placeholder="e.g. internet">
+                                    <span class="ctrl-label" data-i18n="apn_apn_label">APN <span class="ctrl-required">*</span>：</span>
+                                    <input class="ctrl-input" id="APN_APN_CTRL" name="apn" type="text" placeholder="e.g. internet" required>
                                 </label>
                                 <label class="ctrl-field">
                                     <span class="ctrl-label" data-i18n="apn_user_label">Username：</span>
@@ -337,6 +355,23 @@
                             <div id="CTRL_BLACK_LIST" class="ctrl-device-list">
                                 <div class="ctrl-device-empty">No blocked devices</div>
                             </div>
+                            <button type="button" class="ctrl-device-btn" id="CTRL_ADD_BLACK_BTN" onclick="showManualBlockForm()" style="margin-top:8px">+ Add to Blacklist</button>
+                            <div id="CTRL_ADD_BLACK_FORM" class="ctrl-inline-form">
+                                <div class="ctrl-inline-form-inner">
+                                    <div class="ctrl-inline-field">
+                                        <label>MAC Address</label>
+                                        <input type="text" id="CTRL_ADD_BLACK_MAC" maxlength="17" placeholder="AA:BB:CC:DD:EE:FF">
+                                    </div>
+                                    <div class="ctrl-inline-field">
+                                        <label>Name (optional)</label>
+                                        <input type="text" id="CTRL_ADD_BLACK_NAME" maxlength="32" placeholder="Device name">
+                                    </div>
+                                    <div class="ctrl-inline-form-actions">
+                                        <button type="button" class="ctrl-inline-btn confirm danger" onclick="confirmManualBlock()">Block</button>
+                                        <button type="button" class="ctrl-inline-btn cancel" onclick="hideManualBlockForm()">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="ctrl-actions">
                             <button type="button" class="ctrl-submit-btn" id="CTRL_REFRESH_CLIENTS" data-i18n="common_refresh_btn">Refresh</button>
@@ -344,4 +379,5 @@
                     </div>
                 </div>
             </div>
+
 

@@ -105,12 +105,15 @@
           ApBroadcastDisabled: 1,
           ApIsolate: 0,
           ChipIndex: 0,
-          AccessPointIndex: 0
+          AccessPointIndex: 0,
+          AccessPointSwitchStatus: 1
         };
         for (var [key, value] of formData.entries()) {
           var val = value.trim();
           switch (key) {
-            case 'SSID': val && (data[key] = val); break;
+            case 'SSID':
+              if (!val) return showCtrlToast('SSID is required', 'error');
+              data[key] = val; break;
             case 'AuthMode':
               data.EncrypType = val === 'OPEN' ? 'NONE' : 'CCMP';
               val && (data[key] = val); break;
@@ -122,6 +125,8 @@
         }
         if (data.AuthMode === 'OPEN' || data.EncrypType === 'NONE') {
           delete data.Password;
+        } else if (!data.Password) {
+          return showCtrlToast('Password is required', 'error');
         }
         await (await postData(cookie, data)).json();
         showCtrlToast('Saved');
