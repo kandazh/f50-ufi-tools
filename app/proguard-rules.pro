@@ -37,7 +37,7 @@
     public static org.slf4j.Logger getLogger(...);
 }
 
-# -------- 保留 JavaMail 的相关类 ----------
+# -------- Keep JavaMail related classes ----------
 -keep class javax.mail.** { *; }
 -keep class com.sun.mail.** { *; }
 -keep class jakarta.mail.** { *; }
@@ -45,7 +45,7 @@
 -keep class com.sun.activation.** { *; }
 -keep class javax.activation.** { *; }
 
-# 保留构造函数（因为邮件类经常通过反射创建）
+# Keep constructors (mail classes are often created via reflection)
 -keepclassmembers class * {
     public <init>(...);
     public *;
@@ -53,21 +53,21 @@
 -keep class com.sun.mail.util.MailLogger { *; }
 -dontwarn org.slf4j.**
 
-# 避免移除 mailcap 相关配置（部分 MIME 类型注册）
+# Avoid removing mailcap configuration (some MIME type registrations)
 -dontoptimize
 -dontshrink
 
-# 忽略 junixsocket 所依赖但不会运行时使用的注解类
+# Ignore annotation classes required by junixsocket but not used at runtime
 -dontwarn com.kohlschutter.annotations.compiletime.SuppressFBWarnings
 -dontwarn com.kohlschutter.annotations.compiletime.ExcludeFromCodeCoverageGeneratedReport
 -dontwarn org.eclipse.jdt.annotation.NonNullByDefault
 -dontwarn java.rmi.server.RemoteServer
 
-# 保留 junixsocket 相关类，避免反射或 native 调用丢失
+# Keep junixsocket related classes to prevent loss of reflection or native calls
 -keep class org.newsclub.net.unix.** { *; }
 -keep class com.kohlschutter.util.** { *; }
 
-# 防止类名被混淆
+# Prevent class names from being obfuscated
 -keepnames class org.newsclub.net.unix.**
 -dontwarn java.beans.BeanInfo
 -dontwarn java.beans.IntrospectionException

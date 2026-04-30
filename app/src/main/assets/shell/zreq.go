@@ -15,17 +15,17 @@ import (
 )
 
 var (
-	ip     = flag.String("ip", "192.168.0.1", "设备 IP 地址（可选），示例：192.168.0.1")
-	pwd    = flag.String("pwd", "", "登录密码（必填）")
-	method = flag.String("method", "GET", "请求方法：GET 或 POST（默认 GET）")
-	params = flag.String("params", "", "GET 请求参数，格式：cmd=LD&multi_data=1")
-	body   = flag.String("body", "", "POST 请求体，格式：goformId=LOGIN&isTest=false")
-	asJSON = flag.Bool("json", false, "是否以 JSON 格式输出响应")
+	ip     = flag.String("ip", "192.168.0.1", "Device IP address (optional), example: 192.168.0.1")
+	pwd    = flag.String("pwd", "", "Login password (required)")
+	method = flag.String("method", "GET", "Request method: GET or POST (default GET)")
+	params = flag.String("params", "", "GET request parameters, format: cmd=LD&multi_data=1")
+	body   = flag.String("body", "", "POST request body, format: goformId=LOGIN&isTest=false")
+	asJSON = flag.Bool("json", false, "Whether to output response in JSON format")
 )
 
 func mustFlag(val string, name string) {
 	if val == "" {
-		fmt.Printf("参数 --%s 不能为空\n", name)
+		fmt.Printf("Parameter --%s cannot be empty\n", name)
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -90,7 +90,7 @@ func login(baseURL string, pwd string, headers map[string]string) (string, error
 			return parts[0], nil
 		}
 	}
-	return "", errors.New("无法获取 Cookie")
+	return "", errors.New("unable to get Cookie")
 }
 
 func processAD(baseURL, cookie string, headers map[string]string) (string, error) {
@@ -157,7 +157,7 @@ func main() {
 
 	cookie, err := login(baseURL, *pwd, headers)
 	if err != nil {
-		fmt.Println("登录失败:", err)
+		fmt.Println("Login failed:", err)
 		os.Exit(1)
 	}
 
@@ -169,14 +169,14 @@ func main() {
 		url := baseURL + "/goform/goform_get_cmd_process?isTest=false" + qs + "&_=" + now()
 		res, err := httpGet(url, headers)
 		if err != nil {
-			fmt.Println("请求失败:", err)
+			fmt.Println("Request failed:", err)
 			os.Exit(1)
 		}
 		printOutput(res)
 	} else if *method == "POST" {
 		AD, err := processAD(baseURL, cookie, headers)
 		if err != nil {
-			fmt.Println("AD 生成失败:", err)
+			fmt.Println("AD generation failed:", err)
 			os.Exit(1)
 		}
 		headers["Cookie"] = cookie
@@ -185,12 +185,12 @@ func main() {
 		data.Set("AD", AD)
 		res, err := httpPost(baseURL+"/goform/goform_set_cmd_process", headers, data)
 		if err != nil {
-			fmt.Println("请求失败:", err)
+			fmt.Println("Request failed:", err)
 			os.Exit(1)
 		}
 		printOutput(res)
 	} else {
-		fmt.Println("不支持的 method，仅支持 GET 或 POST")
+		fmt.Println("Unsupported method, only GET or POST are supported")
 		os.Exit(1)
 	}
 }

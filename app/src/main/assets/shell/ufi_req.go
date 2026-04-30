@@ -21,7 +21,7 @@ const secretKey = "minikano_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd"
 
 func sha256Hex(data []byte) string {
 	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:]) // 默认就是小写
+	return hex.EncodeToString(sum[:]) // defaults to lowercase
 }
 
 func hmacMD5(data []byte, key []byte) []byte {
@@ -30,7 +30,7 @@ func hmacMD5(data []byte, key []byte) []byte {
 	return h.Sum(nil) // 16 bytes
 }
 
-// 生成 kano-sign
+// Generate kano-sign
 func makeKanoSign(methodUpper, urlPath string, tsMillis string) string {
 	rawData := "minikano" + methodUpper + urlPath + tsMillis
 
@@ -49,7 +49,7 @@ func makeKanoSign(methodUpper, urlPath string, tsMillis string) string {
 	combined := append(sha1, sha2...)
 	final := sha256.Sum256(combined)
 
-	return hex.EncodeToString(final[:]) // 小写hex
+	return hex.EncodeToString(final[:]) // lowercase hex
 }
 
 func normalizeMethod(m string) string {
@@ -60,22 +60,22 @@ func normalizeMethod(m string) string {
 	return strings.ToUpper(m)
 }
 
-// endpoint 可以是：
+// endpoint can be:
 // - "/api/user?id=1"
 // - "http://192.168.1.1/api/user?id=1"
-// host 如 "192.168.1.1" 或 "192.168.1.1:8080"
+// host e.g. "192.168.1.1" or "192.168.1.1:8080"
 func buildURL(host, endpoint string) (*url.URL, error) {
 	endpoint = strings.TrimSpace(endpoint)
 	if endpoint == "" {
-		return nil, fmt.Errorf("endpoint 不能为空")
+		return nil, fmt.Errorf("endpoint cannot be empty")
 	}
 
-	// 如果 endpoint 已经是完整 URL
+	// If endpoint is already a full URL
 	if strings.HasPrefix(endpoint, "http://") || strings.HasPrefix(endpoint, "https://") {
 		return url.Parse(endpoint)
 	}
 
-	// 否则拼接成 http://host + endpoint
+	// Otherwise concatenate as http://host + endpoint
 	if !strings.HasPrefix(endpoint, "/") {
 		endpoint = "/" + endpoint
 	}
@@ -104,21 +104,21 @@ func main() {
 		timeout  int
 	)
 
-	flag.StringVar(&host, "host", "192.168.0.1:2333", `目标地址，比如 "192.168.0.1" 或 "192.168.0.1:2333" (选填)`)
-	flag.StringVar(&password, "pass", "", "密码明文，用于生成 Authorization=sha256(password) (必填)")
-	flag.StringVar(&method, "X", "GET", "HTTP 方法：GET/POST/PUT/DELETE...")
-	flag.StringVar(&endpoint, "e", "", `请求路径或完整URL，如 "/api/xxx" (必填)`)
-	flag.StringVar(&data, "d", "", `请求体(JSON字符串)。GET 一般不需要。例：'{"command":"ls"}'`)
-	flag.IntVar(&timeout, "t", 10, "超时秒数 (默认 15)")
+	flag.StringVar(&host, "host", "192.168.0.1:2333", `Target address, e.g. "192.168.0.1" or "192.168.0.1:2333" (optional)`)
+	flag.StringVar(&password, "pass", "", "Plain text password, used to generate Authorization=sha256(password) (required)")
+	flag.StringVar(&method, "X", "GET", "HTTP method: GET/POST/PUT/DELETE...")
+	flag.StringVar(&endpoint, "e", "", `Request path or full URL, e.g. "/api/xxx" (required)`)
+	flag.StringVar(&data, "d", "", `Request body (JSON string). Usually not needed for GET. Example: '{"command":"ls"}'`)
+	flag.IntVar(&timeout, "t", 10, "Timeout in seconds (default 15)")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `ufi_req - MiniKano签名请求工具
+		fmt.Fprintf(os.Stderr, `ufi_req - MiniKano signed request tool
 
-用法：
+Usage:
   ufi_req -host 192.168.1.1 -pass 123456 -X POST -e /api/xxx -d '{"command":"ls"}'
   ufi_req -host 192.168.1.1 -pass 123456 -X GET  -e "/api/AT?command=AT&slot=0"
 
-参数：
+Parameters:
 `)
 		flag.PrintDefaults()
 	}
@@ -131,13 +131,13 @@ func main() {
 
 	u, err := buildURL(host, endpoint)
 	if err != nil {
-		printJSONError("URL 解析失败", err)
+		printJSONError("URL parse failed", err)
 		os.Exit(1)
 	}
 
 	m := normalizeMethod(method)
 
-	// 签名只用 path，不包含 query
+	// Signing uses only the path, not including query
 	urlPath := u.Path
 	if urlPath == "" {
 		urlPath = "/"
@@ -154,16 +154,16 @@ func main() {
 
 	req, err := http.NewRequest(m, u.String(), body)
 	if err != nil {
-		printJSONError("创建请求失败", err)
+		printJSONError("Failed to create request", err)
 		os.Exit(1)
 	}
 
-	// 必要请求头
+	// Required headers
 	req.Header.Set("kano-t", ts)
 	req.Header.Set("kano-sign", sign)
 	req.Header.Set("Authorization", auth)
 
-	// JSON 约定：只要有 body 就默认 JSON（你也可以改成只对 POST）
+	// JSON convention: default to JSON whenever there is a body (can be changed to POST only)
 	if data != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -174,14 +174,14 @@ func main() {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		printJSONError("响应失败", err)
+		printJSONError("Response failed", err)
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
 
-	// 输出：状态码 + body
+	// Output: status code + body
 	if resp.StatusCode != 200 {
 		fmt.Printf("{\"error\":\"HTTP %d %s\"}", resp.StatusCode, http.StatusText(resp.StatusCode))
 	} else {

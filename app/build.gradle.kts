@@ -9,13 +9,13 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-// 注册执行 npm 命令的任务
+// Register task to execute npm commands
 val npmBuild by tasks.registering(Exec::class) {
     workingDir = file("frontEnd")
     doFirst {
-        println("✅ 当前 workingDir: $workingDir")
-        println("✅ 系统平台: ${System.getProperty("os.name")}")
-        println("✅ 环境变量 PATH:")
+        println("✅ Current workingDir: $workingDir")
+        println("✅ System platform: ${System.getProperty("os.name")}")
+        println("✅ Environment PATH:")
         println(System.getenv("PATH"))
     }
     commandLine = if (System.getProperty("os.name").startsWith("Windows")) {
@@ -27,14 +27,14 @@ val npmBuild by tasks.registering(Exec::class) {
     description = "Build frontend assets using npm"
 
     doFirst {
-        println("[Gradle] 开始执行 npm run build")
+        println("[Gradle] Starting npm run build")
     }
     doLast {
-        println("[Gradle] npm run build 完成")
+        println("[Gradle] npm run build completed")
     }
 }
 
-// 让打包任务依赖这个 npm 构建
+// Make packaging tasks depend on this npm build
 tasks.configureEach {
     if (name.startsWith("assemble") || name.startsWith("install") || name == "build") {
         dependsOn(npmBuild)
@@ -67,7 +67,7 @@ android {
         applicationId = "com.minikano.f50_sms"
         minSdk = 26
         targetSdk = 33
-        // 动态生成 versionCode 为 yyyyMMdd 格式
+        // Dynamically generate versionCode in yyyyMMdd format
         versionCode = SimpleDateFormat("yyyyMMdd").format(Date()).toInt()
         versionName = "4.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -133,11 +133,11 @@ android {
 
 dependencies {
 
-    // Ktor 核心与 CIO 引擎
+    // Ktor core and CIO engine
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
 
-    // 常用功能插件
+    // Common feature plugins
     implementation(libs.ktor.server.default.headers)
     implementation(libs.kotlinx.serialization.json)
 
