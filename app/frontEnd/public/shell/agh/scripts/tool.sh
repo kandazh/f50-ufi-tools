@@ -34,7 +34,7 @@ start_adguardhome() {
   # set timezone
   export TZ="$timezone"
   # run binary
-  "$BIN_DIR/AdGuardHome" --no-check-update >>"$AGH_DIR/bin.log" 2>&1 &
+  "$BIN_DIR/AdGuardHome" -w "$BIN_DIR" -c "$BIN_DIR/AdGuardHome.yaml" --no-check-update >>"$AGH_DIR/bin.log" 2>&1 &
   adg_pid=$!
 
   # wait briefly for AdGuardHome to initialize

@@ -173,16 +173,24 @@
     }).catch(function () { return -1; });
   }
 
-  // Measure download speed via curl
+  // Measure download speed via curl — loops for ~6 seconds
   function measureDownload(url) {
     setStatus('Testing download speed...');
-    addLog('curl download: ' + url.split('/').pop());
-    // Use time-based measurement since curl -w format breaks in root shell
-    var cmd = 'T1=$(date +%s%N); curl -sL -o /data/local/tmp/speedtest_dl "' + url + '"; T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); SZ=$(wc -c < /data/local/tmp/speedtest_dl); echo "$SZ $MS"; rm -f /data/local/tmp/speedtest_dl';
+    addLog('curl download (10s loop): ' + url.split('/').pop());
+    // Loop downloads for DURATION seconds, sum total bytes and elapsed time
+    var cmd = 'DURATION=10; TOTAL=0; T1=$(date +%s%N); END=$(( $(date +%s) + DURATION )); ' +
+      'while [ $(date +%s) -lt $END ]; do ' +
+        'curl -sL -o /data/local/tmp/speedtest_dl "' + url + '" && ' +
+        'SZ=$(wc -c < /data/local/tmp/speedtest_dl) && TOTAL=$((TOTAL + SZ)); ' +
+      'done; ' +
+      'T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "$TOTAL $MS"; rm -f /data/local/tmp/speedtest_dl';
     return shellExec(cmd, 90000).then(function (res) {
       var output = (res.output || res.result || '').trim();
       addLog('Result: ' + output);
-      var parts = output.split(/\s+/);
+      // Get the last line (in case curl outputs something)
+      var lines = output.split('\n');
+      var lastLine = lines[lines.length - 1].trim();
+      var parts = lastLine.split(/\s+/);
       if (parts.length >= 2) {
         var bytes = parseFloat(parts[0]);
         var ms = parseFloat(parts[1]);
@@ -195,20 +203,28 @@
     }).catch(function () { return { MBps: -1, bytes: 0, time: 0 }; });
   }
 
-  // Measure upload speed via curl POST
+  // Measure upload speed via curl POST — loops for ~10 seconds
   function measureUpload() {
     setStatus('Testing upload speed...');
-    addLog('curl upload test (1MB)...');
-    // Use time-based measurement
-    var cmd = 'T1=$(date +%s%N); dd if=/dev/zero bs=1024 count=1024 2>/dev/null | curl -sL -o /dev/null -X POST -d @- "http://speed.cloudflare.com/__up"; T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "1048576 $MS"';
-    return shellExec(cmd, 60000).then(function (res) {
+    addLog('curl upload test (10s loop)...');
+    // Create a 2MB file, then loop uploads for DURATION seconds
+    var cmd = 'dd if=/dev/urandom of=/data/local/tmp/speedtest_ul bs=1024 count=2048 2>/dev/null; ' +
+      'DURATION=10; TOTAL=0; T1=$(date +%s%N); END=$(( $(date +%s) + DURATION )); ' +
+      'while [ $(date +%s) -lt $END ]; do ' +
+        'curl -sL -o /dev/null -X POST --data-binary @/data/local/tmp/speedtest_ul "http://speed.cloudflare.com/__up" && ' +
+        'TOTAL=$((TOTAL + 2097152)); ' +
+      'done; ' +
+      'T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "$TOTAL $MS"; rm -f /data/local/tmp/speedtest_ul';
+    return shellExec(cmd, 90000).then(function (res) {
       var output = (res.output || res.result || '').trim();
       addLog('Result: ' + output);
-      var parts = output.split(/\s+/);
+      var lines = output.split('\n');
+      var lastLine = lines[lines.length - 1].trim();
+      var parts = lastLine.split(/\s+/);
       if (parts.length >= 2) {
         var bytes = parseFloat(parts[0]);
         var ms = parseFloat(parts[1]);
-        if (ms > 0) {
+        if (ms > 0 && bytes > 0) {
           return bytes / (ms / 1000) / 1048576;
         }
       }
