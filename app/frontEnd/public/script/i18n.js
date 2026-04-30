@@ -43,6 +43,7 @@ function applyTranslations() {
 
 function createLanguageSelector() {
     const selector = document.querySelector("#LANG");
+    if (!selector) return;
 
     Object.entries(AVAILABLE_LANGS).forEach(([key, label]) => {
         const option = document.createElement("option");
@@ -59,6 +60,7 @@ function createLanguageSelector() {
 
 function updateSelectValue(lang) {
     const selector = document.querySelector("#LANG");
+    if (!selector) return;
     selector.value = lang;
 }
 

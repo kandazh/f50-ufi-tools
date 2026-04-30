@@ -3780,6 +3780,7 @@ function main_func() {
         // if (dual_sim_support && dual_sim_support == '0') {
         //     return
         // } else {
+        if (!selectEl) return;
         selectEl.style.display = ''
         // }
         if (!(await initRequestData()) || !selectEl) {
