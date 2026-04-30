@@ -19,14 +19,14 @@ object SmbThrottledRunner {
 
     fun runOnceInThread(context: Context) {
         if (running.get()) {
-            KanoLog.d("UFI_TOOLS_LOG", "SMB 命令正在执行中，跳过")
+            KanoLog.d("UFI_TOOLS_LOG", "SMB command in progress, skipping")
             return
         }
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val gatewayIP = sharedPrefs.getString(PREF_GATEWAY_IP, "192.168.0.1:445")
 
-        KanoLog.d("UFI_TOOLS_LOG", "SMB 命令正在执行中,IP:${gatewayIP}，跳过")
+        KanoLog.d("UFI_TOOLS_LOG", "SMB command in progress, IP: ${gatewayIP}，skipping")
 
         val host = gatewayIP?.substringBefore(":")
 
@@ -41,19 +41,19 @@ object SmbThrottledRunner {
                 try {
                     KanoLog.d(
                         "UFI_TOOLS_LOG",
-                        "开始执行 SMB 命令,连接到：\"smb://$host/Internal/\""
+                        "Starting SMB command, connecting to: \"smb://$host/Internal/\""
                     )
 
                     val ctx = SingletonContext.getInstance()
                     val smbFile = SmbFile("smb://$host/Internal/", ctx)
 
                     if (smbFile.exists()) {
-                        KanoLog.d("UFI_TOOLS_LOG", "SMB路径存在")
+                        KanoLog.d("UFI_TOOLS_LOG", "SMB path exists")
                         if (!isExecutedSambaMount) {
                             try {
                                 val socketPath = File(context.filesDir, "kano_root_shell.sock")
                                 if (!socketPath.exists()) {
-                                    throw Exception("执行命令失败，没有找到 socat 创建的 sock (高级功能是否开启？)")
+                                    throw Exception("Command failed, socat socket not found (are advanced features enabled?)")
                                 }
                                 val result =
                                     RootShell.sendCommandToSocket(
@@ -79,30 +79,30 @@ done
                         """.trimIndent(),
                                         socketPath.absolutePath
                                     )
-                                        ?: throw Exception("请检查命令输入格式")
+                                        ?: throw Exception("Please check command input format")
 
-                                KanoLog.d("UFI_TOOLS_LOG", "smb挂载执行结果： $result")
+                                KanoLog.d("UFI_TOOLS_LOG", "SMB mount execution result: $result")
                                 isExecutedSambaMount = true
                             } catch (e: Exception) {
-                                KanoLog.e("UFI_TOOLS_LOG", "smb挂载执行失败", e)
+                                KanoLog.e("UFI_TOOLS_LOG", "SMB mount execution failed", e)
                             }
                         }
                     } else {
-                        KanoLog.d("UFI_TOOLS_LOG", "SMB路径不存在")
+                        KanoLog.d("UFI_TOOLS_LOG", "SMBPath does not exist")
                         needOpenSMB = true
                     }
                 } catch (e: Exception) {
-                    KanoLog.e("UFI_TOOLS_LOG", "SMB命令错误：${e.message}")
+                    KanoLog.e("UFI_TOOLS_LOG", "SMB command error: ${e.message}")
                     needOpenSMB = true
                 } finally {
                     running.set(false)
-                    KanoLog.d("UFI_TOOLS_LOG", "SMB 命令执行完成")
+                    KanoLog.d("UFI_TOOLS_LOG", "SMB command execution complete")
                 }
                 if (needOpenSMB) {
                     openSMB(context)
                 }
             } else {
-                KanoLog.d("UFI_TOOLS_LOG", "没有检测到smb配置更改，高级功能未开启，无需执行")
+                KanoLog.d("UFI_TOOLS_LOG", "No SMB config change detected, advanced features not enabled, skipping")
                 running.set(false)
             }
         }.start()

@@ -15,7 +15,7 @@ import com.minikano.f50_sms.utils.SmsPoll.forwardByEmail
 import com.minikano.f50_sms.utils.SmsPoll.forwardSmsByCurl
 import com.minikano.f50_sms.utils.SmsPoll.forwardSmsByDingTalk
 
-// 定时任务管理器
+// Scheduled task manager
 object TaskSchedulerManager {
     @SuppressLint("StaticFieldLeak")
     var scheduler: TaskScheduler? = null
@@ -28,7 +28,7 @@ object TaskSchedulerManager {
             scheduler!!.restoreTasks()
             scheduler!!.start()
             scheduler!!.reschedule()
-            KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "定时任务调度器已启动，共有 ${scheduler?.listAllTasks()?.size} 个任务")
+            KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "Task scheduler started, total ${scheduler?.listAllTasks()?.size} tasks")
         }
     }
 
@@ -37,7 +37,7 @@ object TaskSchedulerManager {
     fun stop() {
         scheduler?.stop()
         scheduler = null
-        KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "scheduler 实例已停止！")
+        KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "scheduler Instance stopped!")
     }
 }
 
@@ -82,7 +82,7 @@ class TaskScheduler(
     private fun getNextTriggerTimeMillis(): Long? {
         val now = Calendar.getInstance()
         return taskMap.values.mapNotNull { task ->
-            // 跳过一次性任务已触发的
+            // skippingOne-time task already triggered
             if (!task.repeatDaily && task.hasTriggered) return@mapNotNull null
 
             try {
@@ -109,15 +109,15 @@ class TaskScheduler(
     fun start() {
         if (job?.isActive == true) return
         reschedule()
-        startPolling()  // 启动轮询器
+        startPolling()  // Start poller
     }
 
     private fun startPolling() {
         pollJob?.cancel()
         pollJob = scope.launch {
             while (isActive) {
-                delay(5 * 60 * 1000L) // 每 5 分钟
-                KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "定时轮询触发 reschedule() 更新")
+                delay(5 * 60 * 1000L) // Every 5 minutes
+                KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "Periodic poll triggered reschedule() update")
                 reschedule()
             }
         }
@@ -131,7 +131,7 @@ class TaskScheduler(
             resetDailyTaskFlags()
         }
         val nextTimeMillis = getNextTriggerTimeMillis() ?: return
-        KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "下一任务时间：${SimpleDateFormat("HH:mm", Locale.getDefault()).format(nextTimeMillis)}")
+        KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "Next task time: ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(nextTimeMillis)}")
         val delayMillis = (nextTimeMillis - System.currentTimeMillis()).coerceAtLeast(0)
 
         job = scope.launch {
@@ -151,7 +151,7 @@ class TaskScheduler(
         for ((_, task) in taskMap) {
             if (task.time == nowTimeStr && !task.hasTriggered) {
                 task.task()
-                KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "定时任务 ${task.id} 在 $nowTimeStr 执行了")
+                KanoLog.d("UFI_TOOLS_LOG_TaskScheduler", "Scheduled task ${task.id} at $nowTimeStr executed")
                 task.lastRunTimestamp = currentMillis
                 task.hasTriggered = true
                 shouldPersist = true
@@ -179,7 +179,7 @@ class TaskScheduler(
             time.matches(Regex("\\d{2}:\\d{2}:\\d{2}")) -> time.substring(0, 5)
             time.matches(Regex("\\d{2}:\\d{2}")) -> time
             else -> {
-                KanoLog.w("UFI_TOOLS_LOG_TaskScheduler", "时间格式不正确: $time，默认使用原值")
+                KanoLog.w("UFI_TOOLS_LOG_TaskScheduler", "Time format incorrect: $time，Using original value by default")
                 time
             }
         }
@@ -275,7 +275,7 @@ class TaskScheduler(
                         }
                     } else {
                         scope.launch {
-                            if (!scope.isActive) return@launch //避免任务在已停止调度器中执行
+                            if (!scope.isActive) return@launch //Avoid task executing in stopped scheduler
                             try {
                                 val req = KanoGoformRequest("http://$ADB_IP:8080")
                                 val cookie = req.login(ADMIN_PWD)
@@ -285,14 +285,14 @@ class TaskScheduler(
                                     if (result?.getString("result") == "success") {
                                         KanoLog.d(
                                             "UFI_TOOLS_LOG_TaskScheduler",
-                                            "zte_web_API执行成功"
+                                            "zte_web_APIExecution successful"
                                         )
                                     }
                                 }
                             } catch (e: Exception) {
                                 KanoLog.e(
                                     "UFI_TOOLS_LOG_TaskScheduler",
-                                    "任务 ${saved.id} 执行失败: ${e.message}"
+                                    "Task ${saved.id} execution failed: ${e.message}"
                                 )
                             }
                         }

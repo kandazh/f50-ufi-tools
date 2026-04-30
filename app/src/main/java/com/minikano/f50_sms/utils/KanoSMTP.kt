@@ -11,13 +11,13 @@ class KanoSMTP(
     private val username: String,
     private val password: String,
 ) {
-    // 防止重复发送
+    // Prevent duplicate sends
     private val isSending = AtomicBoolean(false)
 
     fun sendEmail(to: String, subject: String, body: String,isHTML:Boolean=true) {
-        // 如果已经在发送中，则直接返回
+        // If already sending, return immediately
         if (!isSending.compareAndSet(false, true)) {
-            KanoLog.w("UFI_TOOLS_LOG", "邮件正在发送中，忽略重复发送")
+            KanoLog.w("UFI_TOOLS_LOG", "Email sending, ignoring duplicate")
             return
         }
 
@@ -54,12 +54,12 @@ class KanoSMTP(
                     }
                 }
 
-                KanoLog.d("UFI_TOOLS_LOG", "开始发送邮件...")
+                KanoLog.d("UFI_TOOLS_LOG", "Sending email...")
                 Transport.send(message)
-                KanoLog.d("UFI_TOOLS_LOG", "$username 邮件发送成功")
+                KanoLog.d("UFI_TOOLS_LOG", "$username Email sent successfully")
 
             } catch (e: Exception) {
-                KanoLog.e("UFI_TOOLS_LOG", "$username 邮件发送失败: ${e.message}", e)
+                KanoLog.e("UFI_TOOLS_LOG", "$username Email send failed: ${e.message}", e)
             } finally {
                 isSending.set(false)
             }

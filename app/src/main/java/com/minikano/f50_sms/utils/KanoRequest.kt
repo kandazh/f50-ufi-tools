@@ -42,7 +42,7 @@ class KanoRequest {
                     response.body?.string()
                 }
             } catch (e: Exception) {
-                println("请求异常: ${e.message}")
+                println("Request exception: ${e.message}")
                 null
             }
         }

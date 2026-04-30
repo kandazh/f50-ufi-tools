@@ -11,42 +11,42 @@ class WakeLock {
         private var wakeLock3: PowerManager.WakeLock? = null
 
         fun execWakeLock (pm: PowerManager){
-            //防止重复持有唤醒锁
+            //Prevent holding duplicate wake locks
             releaseWakeLock()
             wakeLock = pm.newWakeLock(
                 PowerManager.SCREEN_DIM_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
                 "UFI-TOOLS::WakeLock"
             )
             wakeLock?.acquire()
-            Log.d("UFI_TOOLS_LOG", "已开启唤醒锁，防止屏幕熄灭!")
+            Log.d("UFI_TOOLS_LOG", "Wake lock enabled, preventing screen off!")
 
             wakeLock2 = pm.newWakeLock(
                 PowerManager.FULL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
                 "UFI-TOOLS::FULL_WAKE_LOCK"
             )
             wakeLock2?.acquire()
-            Log.d("UFI_TOOLS_LOG", "已开启更强的唤醒锁，保持屏幕常亮并唤醒!")
+            Log.d("UFI_TOOLS_LOG", "Stronger wake lock enabled, keeping screen on!")
 
             wakeLock3 = pm.newWakeLock(
                 PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
                 "UFI-TOOLS::BrightWakeLock"
             )
             wakeLock3?.acquire()
-            Log.d("UFI_TOOLS_LOG", "已开启屏幕亮度唤醒锁，保持屏幕常亮并唤醒!")
+            Log.d("UFI_TOOLS_LOG", "Screen brightness wake lock enabled, keeping screen on!")
         }
 
         fun releaseWakeLock() {
             wakeLock?.let {
                 if (it.isHeld) it.release()
-                Log.d("UFI_TOOLS_LOG", "已释放唤醒锁")
+                Log.d("UFI_TOOLS_LOG", "Wake lock released")
             }
             wakeLock2?.let {
                 if (it.isHeld) it.release()
-                Log.d("UFI_TOOLS_LOG", "已释放FULL_WAKE_LOCK")
+                Log.d("UFI_TOOLS_LOG", "FULL_WAKE_LOCK released")
             }
             wakeLock3?.let {
                 if (it.isHeld) it.release()
-                Log.d("UFI_TOOLS_LOG", "已释放BrightWakeLock")
+                Log.d("UFI_TOOLS_LOG", "BrightWakeLock released")
             }
         }
     }

@@ -5,7 +5,7 @@ import android.util.Log
 
 object DeviceModelChecker {
     suspend fun checkBlackList(context:Context): Boolean {
-        Log.d("UFI_TOOLS_LOG_devcheck", "黑名单功能不启用")
+        Log.d("UFI_TOOLS_LOG_devcheck", "Blocklist feature disabled")
         return false
     }
 

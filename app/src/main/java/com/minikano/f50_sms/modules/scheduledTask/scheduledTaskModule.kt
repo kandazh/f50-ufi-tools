@@ -33,8 +33,8 @@ fun Route.scheduledTaskModule(context: Context) {
     val TAG = "[$BASE_TAG]_ScheduledTaskModule"
 
     /**
-     * 添加定时任务（支持时间 + 是否每天重复）
-     * 参数：id、time（HH:mm:ss 或 yyyy-MM-dd HH:mm:ss）、repeatDaily（可选，默认true）
+     * Add scheduled task (time + daily repeat)
+     * Params: id, time (HH:mm:ss or yyyy-MM-dd HH:mm:ss), repeatDaily (optional, default true)
      */
     post("/api/add_task") {
         try {
@@ -44,9 +44,9 @@ fun Route.scheduledTaskModule(context: Context) {
             val id = json.optString("id", "").trim()
             val time = json.optString("time", "").trim()
             val repeatDaily = json.optBoolean("repeatDaily", true)
-            val actionJson = json.optJSONObject("action")?:  throw Exception("请传入action")
+            val actionJson = json.optJSONObject("action")?:  throw Exception("Please provide action")
 
-            // 把 JSONObject 转成 Map<String, String>
+            // Convert JSONObject to Map<String, String>
             val paramsMap = mutableMapOf<String, String>()
             val keys = actionJson.keys()
             while (keys.hasNext()) {
@@ -54,7 +54,7 @@ fun Route.scheduledTaskModule(context: Context) {
                 paramsMap[key] = actionJson.optString(key)
             }
 
-            if (id.isEmpty() || time.isEmpty()) throw Exception("参数不完整")
+            if (id.isEmpty() || time.isEmpty()) throw Exception("Incomplete parameters")
 
             TaskSchedulerManager.get()?.addTask(System.currentTimeMillis() ,id, time, repeatDaily, paramsMap)
 
@@ -66,10 +66,10 @@ fun Route.scheduledTaskModule(context: Context) {
             )
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "添加任务失败：${e.message}")
+            KanoLog.d(TAG, "Failed to add task: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"添加任务失败: ${e.message}"}""",
+                """{"error":"Failed to add task: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
@@ -77,8 +77,8 @@ fun Route.scheduledTaskModule(context: Context) {
     }
 
     /**
-     * 删除定时任务
-     * 参数：id
+     * Delete scheduled task
+     * Parameter: id
      */
     post("/api/remove_task") {
         try {
@@ -86,7 +86,7 @@ fun Route.scheduledTaskModule(context: Context) {
             val json = JSONObject(body)
 
             val id = json.optString("id", "").trim()
-            if (id.isEmpty()) throw Exception("参数id不能为空")
+            if (id.isEmpty()) throw Exception("Parameter id cannot be empty")
 
             TaskSchedulerManager.get()?.removeTask(id)
 
@@ -98,10 +98,10 @@ fun Route.scheduledTaskModule(context: Context) {
             )
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "删除任务失败：${e.message}")
+            KanoLog.d(TAG, "Failed to delete task: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"删除任务失败: ${e.message}"}""",
+                """{"error":"Failed to delete task: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
@@ -109,13 +109,13 @@ fun Route.scheduledTaskModule(context: Context) {
     }
 
     /**
-     * 删除全部任务
+     * Delete all tasks
      */
     post("/api/clear_task") {
         try {
 
             val scheduler = TaskSchedulerManager.get()
-                ?: throw IllegalStateException("任务调度器未初始化")
+                ?: throw IllegalStateException("Task scheduler not initialized")
 
             call.response.headers.append("Access-Control-Allow-Origin", "*")
 
@@ -129,10 +129,10 @@ fun Route.scheduledTaskModule(context: Context) {
             )
 
         } catch (e: Exception) {
-            KanoLog.d("[$BASE_TAG]_pluginsModule", "清空定时任务出错: ${e.message}")
+            KanoLog.d("[$BASE_TAG]_pluginsModule", "Error clearing scheduled tasks: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"清空定时任务出错: ${e.message}"}""",
+                """{"error":"Error clearing scheduled tasks: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
@@ -140,7 +140,7 @@ fun Route.scheduledTaskModule(context: Context) {
     }
 
     /**
-     * 获取任务列表
+     * Get task list
      */
     get("/api/list_tasks") {
         try {
@@ -166,10 +166,10 @@ fun Route.scheduledTaskModule(context: Context) {
             call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "获取任务列表失败：${e.message}")
+            KanoLog.d(TAG, "Failed to get task list: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取任务列表失败"}""",
+                """{"error":"Failed to get task list"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
@@ -177,14 +177,14 @@ fun Route.scheduledTaskModule(context: Context) {
     }
 
     /**
-     * 根据 ID 获取单个任务详情
+     * Get single task details by ID
      */
     get("/api/get_task") {
         val id = call.request.queryParameters["id"]
         if (id.isNullOrBlank()) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"缺少任务ID"}""",
+                """{"error":"Missing task ID"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.BadRequest
             )
@@ -197,7 +197,7 @@ fun Route.scheduledTaskModule(context: Context) {
             if (task == null) {
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"任务不存在"}""",
+                    """{"error":"Task not found"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.NotFound
                 )
@@ -217,10 +217,10 @@ fun Route.scheduledTaskModule(context: Context) {
                 call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
             }
         } catch (e: Exception) {
-            KanoLog.d(TAG, "获取任务失败：${e.message}")
+            KanoLog.d(TAG, "Failed to get task: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取任务失败"}""",
+                """{"error":"Failed to get task"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

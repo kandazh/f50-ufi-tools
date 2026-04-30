@@ -10,10 +10,10 @@ import java.io.FileReader
 import java.util.Locale
 
 /*
-* 感谢群内 执念 大哥提供的思路
+* Thanks to community members for the approach
 * */
 
-// 数据类
+// Data class
 data class CpuStat(val cpu: String, val total: Long, val idle: Long)
 data class ThermalZone(val type: String, val temp: Int)
 data class MemoryInfo(
@@ -74,7 +74,7 @@ private fun getClusterMap(): Map<Int, String> {
     return clusterMap
 }
 
-//获取json格式的cpu频率（含集群信息：LITTLE/MID/BIG）
+//Get CPU freq JSON (cluster: LITTLE/MID/BIG)
 suspend fun getCpuFreqJson(): String = withContext(Dispatchers.IO) {
     val json = JSONObject()
     val clusterMap = getClusterMap()
@@ -142,9 +142,9 @@ private fun readProcStat(): Map<String, CpuStat> {
             val parts = line.trim().split("\\s+".toRegex())
             if (parts.size > 4) {
                 val cpuName = parts[0]
-                // 计算总时间（所有字段之和）
+                // Calculate total (sum of all fields)
                 val total = parts.subList(1, parts.size).sumOf { it.toLongOrNull() ?: 0 }
-                // 空闲时间 = idle + iowait (第4列 + 第5列)
+                // Idle = idle + iowait (col 4 + col 5)
                 val idle = (parts[4].toLongOrNull() ?: 0) +
                         (parts.getOrNull(5)?.toLongOrNull() ?: 0)
                 stats[cpuName] = CpuStat(cpuName, total, idle)
@@ -157,19 +157,19 @@ private fun readProcStat(): Map<String, CpuStat> {
 suspend fun getMemoryUsage(): String = withContext(Dispatchers.IO) {
     val memInfo = readProcMeminfo()
 
-    // 计算内存使用率
+    // Calculate memory usage
     val used = memInfo.total - memInfo.available
     val usagePercent = if (memInfo.total > 0) {
         used.toDouble() * 100 / memInfo.total
     } else 0.0
 
-    // 计算交换空间使用率
+    // Calculate swap space usage
     val swapUsed = memInfo.swapTotal - memInfo.swapFree
     val swapUsagePercent = if (memInfo.swapTotal > 0) {
         swapUsed.toDouble() * 100 / memInfo.swapTotal
     } else 0.0
 
-    // 构建JSON
+    // Build JSON
     return@withContext buildJsonObject {
         put("mem_total_kb", memInfo.total)
         put("mem_available_kb", memInfo.available)
@@ -208,7 +208,7 @@ private fun parseMemValue(line: String): Long {
         ?.toLongOrNull() ?: 0L
 }
 
-//CPU温度
+//CPU temperature
 suspend fun readThermalZones(): Pair<Int, String> = withContext(Dispatchers.IO) {
     val thermalDir = File("/sys/class/thermal")
     val zones = mutableListOf<ThermalZone>()
@@ -221,7 +221,7 @@ suspend fun readThermalZones(): Pair<Int, String> = withContext(Dispatchers.IO) 
             try {
                 val sensorType = typeFile.readText().trim()
                 val tempValue = tempFile.readText().trim().toIntOrNull() ?: -1
-                //大于124摄氏度的传感器不显示（过滤无意义值）
+                //Hide sensors above 124C (filter meaningless values)
                 if (tempValue <= 124 * 1000 && tempValue >= 0 && sensorType.isNotEmpty()) {
                     zones.add(ThermalZone(sensorType, tempValue))
                 }
@@ -235,10 +235,10 @@ suspend fun readThermalZones(): Pair<Int, String> = withContext(Dispatchers.IO) 
     return@withContext Pair(maxTemp, json)
 }
 
-//电池电压，电流
+//Battery voltage, current
 data class BatteryInfo(
-    var current_uA: Int = -1,  // 单位 μA
-    var voltage_uV: Int = -1  // 单位 μV
+    var current_uA: Int = -1,  // Unit: uA
+    var voltage_uV: Int = -1  // Unit: uV
 )
 suspend fun readBatteryStatus(): BatteryInfo = withContext(Dispatchers.IO) {
     val baseDir = File("/sys/class/power_supply/battery")
@@ -291,7 +291,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
             try {
                 val product = productFile.readText().trim()
                 val speed = speedFile.readText().trim().toIntOrNull() ?: 0
-                //排除掉不是 真正 USB-C 的设备
+                //Exclude devices that are not real USB-C
                 if (
                     !(deviceDir.name.startsWith("usb")) &&
                     !(product.contains("Host Controller", ignoreCase = true)) &&
@@ -304,7 +304,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
         }
     }
 
-    // 顺便获取 Type-C host/gadget 模式
+    // Also get Type-C host/gadget mode
     // cat /sys/class/android_usb/android0/state
     var typeCMode = "unknown"
     val portStateFile = File("/sys/class/android_usb/android0/state")
@@ -313,7 +313,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
         typeCMode = if (state == "DISCONNECTED") "host" else "gadget"
     }
 
-    //如果是gadget模式，从另一个地方获取速度
+    //If gadget mode, get speed from another source
     if(typeCMode == "gadget"){
         val udcDir = File("/sys/class/udc")
         if (udcDir.exists()){
@@ -338,7 +338,7 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
         }
     }
 
-    // 构建 JSON
+    // Build JSON
     val jsonArray = JSONArray()
     devices.forEach { dev ->
         val obj = JSONObject()
@@ -355,11 +355,11 @@ suspend fun readUsbDevices(): Pair<Int, String> = withContext(Dispatchers.IO) {
     return@withContext Pair(maxSpeed, jsonRoot.toString())
 }
 
-//连接数
+//Connection count
 data class NetConnCount(
     var tcp: Int = -1,
     var tcpActive: Int = -1,   // ESTABLISHED
-    var tcpOther: Int = -1,    // 其他状态
+    var tcpOther: Int = -1,    // Other states
     var tcp6: Int = -1,
     var udp: Int = -1,
     var udp6: Int = -1,
@@ -399,9 +399,9 @@ private fun countTcpStates(path: String): Pair<Int, Int> {
 
                 total++
 
-                // 第4列是状态 hex
-                // 直接取固定位置比 split 更省CPU
-                // 但为稳妥仍用轻量 split
+                // 4th column is state hex
+                // Direct fixed position is more CPU efficient than split
+                // But still use lightweight split for safety
                 val parts = line.trim().split(Regex("\\s+"))
                 if (parts.size >= 4 && parts[3] == "01") {
                     active++ // ESTABLISHED
@@ -420,17 +420,17 @@ private fun countProcNetLines(path: String, skipHeader: Boolean): Int {
 
     return try {
         BufferedReader(FileReader(f), /*bufferSize=*/ 8 * 1024).use { br ->
-            if (skipHeader) br.readLine() // 读掉表头
+            if (skipHeader) br.readLine() // Skip header line
             var count = 0
             while (true) {
                 val line = br.readLine() ?: break
-                // 过滤空行
+                // Filter empty lines
                 if (line.isNotEmpty()) count++
             }
             count
         }
     } catch (_: Throwable) {
-        // 无权限 / 读取失败
+        // No permission / read failed
         -1
     }
 }

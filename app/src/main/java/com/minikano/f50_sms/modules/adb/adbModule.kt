@@ -18,14 +18,14 @@ import io.ktor.server.routing.post
 import org.json.JSONObject
 import androidx.core.content.edit
 
-//静态资源
+//Static resources
 fun Route.adbModule(context: Context) {
     val TAG = "[$BASE_TAG]_adbModule"
 
-    //更新ADMIN_PWD
+    //Update ADMIN_PWD
     post("/api/update_admin_pwd"){
         try {
-            // 获取 JSON Body
+            // Get JSON body
             val body = call.receiveText()
             val json = JSONObject(body)
 
@@ -33,29 +33,29 @@ fun Route.adbModule(context: Context) {
 
             val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-            // 保存配置
+            // Save config
             sharedPrefs.edit(commit = true) {
                 putString("ADMIN_PWD", password)
             }
 
-            // 响应
+            // Respond
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
                 """{"result":"success"}""",
                 ContentType.Application.Json
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "解析ADB_WIFI POST 请求出错：${e.message}")
+            KanoLog.d(TAG, "Parse ADB_WIFI POST request error: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"参数解析失败"}""",
+                """{"error":"Parameter parsing failed"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //获取网络ADB自启状态
+    //Get network ADB auto-start status
     get("/api/adb_wifi_setting") {
         try {
             val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -66,20 +66,20 @@ fun Route.adbModule(context: Context) {
                 ContentType.Application.Json
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "获取网络adb信息出错： ${e.message}")
+            KanoLog.d(TAG, "Error getting network ADB info: ${e.message}")
 
             call.respondText(
-                """{"error":"获取网络adb信息失败"}""",
+                """{"error":"Failed to get network ADB info"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //修改网络ADB自启状态
+    //Change network ADB auto-start status
     post("/api/adb_wifi_setting") {
         try {
-            // 获取 JSON Body
+            // Get JSON body
             val body = call.receiveText()
             val json = JSONObject(body)
 
@@ -88,12 +88,12 @@ fun Route.adbModule(context: Context) {
 
             KanoLog.d(
                 TAG,
-                "接收到ADB_WIFI配置：enabled=$enabled, password=$password"
+                "Received ADB_WIFI config: enabled=$enabled, password=$password"
             )
 
             val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-            // 保存配置
+            // Save config
             if (enabled) {
                 sharedPrefs.edit(commit = true) {
                     putString("ADMIN_PWD", password)
@@ -108,24 +108,24 @@ fun Route.adbModule(context: Context) {
 
             KanoLog.d(TAG, "ADMIN_PWD:${sharedPrefs.getString("ADMIN_PWD", "")}")
 
-            // 响应
+            // Respond
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
                 """{"result":"success","enabled":"$enabled"}""",
                 ContentType.Application.Json
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "解析ADB_WIFI POST 请求出错：${e.message}")
+            KanoLog.d(TAG, "Parse ADB_WIFI POST request error: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"参数解析失败"}""",
+                """{"error":"Parameter parsing failed"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //网络ADB启动状态
+    //Network ADB running status
     get("/api/adb_alive") {
         call.response.headers.append("Access-Control-Allow-Origin", "*")
         call.respondText(

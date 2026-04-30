@@ -52,7 +52,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
     val TAG = "[$BASE_TAG]_baseDeviceInfoModule"
 
     get("/api/baseDeviceInfo") {
-        //客户端IP
+        //Client IP
         var ipRes: String? = null
         try {
             val headers = call.request.headers
@@ -62,10 +62,10 @@ fun Route.baseDeviceInfoModule(context: Context) {
                 ?: headers["remote-addr"]
                 ?: call.request.origin.remoteAddress
 
-            KanoLog.d(TAG, "获取客户端IP成功: $ip")
+            KanoLog.d(TAG, "Got client IP: $ip")
             ipRes = ip
         } catch (e: Exception) {
-            KanoLog.e(TAG, "获取客户端IP出错: ${e.message}")
+            KanoLog.e(TAG, "Error getting client IP: ${e.message}")
             ipRes = null
         }
 
@@ -101,7 +101,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
                 metricsCache = result
                 result
             } catch (e: Exception) {
-                KanoLog.d(TAG, "获取cpu/thermal/memory信息出错： ${e.message}")
+                KanoLog.d(TAG, "Error getting CPU/thermal/memory info:  ${e.message}")
                 DeviceMetricsCache(null, null, null, null, null, null, null, now)
             }
         }
@@ -123,7 +123,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
             externalAvailable = exStorageInfo?.availableBytes ?: 0
             externalUsed = externalTotal!! - externalAvailable!!
         } catch (e: Exception) {
-            KanoLog.d(TAG, "存储与日流量信息出错： ${e.message}")
+            KanoLog.d(TAG, "Error getting storage & daily data:  ${e.message}")
         }
 
         // Battery info
@@ -134,7 +134,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
             currentNow = batteryStatus.current_uA
             voltageNow = batteryStatus.voltage_uV
         } catch (e: Exception) {
-            KanoLog.d(TAG, "获取型号与电量信息出错：${e.message}")
+            KanoLog.d(TAG, "Error getting model and battery info: ${e.message}")
         }
 
         val jsonResult = """
@@ -174,17 +174,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取连接信息出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting connection info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取连接信息出错(SELINUX状态：${KanoUtils.getSELinuxStatus()})"}""",
+                """{"error":"Error getting connection info (SELinux status: ${KanoUtils.getSELinuxStatus()})"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //流量信息获取（时间范围）
+    //Get data usage (time range)
     get("/api/cellularUsage") {
         try {
             val method = call.request.queryParameters["method"] ?: "date-range"
@@ -192,13 +192,13 @@ fun Route.baseDeviceInfoModule(context: Context) {
             val endTime = call.request.queryParameters["endTime"]?.toLongOrNull()
 
             if (startTime == null) {
-                throw Exception("缺少参数 startTime")
+                throw Exception("Missing parameter startTime")
             }
             if (endTime == null) {
-                throw Exception("缺少参数 endTime")
+                throw Exception("Missing parameter endTime")
             }
 
-            KanoLog.d(TAG, "cellularUsage 传入参数：startTime：$startTime endTime：$endTime method：$method")
+            KanoLog.d(TAG, "cellularUsage Input parameter: startTime：$startTime endTime：$endTime method：$method")
 
             val jsonResult = if (method != "mills-range") {
                 val res = KanoUtils.getRangeDailyDataUsage(context, startTime, endTime)
@@ -220,11 +220,11 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.respondText(jsonResult, ContentType.Application.Json)
 
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取流量使用情况出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting data usage: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
                 JSONObject().apply {
-                    put("error", "获取流量使用情况出错:${e.message}")
+                    put("error", "Error getting data usage: ${e.message}")
                 }.toString(),
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
@@ -241,17 +241,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取用户协议信息出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting terms info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取用户协议信息出错"}""",
+                """{"error":"Error getting terms info"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //设置昵称
+    //Set nickname
     post("/api/set_nickname"){
         try {
             val body = call.receiveText()
@@ -266,17 +266,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "设置昵称出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error setting nickname: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"设置昵称出错"}""",
+                """{"error":"Error setting nickname"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //版本信息获取
+    //Get version info
     get("/api/version_info") {
         try {
             val jsonResult = """
@@ -292,10 +292,10 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取版本信息出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting version info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取版本信息出错"}""",
+                """{"error":"Error getting version info"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
@@ -309,17 +309,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取设备id出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting device ID: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取设备id出错"}""",
+                """{"error":"Error getting device ID"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //SELinux状态
+    //SELinux status
     get("/api/SELinux"){
         try {
             val res = KanoUtils.getSELinuxStatus()
@@ -332,17 +332,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取selinux状态出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting SELinux status: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取selinux状态出错"}""",
+                """{"error":"Error getting SELinux status"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //是否需要token
+    //Whether token is needed
     get("/api/need_token") {
         try {
             val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -357,17 +357,17 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取TOKEN信息出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting token info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取TOKEN信息出错"}""",
+                """{"error":"Error getting token info"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //usb设备树以及接口状态
+    //USB device tree and interface status
     get("/api/usb_status") {
         try {
             val (maxSpeed,details) = readUsbDevices()
@@ -381,10 +381,10 @@ fun Route.baseDeviceInfoModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(jsonResult, ContentType.Application.Json)
         } catch (e: Exception) {
-            KanoLog.d("UFI_TOOLS_LOG", "获取UsbDevices信息出错：${e.message}")
+            KanoLog.d("UFI_TOOLS_LOG", "Error getting USB devices info: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"获取UsbDevices信息出错"}""",
+                """{"error":"Error getting USB devices info"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

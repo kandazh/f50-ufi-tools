@@ -67,12 +67,12 @@ object KanoAuth {
         }
 
         val clientTimestamp = timestampStr.toLongOrNull() ?: return false
-        //如果是反向代理，则不要进行path过滤
+        //Skip path filtering for reverse proxy
         val signTarget =
             if (uriForAuth == "/api/proxy" || uriForAuth.startsWith("/api/proxy/")) {
                 rawPathForSign
             } else {
-                uriForAuth       // 其它接口继续用 normalizePath 的结果
+                uriForAuth       // Other APIs use normalizePath result
             }
 
         val raw = "minikano$method$signTarget$clientTimestamp"

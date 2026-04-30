@@ -95,7 +95,7 @@ fun Route.anyProxyModule(context: Context) {
 
             val okHttpClient = proxyHttpClient
 
-            // 构建请求体（如果有）
+            // Build request body (if any)
             val requestBody = if (call.request.httpMethod in listOf(
                     HttpMethod.Post, HttpMethod.Put, HttpMethod.Patch
                 )
@@ -104,11 +104,11 @@ fun Route.anyProxyModule(context: Context) {
                 bodyBytes.toRequestBody(call.request.contentType()?.toString()?.toMediaTypeOrNull())
             } else null
 
-            // 构建请求头
+            // Build request headers
             val headersBuilder = Headers.Builder()
             for ((key, values) in call.request.headers.entries()) {
                 if (key.startsWith("kano-", ignoreCase = true)) {
-                    KanoLog.d(TAG,"代理请求头检测到$key=$values，已去掉前缀")
+                    KanoLog.d(TAG,"Proxy header detected $key=$values，prefix removed")
                     if(key.contains("kano-cookie", ignoreCase = true)) {
                         headersBuilder.add("Cookie", values.first())
                     }else {
@@ -131,7 +131,7 @@ fun Route.anyProxyModule(context: Context) {
                 val statusCode = response.code
                 val contentType = responseBody?.contentType()?.toString()?.let { ContentType.parse(it) }
 
-                // 处理响应头
+                // Process response headers
                 response.headers.names().forEach { name ->
                     val lowerName = name.lowercase()
                     val values = response.headers.values(name)
@@ -157,7 +157,7 @@ fun Route.anyProxyModule(context: Context) {
 
                 if (responseBody != null) {
                     if (contentType?.match(ContentType.Text.Html) == true) {
-                        // HTML 模式，替换资源路径
+                        // HTML mode, replace resource paths
                         val html = responseBody.string()
                         val baseUrl = targetUrl.substringBeforeLast("/").substringBefore("?")
                         val proxyPrefix = "/api/proxy/--$baseUrl"
@@ -168,7 +168,7 @@ fun Route.anyProxyModule(context: Context) {
                         }
                         call.respondText(rewrittenHtml, contentType, HttpStatusCode.fromValue(statusCode))
                     } else {
-                        // 非 HTML，使用流式响应
+                        // Non-HTML, use streaming response
                         call.respondOutputStream(contentType, HttpStatusCode.fromValue(statusCode)) {
                             responseBody.byteStream().use { input ->
                                 input.copyTo(this)

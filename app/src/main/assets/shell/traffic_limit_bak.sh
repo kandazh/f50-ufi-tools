@@ -1,6 +1,6 @@
 #!/system/bin/sh
 
-IFACE="br0"  # 设备
+IFACE="br0"  # Device
 BASE_CLASSID="10"
 
 ensure_tc_root() {
@@ -22,7 +22,7 @@ ip_to_classid() {
 
 add_limit() {
   ip="$1"
-  downlimit="$2"  # 实际上限制上传 = 控制下载
+  downlimit="$2"  # Actually limiting upload = controlling download
 
   ensure_tc_root
 
@@ -50,15 +50,15 @@ release_limit() {
 
   echo "[+] release $ip traffic limit..."
 
-  # 清除 iptables mark 规则
+  # Clear iptables mark rules
   iptables -t mangle -D POSTROUTING -d "$ip" -j MARK --set-mark 100 2>/dev/null
 
-  # 更强力地清除 tc filter 和 class
+  # More forcefully clear tc filter and class
   tc filter del dev "$IFACE" parent 1: protocol ip handle 100 fw 2>/dev/null
   tc class del dev "$IFACE" classid "$classid" 2>/dev/null
 }
 
-# ========= 参数解析 =========
+# ========= Parameter parsing =========
 if [ "$1" = "--limit" ]; then
   if [ "$#" -eq 2 ]; then
     show_limit "$2"

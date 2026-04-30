@@ -19,7 +19,7 @@ class KanoGoformRequest(private val baseUrl: String) {
     suspend fun login(password: String): String? = withContext(Dispatchers.IO) {
         val ld = getLD()?.optString("LD") ?: return@withContext null
         val pwdHash = sha256(sha256(password) + ld)
-        KanoLog.d("UFI_TOOLS_LOG", "登录哈希：${pwdHash}")
+        KanoLog.d("UFI_TOOLS_LOG", "Login hash: ${pwdHash}")
 
         val body = FormBody.Builder()
             .add("goformId", "LOGIN")
@@ -38,11 +38,11 @@ class KanoGoformRequest(private val baseUrl: String) {
         client.newCall(req).execute().use { res ->
             if (!res.isSuccessful) return@withContext null
             val bdy = res.body?.string()?.let { JSONObject(it) }
-            KanoLog.d("UFI_TOOLS_LOG", "登录请求结果：${bdy}")
+            KanoLog.d("UFI_TOOLS_LOG", "Login result: ${bdy}")
             val resData = bdy ?: return@withContext null
             if (resData.optString("result") == "3") return@withContext null
             val header = res.header("set-cookie")?.split(";")?.firstOrNull()
-            KanoLog.d("UFI_TOOLS_LOG", "登录Cookie：${header}")
+            KanoLog.d("UFI_TOOLS_LOG", "Login cookie: ${header}")
             return@withContext res.header("set-cookie")
         }
     }
@@ -78,13 +78,13 @@ class KanoGoformRequest(private val baseUrl: String) {
     )
 
     private suspend fun processAD(cookie: String): String = withContext(Dispatchers.IO) {
-        val ufiInfo = getUFIInfo() ?: throw Exception("无法获取版本信息")
+        val ufiInfo = getUFIInfo() ?: throw Exception("Failed to get version info")
         val wa = ufiInfo.optString("wa_inner_version")
         val cr = ufiInfo.optString("cr_version")
-        if (wa.isEmpty() || cr.isEmpty()) throw Exception("版本字段缺失")
+        if (wa.isEmpty() || cr.isEmpty()) throw Exception("Version fields missing")
         val parsed = sha256(wa + cr)
 
-        val rd = getRD(cookie)?.optString("RD") ?: throw Exception("RD获取失败")
+        val rd = getRD(cookie)?.optString("RD") ?: throw Exception("RDFetch failed")
         return@withContext sha256(parsed + rd)
     }
 
@@ -115,7 +115,7 @@ class KanoGoformRequest(private val baseUrl: String) {
     suspend fun getData(
         params: Map<String, String>,
         cookie: String? = null,
-        timeoutMillis: Long = 2000 // 默认超时 2 秒
+        timeoutMillis: Long = 2000 // Default timeout 2 seconds
     ): JSONObject? = withContext(Dispatchers.IO) {
         try {
             withTimeout(timeoutMillis) {
@@ -144,8 +144,8 @@ class KanoGoformRequest(private val baseUrl: String) {
                 }
             }
         } catch (e: Exception) {
-            // 打印异常可以帮你 debug
-            KanoLog.e("UFI_TOOLS_LOG", "getData 异常：${e.message}")
+            // Print exception for debugging
+            KanoLog.e("UFI_TOOLS_LOG", "getData Exception: ${e.message}")
             return@withContext null
         }
     }

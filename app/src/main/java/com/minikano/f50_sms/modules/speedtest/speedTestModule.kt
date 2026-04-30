@@ -38,15 +38,15 @@ object SpeedTestDispatchers {
 fun Route.speedTestModule(context: Context) {
     val TAG = "[$BASE_TAG]_speedTestModule"
 
-    //测速
+    //Speed test
     get("/api/speedtest") {
         if (!speedTestLimiter.tryAcquire()) {
-            call.respond(HttpStatusCode.TooManyRequests, "测速请求过多，请稍后再试")
+            call.respond(HttpStatusCode.TooManyRequests, "Too many speed test requests, try later")
             return@get
         }
         try {
             withContext(SpeedTestDispatchers.dispatcher) {
-                KanoLog.d(TAG, "当前线程数: ${Thread.currentThread().name}")
+                KanoLog.d(TAG, "Current thread: ${Thread.currentThread().name}")
                 val parms = call.request.queryParameters
                 val totalChunks = KanoUtils.getChunkCount(parms["ckSize"]).coerceIn(1, 1024)
                 val enableCors = parms.contains("cors")

@@ -34,12 +34,12 @@ object SmsPoll {
         val isNew = lastSms == null || sms != lastSms
 
         if (withinMin && isNew) {
-            KanoLog.d(TAG, "收到新短信: ${sms.address} - ${sms.body}")
+            KanoLog.d(TAG, "New SMS: ${sms.address} - ${sms.body}")
             lastSms = sms
 
             val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-            // 转发预处理
+            // Forward pre-processing
             val keywords = sharedPrefs.getString("kano_sms_forward_blacklist_keywords", "") ?: ""
             val phone = sharedPrefs.getString("kano_sms_forward_blacklist_phone", "") ?: ""
 
@@ -49,7 +49,7 @@ object SmsPoll {
                 .filter { it.isNotEmpty() }
 
             if (phoneList.contains(sms.address)) {
-                KanoLog.d(TAG, "源手机号 ${sms.address} 在手机号黑名单内，不执行短信转发操作")
+                KanoLog.d(TAG, "Source number ${sms.address} in phone blocklist, skipping forward")
                 return
             }
 
@@ -60,7 +60,7 @@ object SmsPoll {
 
             for (item in keywordsList) {
                 if (sms.body.contains(item)) {
-                    KanoLog.d(TAG, "短信内容命中关键词 [$item]，不执行短信转发")
+                    KanoLog.d(TAG, "SMS matched keyword [$item]，skipping SMS forward")
                     return
                 }
             }
@@ -80,23 +80,23 @@ object SmsPoll {
         } else {
             KanoLog.d(
                 TAG,
-                "无新短信，短信是否${minute}分钟内：$withinMin,短信是否为新：$isNew"
+                "No new SMS, within ${minute}min: $withinMin, is new: $isNew"
             )
         }
     }
 
-    //通过curl转发
+    //Forward via CURL
     fun forwardSmsByCurl(sms_data: SmsInfo?, context: Context) {
         if (sms_data == null) return
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val originalCurl = sharedPrefs.getString("kano_sms_curl", null)
         if (originalCurl.isNullOrEmpty()) {
-            KanoLog.e(TAG, "curl 配置错误：kano_sms_curl 为空")
+            KanoLog.e(TAG, "curl Config error: kano_sms_curl is empty")
             return
         }
 
-        KanoLog.d(TAG, "开始转发短信...（CURL）")
+        KanoLog.d(TAG, "Starting SMS forwarding... (CURL)")
         try {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 .withZone(ZoneId.systemDefault())
@@ -104,59 +104,59 @@ object SmsPoll {
             val smsFrom = sms_data.address
             val smsTime = formatter.format(Instant.ofEpochMilli(sms_data.timestamp))
 
-            //替换并发送
+            //Replace and send
             var replacedCurl = originalCurl
                 .replace("{{sms-body}}", smsText)
                 .replace("{{sms-time}}", smsTime)
                 .replace("{{sms-from}}", smsFrom).trimIndent()
 
-            //寻找可替换的其他占位符
+            //Find other replaceable placeholders
             replacedCurl = buildStatusSmsMsg(replacedCurl,context, TAG)
 
             KanoCURL(context).send(replacedCurl)
         } catch (e: Exception){
-            KanoLog.e(TAG,"短信转发(forwardSmsByCurl)出错：",e)
+            KanoLog.e(TAG,"SMS forward (forwardSmsByCurl) error: ",e)
         }
     }
 
-    //通过SMTP邮件转发
+    //Forward via SMTP email
     fun forwardByEmail(sms_data: SmsInfo?, context: Context,notSMS: Boolean = false) {
         if (sms_data == null) return
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val smtpHost = sharedPrefs.getString("kano_smtp_host", null)
         if (smtpHost.isNullOrEmpty()) {
-            KanoLog.e(TAG, "SMTP 配置错误：kano_smtp_host 为空")
+            KanoLog.e(TAG, "SMTP Config error: kano_smtp_host is empty")
             return
         }
 
         val smtpTo = sharedPrefs.getString("kano_smtp_to", null)
         if (smtpTo.isNullOrEmpty()) {
-            KanoLog.e(TAG, "SMTP 配置错误：kano_smtp_to 为空")
+            KanoLog.e(TAG, "SMTP Config error: kano_smtp_to is empty")
             return
         }
 
         val smtpPort = sharedPrefs.getString("kano_smtp_port", null)
         if (smtpPort.isNullOrEmpty()) {
-            KanoLog.e(TAG, "SMTP 配置错误：kano_smtp_port 为空")
+            KanoLog.e(TAG, "SMTP Config error: kano_smtp_port is empty")
             return
         }
 
         val username = sharedPrefs.getString("kano_smtp_username", null)
         if (username.isNullOrEmpty()) {
-            KanoLog.e(TAG, "SMTP 配置错误：kano_smtp_username 为空")
+            KanoLog.e(TAG, "SMTP Config error: kano_smtp_username is empty")
             return
         }
 
         val password = sharedPrefs.getString("kano_smtp_password", null)
         if (password.isNullOrEmpty()) {
-            KanoLog.e(TAG, "SMTP 配置错误：kano_smtp_password 为空")
+            KanoLog.e(TAG, "SMTP Config error: kano_smtp_password is empty")
             return
         }
 
         val smtpClient = KanoSMTP(smtpHost, smtpPort, username, password)
 
-        KanoLog.d(TAG, "开始转发短信...(SMTP)")
+        KanoLog.d(TAG, "Starting SMS forwarding... (SMTP)")
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.systemDefault())
@@ -168,16 +168,16 @@ object SmsPoll {
         if(shouldForwardDeviceInfo == "1") {
             statusText = buildStatusSmsMsg(
             """
-            <p><b>🌐 当日用量: </b>{{daily-flow}}</p>
-            <p><b>🌛 月用量(高级后台统计): </b>{{monthly-flow-count}}  </p>
-            <p><b>🌛 月用量(官方后台统计): </b>{{monthly-flow-sum}}</p>
-            <p><b>🔥 CPU温度: </b>{{cpu-temp}}</p>
-            <p><b>🖥️ CPU占用: </b>{{cpu-usage}}</p>
-            <p><b>🧠 内存占用: </b>{{mem-usage}}</p>
-            <p><b>🔋 电池信息: </b>{{battery-level}} {{battery-current}} {{battery-voltage}}</p>
-            <p><b>⏱️ 开机时长: </b>{{boot-time}}</p>
-            <p><b>📱 设备名称: </b>{{model}}({{nickname}})</p>
-            <p><b>📦 APP版本: </b>{{app-ver}}</p>
+            <p><b>🌐 Daily usage: </b>{{daily-flow}}</p>
+            <p><b>🌛 Monthly usage (advanced backend stats): </b>{{monthly-flow-count}}  </p>
+            <p><b>🌛 Monthly usage (official backend stats): </b>{{monthly-flow-sum}}</p>
+            <p><b>🔥 CPU temp: </b>{{cpu-temp}}</p>
+            <p><b>🖥️ CPU usage: </b>{{cpu-usage}}</p>
+            <p><b>🧠 Memory usage: </b>{{mem-usage}}</p>
+            <p><b>🔋 Battery info: </b>{{battery-level}} {{battery-current}} {{battery-voltage}}</p>
+            <p><b>⏱️ Uptime: </b>{{boot-time}}</p>
+            <p><b>📱 Device name: </b>{{model}}({{nickname}})</p>
+            <p><b>📦 APP version: </b>{{app-ver}}</p>
             """.trimIndent(), context, TAG
             )
         }
@@ -185,8 +185,8 @@ object SmsPoll {
         """
         <div>
             <p>${sms_data!!.body.trimStart()}</p>
-            <p>📩 <b>来自：</b>${sms_data.address}</p>
-            <p>⏰ <b>时间：</b>${formatter.format(Instant.ofEpochMilli(sms_data.timestamp))}</p>
+            <p>📩 <b>From: </b>${sms_data.address}</p>
+            <p>⏰ <b>Time: </b>${formatter.format(Instant.ofEpochMilli(sms_data.timestamp))}</p>
             <hr/>
             $statusText
             <div style="text-align: center;">
@@ -212,20 +212,20 @@ object SmsPoll {
         )
     }
 
-    //通过钉钉webhook转发
+    //Forward via DingTalk webhook
     fun forwardSmsByDingTalk(sms_data: SmsInfo?, context: Context,notSMS: Boolean = false) {
         if (sms_data == null) return
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val webhookUrl = sharedPrefs.getString("kano_dingtalk_webhook", null)
         if (webhookUrl.isNullOrEmpty()) {
-            KanoLog.e(TAG, "钉钉配置错误：kano_dingtalk_webhook 为空")
+            KanoLog.e(TAG, "DingTalk config error: kano_dingtalk_webhook is empty")
             return
         }
 
         val secret = sharedPrefs.getString("kano_dingtalk_secret", null)
 
-        KanoLog.d(TAG, "开始转发短信...（钉钉）")
+        KanoLog.d(TAG, "Starting SMS forwarding... (DingTalk)")
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.systemDefault())
         val smsText = JSONObject.quote(sms_data.body.trim()).removeSurrounding("\"")
@@ -237,30 +237,30 @@ object SmsPoll {
         if(shouldForwardDeviceInfo == "1"){
             statusText = buildStatusSmsMsg(
             """
-            🌐 当日用量: {{daily-flow}}    
-            🌛 月用量(高级后台统计): {{monthly-flow-count}}    
-            🌛 月用量(官方后台统计): {{monthly-flow-sum}}    
-            🔥 CPU温度: {{cpu-temp}}
-            🖥️ CPU使用: {{cpu-usage}}
-            🧠 内存使用: {{mem-usage}}
-            🔋 电池信息: {{battery-level}} {{battery-current}} {{battery-voltage}}
-            ⏱️ 开机时长: {{boot-time}}
-            📱 设备名称: {{model}}({{nickname}})
-            📦 APP版本: {{app-ver}}
+            🌐 Daily usage: {{daily-flow}}    
+            🌛 Monthly usage (advanced backend stats): {{monthly-flow-count}}    
+            🌛 Monthly usage (official backend stats): {{monthly-flow-sum}}    
+            🔥 CPU temp: {{cpu-temp}}
+            🖥️ CPU usage: {{cpu-usage}}
+            🧠 Memory usage: {{mem-usage}}
+            🔋 Battery info: {{battery-level}} {{battery-current}} {{battery-voltage}}
+            ⏱️ Uptime: {{boot-time}}
+            📱 Device name: {{model}}({{nickname}})
+            📦 APP version: {{app-ver}}
             """.trimIndent(),context, TAG)
         }
         var smsTypeString =
         """
-        📱 新短信通知
+        📱 New SMS notification
             
-        📄 内容：$smsText
-        📞 来自：$smsFrom
-        ⏰ 时间：$smsTime
+        📄 content: $smsText
+        📞 From: $smsFrom
+        ⏰ Time: $smsTime
         """.trimIndent()
         if(notSMS){
-            smsTypeString = "📱 设备信息\n"
+            smsTypeString = "📱 Device info\n"
         }
-        // 构建钉钉消息内容
+        // Build DingTalk message content
         val messageContent = listOf(
             smsTypeString,
             statusText,
@@ -287,7 +287,7 @@ object SmsPoll {
                 } else null
             }
         } catch (e: Exception) {
-            KanoLog.e(TAG, "没有短信权限，读不到短信呢", e)
+            KanoLog.e(TAG, "No SMS permission, cannot read SMS", e)
             null
         }
     }

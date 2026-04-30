@@ -13,7 +13,7 @@ fun Route.authenticatedRoute(context: Context, block: Route.() -> Unit) {
         intercept(ApplicationCallPipeline.Plugins) {
             if (!KanoAuth.checkAuth(call, context)) {
                 call.respond(HttpStatusCode.Unauthorized)
-                finish() // 阻止后续处理
+                finish() // Block further processing
             }
         }
         block()

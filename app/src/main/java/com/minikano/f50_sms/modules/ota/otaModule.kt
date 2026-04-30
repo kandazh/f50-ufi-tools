@@ -42,17 +42,17 @@ object ApkState {
 fun Route.otaModule(context: Context) {
     val TAG = "[$BASE_TAG]_OTAModule"
 
-    //检查更新
+    //Check for updates
     get("/api/check_update") {
         try {
             val path = "/UFI-TOOLS-UPDATE"
             val downloadUrl = "${AppMeta.GLOBAL_SERVER_URL}/d$path/"
             val changelogUrl = "${AppMeta.GLOBAL_SERVER_URL}/d$path/changelog.txt"
 
-            // 拉取 changelog 文本
+            // Fetch changelog text
             val changelog = KanoRequest.getTextFromUrl(changelogUrl)
 
-            // 请求 alist 的 API
+            // Request alist API
             val requestBody = """
             {
                 "path": "$path",
@@ -74,7 +74,7 @@ fun Route.otaModule(context: Context) {
                 ?.replace(Regex("\r?\n"), "<br>")
                 ?.let { JSONObject.quote(it) }
 
-            // 拼装 JSON 响应
+            // Build JSON response
             val resultJson = """
             {
                 "base_uri": "$downloadUrl",
@@ -86,17 +86,17 @@ fun Route.otaModule(context: Context) {
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(resultJson, ContentType.Application.Json, HttpStatusCode.OK)
         } catch (e: Exception) {
-            KanoLog.d(TAG, "请求出错：${e.message}")
+            KanoLog.d(TAG, "Request error: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"请求出错"}""",
+                """{"error":"Request error"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //从URL下载APK
+    //Download APK from URL
     post("/api/download_apk") {
         try {
             val body = call.receiveText()
@@ -104,14 +104,14 @@ fun Route.otaModule(context: Context) {
 
             val apkUrl = json.optString("apk_url", "").trim()
             if (apkUrl.isEmpty()) {
-                throw IllegalArgumentException("请提供 apk_url")
+                throw IllegalArgumentException("Please provide apk_url")
             }
 
-            KanoLog.d(TAG, "接收到 apk_url=$apkUrl")
+            KanoLog.d(TAG, "Received apk_url=$apkUrl")
 
             synchronized(this) {
                 if (ApkState.downloadInProgress && apkUrl == ApkState.currentDownloadingUrl) {
-                    KanoLog.d(TAG, "已在下载该 APK，忽略重复请求")
+                    KanoLog.d(TAG, "APK already downloading, ignoring duplicate request")
                 } else {
                     ApkState.downloadInProgress = true
                     ApkState.download_percent = 0
@@ -129,14 +129,14 @@ fun Route.otaModule(context: Context) {
                             }
                             if (path != null) {
                                 ApkState.downloadResultPath = path
-                                KanoLog.d(TAG, "下载完成：$path")
+                                KanoLog.d(TAG, "Download complete：$path")
                             } else {
-                                ApkState.downloadError = "下载失败"
-                                KanoLog.d(TAG, "下载失败：返回路径为空")
+                                ApkState.downloadError = "Download failed"
+                                KanoLog.d(TAG, "Download failed：Return path is null")
                             }
                         } catch (e: Exception) {
-                            ApkState.downloadError = e.message ?: "未知错误"
-                            KanoLog.d(TAG, "【子线程】下载异常：${e.message}")
+                            ApkState.downloadError = e.message ?: "Unknown error"
+                            KanoLog.d(TAG, "[Worker thread] download exception: ${e.message}")
                         } finally {
                             ApkState.downloadInProgress = false
                         }
@@ -151,17 +151,17 @@ fun Route.otaModule(context: Context) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "【主线程】执行 /download_apk 出错：${e.message}")
+            KanoLog.d(TAG, "[Main thread] /download_apk error: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"${e.message ?: "未知错误"}"}""",
+                """{"error":"${e.message ?: "Unknown error"}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )
         }
     }
 
-    //下载进度
+    //Download progress
     get("/api/download_apk_status") {
         val status = when {
             ApkState.downloadInProgress -> "downloading"
@@ -182,7 +182,7 @@ fun Route.otaModule(context: Context) {
         call.respondText(json, ContentType.Application.Json)
     }
 
-    //安装APK
+    //Install APK
     post("/api/install_apk") {
         val outputChannel = ByteChannel(autoFlush = true)
 
@@ -191,19 +191,19 @@ fun Route.otaModule(context: Context) {
             try {
                 ApkState.downloadResultPath = ApkState.downloadResultPath
                 if (ApkState.downloadResultPath == null) {
-                    writer.write("""{"error":"未检测到已下载的 APK"}""")
+                    writer.write("""{"error":"No downloaded APK detected"}""")
                     return@launch
                 }
 
-                //使用高级功能安装
+                //Install using advanced features
                 val socketPath = File(context.filesDir, "kano_root_shell.sock")
-                //试试能不能
+                //Test if it works
                 val testResult =
                     RootShell.sendCommandToSocket(
                         "whoami",
                         socketPath.absolutePath
-                    ) ?: "whoami执行失败"
-                KanoLog.d(TAG, "socat测试结果： $testResult")
+                    ) ?: "whoamiExecution failed"
+                KanoLog.d(TAG, "socatTest result: $testResult")
                 if (socketPath.exists() && testResult.contains("root")) {
 
                     val shellScript = """
@@ -217,7 +217,7 @@ fun Route.otaModule(context: Context) {
                 ' >/dev/null 2>&1 &
                 """.trimIndent()
 
-                    //保存sh
+                    //Save shell script
                     val scriptFile =
                         ShellKano.createShellScript(
                             context,
@@ -232,24 +232,24 @@ fun Route.otaModule(context: Context) {
                             socketPath.absolutePath
                         )
 
-                    KanoLog.d(TAG, "socat安装apk结果： $result")
+                    KanoLog.d(TAG, "socatInstall APK result: $result")
                     delay(2000)
                     writer.write("""{"result":"success"}""")
 
                 } else {
-                    KanoLog.d(TAG, "没有找到socat，执行B计划")
+                    KanoLog.d(TAG, "socat not found, executing plan B")
 
                     val outFileAdb = KanoUtils.copyFileToFilesDir(context, "shell/adb")
-                        ?: throw Exception("复制 adb 到 filesDir 失败")
+                        ?: throw Exception("Failed to copy adb to filesDir")
                     outFileAdb.setExecutable(true)
 
-                    // 复制APK到 sdcard 根目录
+                    // Copy APK to sdcard root dir
                     val copyCmd =
                         "${outFileAdb.absolutePath} -s localhost shell sh -c 'cp ${ApkState.downloadResultPath} /sdcard/ufi_tools_latest.apk'"
-                    KanoLog.d(TAG, "执行：$copyCmd")
+                    KanoLog.d(TAG, "Executing: $copyCmd")
                     ShellKano.runShellCommand(copyCmd, context)
 
-                    // 创建并复制 shell 脚本
+                    // Create and copy shell script
                     val scriptText = """
                     #!/system/bin/sh
                     pm install -r -g /sdcard/ufi_tools_latest.apk >> /sdcard/ufi_tools_update.log 2>&1
@@ -265,7 +265,7 @@ fun Route.otaModule(context: Context) {
 
                     val copyShCmd =
                         "${outFileAdb.absolutePath} -s localhost shell sh -c 'cp $shPath /sdcard/ufi_tools_update.sh'"
-                    KanoLog.d(TAG, "执行：$copyShCmd")
+                    KanoLog.d(TAG, "Executing: $copyShCmd")
                     ShellKano.runShellCommand(copyShCmd, context)
 
                     suspend fun clickStage() {
@@ -313,7 +313,7 @@ fun Route.otaModule(context: Context) {
                             }
                             delay(400)
                         }
-                        throw Exception("click_stage 多次尝试失败")
+                        throw Exception("click_stage Multiple attempts failed")
                     }
 
                     suspend fun tryClickStage(maxRetry: Int = 2) {
@@ -325,7 +325,7 @@ fun Route.otaModule(context: Context) {
                             } catch (e: Exception) {
                                 KanoLog.w(
                                     TAG,
-                                    "click_stage1 执行失败，尝试第 ${retry + 1} 次，错误：${e.message}"
+                                    "click_stage1 Execution failed, attempt ${retry + 1}, error: ${e.message}"
                                 )
                                 repeat(10) {
                                     ShellKano.runShellCommand(
@@ -337,7 +337,7 @@ fun Route.otaModule(context: Context) {
                                 retry++
                             }
                         }
-                        throw Exception("click_stage 多次重试失败")
+                        throw Exception("click_stage multiple retries failed")
                     }
 
                     tryClickStage()
@@ -350,17 +350,17 @@ fun Route.otaModule(context: Context) {
                             outFileAdb.absolutePath,
                             context,
                             "",
-                            listOf("START", "开始"),
+                            listOf("START", "Start"),
                             needBack = false,
                             useClipBoard = true
                         )
                         writer.write("""{"result":"success"}""")
                     } catch (e: Exception) {
-                        writer.write("""{"error":${JSONObject.quote("执行 shell 命令失败: ${e.message}")}}""")
+                        writer.write("""{"error":${JSONObject.quote("Execute shell command failed: ${e.message}")}}""")
                     }
                 }
             } catch (e: Exception) {
-                writer.write("""{"error":${JSONObject.quote("异常: ${e.message}")}}""")
+                writer.write("""{"error":${JSONObject.quote("Exception: ${e.message}")}}""")
             } finally {
                 writer.flush()
                 outputChannel.close()

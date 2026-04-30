@@ -71,10 +71,10 @@ class KanoReport {
             val client = OkHttpClient.Builder()
                 .dns(TimeoutDns(3000))
                 .callTimeout(3, TimeUnit.SECONDS)
-                .connectTimeout(2, TimeUnit.SECONDS)  // 连接超时
-                .readTimeout(1, TimeUnit.SECONDS)     // 读取超时
-                .writeTimeout(1, TimeUnit.SECONDS)    // 写入超时
-                .retryOnConnectionFailure(false)  // 关闭失败重试
+                .connectTimeout(2, TimeUnit.SECONDS)  // Connection timeout
+                .readTimeout(1, TimeUnit.SECONDS)     // Read timeout
+                .writeTimeout(1, TimeUnit.SECONDS)    // Write timeout
+                .retryOnConnectionFailure(false)  // Disable retry on failure
                 .build()
             val url = "$BASE_URL/report/$uuid"
             val request = Request.Builder()
@@ -85,7 +85,7 @@ class KanoReport {
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    KanoLog.e("UFI_TOOLS_LOG_devcheck", "请求失败，code=${response.code}")
+                    KanoLog.e("UFI_TOOLS_LOG_devcheck", "Request failed, code=${response.code}")
                     return@withContext null
                 }
                 val bodyStr = response.body?.string() ?: return@withContext null

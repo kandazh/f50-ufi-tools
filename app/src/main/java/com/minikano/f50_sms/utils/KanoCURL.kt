@@ -3,28 +3,28 @@ package com.minikano.f50_sms.utils
 import android.content.Context
 import java.util.concurrent.atomic.AtomicBoolean
 class KanoCURL(private val context: Context) {
-    // 防止重复发送
+    // Prevent duplicate sends
     private val isSending = AtomicBoolean(false)
 
     fun send(command:String) {
-        // 如果已经在发送中，则直接返回
+        // If already sending, return immediately
         if (!isSending.compareAndSet(false, true)) {
-            KanoLog.w("UFI_TOOLS_LOG_Curl", "curl正在请求中，忽略重复请求")
+            KanoLog.w("UFI_TOOLS_LOG_Curl", "CURL request in progress, ignoring duplicate")
             return
         }
         Thread {
             try {
-                KanoLog.w("UFI_TOOLS_LOG_Curl", "正在执行curl命令:$command")
+                KanoLog.w("UFI_TOOLS_LOG_Curl", "Executing CURL: $command")
                 val args = KanoUtils.parseShellArgs(command.replaceFirst("curl", ""))
                 val result = ShellKano.executeShellFromAssetsSubfolderWithArgs(
                     context,
                     "shell/curl",
                     *args.toTypedArray(),
                     timeoutMs = 10000
-                ) ?: throw Exception("runShellCommand为null")
-                KanoLog.w("UFI_TOOLS_LOG_Curl", "执行curl命令结果：$result")
+                ) ?: throw Exception("runShellCommand is null")
+                KanoLog.w("UFI_TOOLS_LOG_Curl", "CURL command execution result: $result")
             } catch (e: Exception) {
-                KanoLog.e("UFI_TOOLS_LOG_Curl", "curl请求失败: ${e.message}", e)
+                KanoLog.e("UFI_TOOLS_LOG_Curl", "curlRequest failed: ${e.message}", e)
             } finally {
                 isSending.set(false)
             }

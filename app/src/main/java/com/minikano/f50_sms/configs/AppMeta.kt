@@ -52,7 +52,7 @@ object AppMeta {
 
     fun updateIsDefaultOrWeakToken(context: Context,value: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        //持久化
+        //Persist
         prefs.edit(commit = true) {
             putBoolean(PREF_IS_WEAK_TOKEN,value)
         }
@@ -82,7 +82,7 @@ object AppMeta {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit(commit = true) { putString(PREF_WAKELOCK, isLock)}
         isEnableWakeLock = flag
-        //更新唤醒锁
+        //Update wake lock
         if (isEnableWakeLock) {
             WakeLock.execWakeLock(context.getSystemService(Context.POWER_SERVICE) as PowerManager)
         } else {
@@ -107,7 +107,7 @@ object AppMeta {
             val isWeak = prefs.getBoolean(PREF_IS_WEAK_TOKEN, false)
             updateIsDefaultOrWeakToken(context,isWeak)
 
-            //预处理口令
+            //Pre-process token
             KanoUtils.transformLoginToken(context, prefs)
 
             val globalServerAddress = prefs.getString(GLOBAL_SERVER_URL_KEY, null)

@@ -27,11 +27,11 @@ const val PREFS_NAME = "kano_ZTE_store"
 
 fun Application.mainModule(context: Context, proxyServerIp: String) {
     install(DefaultHeaders)
-    val targetServerIP = proxyServerIp  // 目标服务器地址
+    val targetServerIP = proxyServerIp  // Target server address
     val TAG = "[$BASE_TAG]_reverseProxyModule"
 
     routing {
-        // 静态资源
+        // Static resources
         staticFileModule(context)
 
         authenticatedRoute(context) {
@@ -64,7 +64,7 @@ fun Application.mainModule(context: Context, proxyServerIp: String) {
 
     }
 
-    //应用结束时关闭dispather，避免内存泄漏
+    //Close dispatcher on exit to avoid memory leak
     environment.monitor.subscribe(ApplicationStopped) {
         SpeedTestDispatchers.close()
     }

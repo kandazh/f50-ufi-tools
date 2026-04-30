@@ -14,8 +14,8 @@ object UniqueDeviceIDManager {
     private val PREFS_NAME = "kano_ZTE_store"
 
     /**
-     * 必须先调用此方法初始化，传入 Context，
-     * 初始化后才能调用 getUUID()
+     * Must call this method to initialize first, pass Context,
+     * Can only call getUUID() after initialization
      */
     fun init(context: Context) {
         if (initialized) return
@@ -25,7 +25,7 @@ object UniqueDeviceIDManager {
     }
 
     /**
-     * 获取UUID，必须先调用 init() 完成初始化，否则会抛异常
+     * Get UUID, must call init() first or throws exception
      */
     fun getUUID(): String? {
         check(initialized) { "UniqueDeviceIDManager must be initialized first by calling init(context)" }
@@ -43,7 +43,7 @@ object UniqueDeviceIDManager {
             prefs.edit(commit = true) { putString("device_uuid", newUUID) }
             newUUID
         } catch (e: Exception) {
-            Log.e("UFI_TOOLS_LOG", "设备唯一标识符读取失败", e)
+            Log.e("UFI_TOOLS_LOG", "Device unique identifier read failed", e)
             null
         }
     }

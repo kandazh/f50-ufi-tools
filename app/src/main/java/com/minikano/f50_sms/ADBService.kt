@@ -58,11 +58,11 @@ class ADBService : Service() {
         handlerThread = HandlerThread("KanoBackgroundHandler")
         handlerThread.start()
         handler = Handler(handlerThread.looper)
-        // 串行执行任务
+        // Execute tasks serially
         handler.post {
             resetFilesFromAssets(applicationContext)
 
-            // 等文件拷贝完成后再继续
+            // Wait for file copy to complete
             startAdbKeepAliveTask(applicationContext)
             startIperfTask(applicationContext)
             val executor = Executors.newFixedThreadPool(3)
@@ -70,11 +70,11 @@ class ADBService : Service() {
             executor.execute(runnableSMB)
             // Telemetry disabled — do not execute runnableRPT
             // executor.execute(runnableRPT)
-            //订阅电池事件接收器
+            //Subscribe to battery event receiver
             registerBatteryReceiver()
         }
 
-        //开启定时任务
+        //Start scheduled tasks
         TaskSchedulerManager.init(applicationContext)
         return START_STICKY
     }
@@ -83,42 +83,42 @@ class ADBService : Service() {
         batteryReceiver = BatteryReceiver(onLowBattery = {
             forwardMessage(
                 """
-                ${AppMeta.nickName} 剩余电量低（10%），请及时充电~
+                ${AppMeta.nickName} Battery low (10%), please charge soon~
                     Battery low (10%). Please charge your device.
                 """.trimIndent()
-                ,"${AppMeta.nickName} 电量低（10%）")
+                ,"${AppMeta.nickName} Battery low (10%)")
         },
         onVeryLowBattery = {
             forwardMessage(
                 """
-                ${AppMeta.nickName} 剩余电量过低（5%），请及时充电~
+                ${AppMeta.nickName} Battery very low (5%), please charge soon~
                 Battery is very low (5%). Please charge your device.
                 """.trimIndent()
-                ,"${AppMeta.nickName} 电量过低（5%）")
+                ,"${AppMeta.nickName} Battery very low (5%)")
         },
         onFullBattery = {
             forwardMessage(
                 """
-                ${AppMeta.nickName} 电量已充满~
+                ${AppMeta.nickName} Fully charged~
                 ${AppMeta.nickName} is fully charged.
                 """.trimIndent()
-                ,"${AppMeta.nickName} 已充满~")
+                ,"${AppMeta.nickName} Fully charged~")
 
         },
         onCharge = {
             forwardMessage(
                 """
-                ${AppMeta.nickName} 已插入电源~
+                ${AppMeta.nickName} Power connected~
                 ${AppMeta.nickName} power connected.
                 """.trimIndent()
-            ,"${AppMeta.nickName} 已插入电源~")
+            ,"${AppMeta.nickName} Power connected~")
         })
 
         registerReceiver(
             batteryReceiver,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         )
-        Log.d(TAG, "BatteryReceiver 已注册")
+        Log.d(TAG, "BatteryReceiver Registered")
     }
 
     private fun forwardMessage(message:String,title:String){
@@ -136,24 +136,24 @@ class ADBService : Service() {
         val filesDir = context.filesDir
 
 
-        // 删除所有文件
+        // Delete all files
         filesDir.listFiles()?.forEach { file ->
             if (file.isFile) {
                 try {
                     file.delete()
                 } catch (e: Exception) {
-                    Log.e(TAG, "删除文件失败:${e.message}")
+                    Log.e(TAG, "Delete failed:${e.message}")
                 }
             }
         }
 
-        // 复制 assets 中的所有文件
+        // Copy all files from assets
         try {
             KanoUtils.copyAssetsRecursively(context, "shell", context.filesDir)
             KanoUtils.normalizeLineEndingsInDirShallow(context.filesDir)
-            Log.d(TAG, "已初始化 files 目录")
+            Log.d(TAG, "Files dir initialized")
         } catch (e: Exception) {
-            Log.e(TAG, "初始化 files 目录失败:${e.message}")
+            Log.e(TAG, "Failed to initialize files dir: ${e.message}")
         }
     }
 
@@ -164,7 +164,7 @@ class ADBService : Service() {
                 try {
                     SmsPoll.checkNewSmsAndSend(applicationContext)
                 } catch (e: Exception) {
-                    KanoLog.e(TAG, "读取短信时发生错误", e)
+                    KanoLog.e(TAG, "Error reading SMS", e)
                 }
             }
             handler.postDelayed(this, 5000)
@@ -178,15 +178,15 @@ class ADBService : Service() {
     private val runnableRPT = object : Runnable {
         override fun run() {
             if (rptRunning) {
-                KanoLog.w(TAG, "上一次 RPT 还未完成，跳过本次")
+                KanoLog.w(TAG, "Previous RPT not finished, skipping this time")
             } else {
                 rptScope.launch {
                     rptRunning = true
                     try {
-                        KanoLog.d(TAG, "周期性发送状态中...")
+                        KanoLog.d(TAG, "Periodically sending status...")
                         reportToServer()
                     } catch (e: Exception) {
-                        KanoLog.e(TAG, "发送状态时发生错误：", e)
+                        KanoLog.e(TAG, "Error sending status: ", e)
                     } finally {
                         rptRunning = false
                     }
@@ -199,10 +199,10 @@ class ADBService : Service() {
     private val runnableSMB = object : Runnable {
         override fun run() {
             try {
-                KanoLog.d(TAG, "激活SMB内置脚本中...")
+                KanoLog.d(TAG, "Activating SMB built-in script...")
                 SmbThrottledRunner.runOnceInThread(applicationContext)
             } catch (e: Exception) {
-                KanoLog.e(TAG, "激活SMB内置脚本错误")
+                KanoLog.e(TAG, "SMB built-in script activation error")
             }
             handler.postDelayed(this, 20_000)
         }
@@ -211,7 +211,7 @@ class ADBService : Service() {
     private fun startIperfTask(context: Context){
         iperfExecutor.execute {
             try{
-                KanoLog.d(TAG, "iperf3启动中...")
+                KanoLog.d(TAG, "iperf3Starting...")
                 killProcessByName("iperf3")
                 val result =
                     executeShellFromAssetsSubfolderWithArgs(
@@ -221,12 +221,12 @@ class ADBService : Service() {
                         "-D",
                     )
                 if (result != null) {
-                    KanoLog.d(TAG, "iperf3已启动")
+                    KanoLog.d(TAG, "iperf3Started")
                 } else {
-                    KanoLog.e(TAG, "iperf3启动失败(用户模式)")
+                    KanoLog.e(TAG, "iperf3Start failed (user mode)")
                 }
             }catch (e:Exception){
-                KanoLog.e(TAG, "iperf3命令执行出错",e)
+                KanoLog.e(TAG, "iperf3commandExecution error",e)
             }
         }
     }
@@ -239,11 +239,11 @@ class ADBService : Service() {
                 while (!Thread.currentThread().isInterrupted) {
                     val isDebugEnabled = isUsbDebuggingEnabled(context)
                     if (!isDebugEnabled){
-                        KanoLog.d(TAG, "没有开启ADB，不执行ADB保活")
+                        KanoLog.d(TAG, "ADB not enabled, skipping ADB keep-alive")
                         adbIsReady = false
                     }
                     else {
-                        KanoLog.d(TAG, "保活ADB服务中...")
+                        KanoLog.d(TAG, "Keeping ADB service alive...")
 
                         var result =
                             executeShellFromAssetsSubfolderWithArgs(context, adbPath, "devices") {
@@ -251,25 +251,25 @@ class ADBService : Service() {
                             }
 
                         if (result?.contains("localhost:5555\tdevice") == true) {
-                            KanoLog.d(TAG, "adb存活，无需启动")
+                            KanoLog.d(TAG, "adbAlive, no need to start")
                             adbIsReady = true
                             if (!isExecutedDisabledFOTA) {
                                 disableFOTATimes--
                                 if (disableFOTATimes <= 0) {
                                     KanoLog.d(
                                         TAG,
-                                        "已连续3次尝试使用adb禁用FOTA，强制isExecutingDisabledFOTA = true"
+                                        "3 consecutive attempts to disable FOTA via ADB, forcingisExecutingDisabledFOTA = true"
                                     )
                                     isExecutingDisabledFOTA = true
                                 }
                                 val res = KanoUtils.disableFota(applicationContext)
                                 if (res) {
-                                    KanoLog.d(TAG, "使用adb禁用FOTA完成")
+                                    KanoLog.d(TAG, "Disable FOTA via ADB completed")
                                 }
                                 isExecutedDisabledFOTA = true
                             }
                         } else {
-                            KanoLog.w(TAG, "adb无设备或已退出，尝试启动")
+                            KanoLog.w(TAG, "adbNo device or exited, trying to start")
                             adbIsReady = false
 
                             ShellKano.killProcessByName("adb")
@@ -298,11 +298,11 @@ class ADBService : Service() {
                                 }
 
                                 if (result?.contains("localhost:5555\tdevice") == true) {
-                                    KanoLog.d(TAG, "ADB连接成功: $result")
+                                    KanoLog.d(TAG, "ADBConnection successful: $result")
                                     adbIsReady = true
                                     break
                                 } else {
-                                    KanoLog.d(TAG, "ADB未连接: $result")
+                                    KanoLog.d(TAG, "ADBNot connected: $result")
                                 }
 
                                 Thread.sleep(interval.toLong())
@@ -310,11 +310,11 @@ class ADBService : Service() {
                             }
                         }
                     }
-                    // 每 11 秒轮询一次
+                    // Poll every 11 seconds
                     Thread.sleep(11_000)
                 }
             } catch (e: Exception) {
-                KanoLog.e(TAG, "ADB 保活线程异常", e)
+                KanoLog.e(TAG, "ADB Keep-alive thread exception", e)
             }
         }
     }
@@ -334,15 +334,15 @@ class ADBService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "adb_service后台服务",
+                "adb_serviceBackground service",
                 NotificationManager.IMPORTANCE_LOW
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
 
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("adb_service后台运行中")
-            .setContentText("正在执行adb_service定时任务")
+            .setContentTitle("adb_serviceRunning in background")
+            .setContentText("Executing adb_service scheduled tasks")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .build()
     }

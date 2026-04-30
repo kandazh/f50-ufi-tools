@@ -18,13 +18,13 @@ class KanoDingTalk(
     private val webhookUrl: String,
     private val secret: String? = null
 ) {
-    // 防止重复发送
+    // Prevent duplicate sends
     private val isSending = AtomicBoolean(false)
 
     fun sendMessage(content: String) {
-        // 如果已经在发送中，则直接返回
+        // If already sending, return immediately
         if (!isSending.compareAndSet(false, true)) {
-            KanoLog.w("UFI_TOOLS_LOG_DingTalk", "钉钉消息正在发送中，忽略重复发送")
+            KanoLog.w("UFI_TOOLS_LOG_DingTalk", "DingTalk message sending, ignoring duplicate")
             return
         }
 
@@ -33,7 +33,7 @@ class KanoDingTalk(
                 val client = OkHttpClient()
                 val mediaType = "application/json; charset=utf-8".toMediaType()
                 
-                // 构建消息内容
+                // Build message content
                 val messageJson = """
                 {
                     "msgtype": "text",
@@ -43,7 +43,7 @@ class KanoDingTalk(
                 }
                 """.trimIndent()
 
-                // 计算签名（如果提供了secret）
+                // Calculate signature (if secret provided)
                 val finalUrl = if (!secret.isNullOrEmpty()) {
                     val timestamp = System.currentTimeMillis()
                     val stringToSign = "$timestamp\n$secret"
@@ -63,18 +63,18 @@ class KanoDingTalk(
                     .post(body)
                     .build()
 
-                KanoLog.d("UFI_TOOLS_LOG_DingTalk", "开始发送钉钉消息...")
+                KanoLog.d("UFI_TOOLS_LOG_DingTalk", "Starting to send DingTalk message...")
                 val response = client.newCall(request).execute()
                 
                 if (response.isSuccessful) {
-                    KanoLog.d("UFI_TOOLS_LOG_DingTalk", "钉钉消息发送成功")
+                    KanoLog.d("UFI_TOOLS_LOG_DingTalk", "DingTalk message sent successfully")
                 } else {
-                    KanoLog.e("UFI_TOOLS_LOG_DingTalk", "钉钉消息发送失败: ${response.code}")
+                    KanoLog.e("UFI_TOOLS_LOG_DingTalk", "DingTalk message send failed: ${response.code}")
                 }
                 
                 response.close()
             } catch (e: Exception) {
-                KanoLog.e("UFI_TOOLS_LOG_DingTalk", "钉钉消息发送异常: ${e.message}", e)
+                KanoLog.e("UFI_TOOLS_LOG_DingTalk", "DingTalk message send exception: ${e.message}", e)
             } finally {
                 isSending.set(false)
             }

@@ -16,11 +16,11 @@ import java.net.URL
 
 const val TAG = "[$BASE_TAG]_reverseProxyModule"
 
-//反向代理官方后端
+//Reverse proxy official backend
 fun Route.reverseProxyModule(targetServerIP:String) {
-    //转发到原厂web后端
+    //Forward to factory web backend
     route("/api/goform/{...}") {
-        KanoLog.d(TAG,"开始反向代理资源...")
+        KanoLog.d(TAG,"Starting reverse proxy...")
         handle {
             val targetServer = "http://${targetServerIP}"
             val originalPath = call.request.uri.removePrefix("/api")
@@ -35,7 +35,7 @@ fun Route.reverseProxyModule(targetServerIP:String) {
 
             val method = call.request.httpMethod.value
 
-            // 处理 OPTIONS 请求
+            // Handle OPTIONS request
             if (method == "OPTIONS") {
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.response.headers.append("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -60,7 +60,7 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                     }
 
                     call.request.headers.forEach { key, values ->
-                        // 忽略客户端 Referer host
+                        // Ignore client Referer host
                         if (!key.equals("host", ignoreCase = true) &&
                             !key.equals("referer", ignoreCase = true) &&
                             !key.equals("cookie", true)
@@ -103,7 +103,7 @@ fun Route.reverseProxyModule(targetServerIP:String) {
                     }
                 }
             } catch (e: Exception) {
-                KanoLog.e(TAG,"转发出错",e)
+                KanoLog.e(TAG,"Forward error",e)
                 call.respond(HttpStatusCode.InternalServerError, "Proxy error: ${e.message}")
             } finally {
                 conn?.disconnect()

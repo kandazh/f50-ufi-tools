@@ -55,10 +55,10 @@ class ShellKano {
         fun runShellCommand(command: String?, context: Context): String? {
             val output = StringBuilder()
             try {
-                // 设置 HOME 环境变量
+                // Set HOME env var
                 val env = arrayOf("HOME=${context.filesDir.absolutePath}")
 
-                // 启动进程（传入环境变量）
+                // Start process (with env vars)
                 val process = Runtime.getRuntime().exec(command, env)
 
                 val reader = BufferedReader(
@@ -86,19 +86,19 @@ class ShellKano {
         }
 
         /**
-         * adb寻找ui控件然后点击
+         * ADB find UI widget and click
          * @return 1 0 -1
-         * 1表示已经在AT发送界面了
-         * 0表示执行点击成功
-         * -1表示执行失败 没有找到任何文本
+         * 1 = already on AT send screen
+         * 0 = click executed successfully
+         * -1 means execution failed, no text found
          */
         fun parseUiDumpAndClick(targetText: String, adbPath: String, context: Context): Number {
             val cacheFile = getUiDoc(adbPath, context)
 
             val doc = cacheFile
-            KanoLog.d("UFI_TOOLS_LOG", "doc 读取 结果：${doc.getElementsByTagName("node")}")
+            KanoLog.d("UFI_TOOLS_LOG", "doc read result: ${doc.getElementsByTagName("node")}")
 
-            //tap逻辑
+            //tap logic
             val nodes = doc.getElementsByTagName("node")
             for (i in 0 until nodes.length) {
                 val node = nodes.item(i)
@@ -116,11 +116,11 @@ class ShellKano {
                         "$adbPath -s localhost shell input tap $tapX $tapY",
                         context
                     )
-                        ?: throw Exception("执行 input tap 失败")
-                    KanoLog.d("UFI_TOOLS_LOG", "input tap 点击 坐标：$tapX,$tapY 结果：${result} ")
+                        ?: throw Exception("Failed to execute input tap")
+                    KanoLog.d("UFI_TOOLS_LOG", "input tap click coordinates: $tapX,$tapY result: ${result} ")
                     return 0
                 } else if (text.contains("AT Command:")) {
-                    //说明已经在AT页面了
+                    //Already on AT page
                     return 1
                 }
             }
@@ -128,7 +128,7 @@ class ShellKano {
         }
 
         /**
-         * 填写input内容然后发送AT指令
+         * Fill input content and send AT command
          */
         fun fillInputAndSend(
             inputText: String,
@@ -142,10 +142,10 @@ class ShellKano {
             val doc = getUiDoc(adbPath, context)
             val nodes = doc.getElementsByTagName("node")
             val escapedInput = inputText.replace(" ", "%s")
-            //复制文本到剪贴板
+            //Copy text to clipboard
             KanoUtils.copyToClipboard(context, "sambaCommand", inputText)
 
-            // 寻找输入框
+            // Find input field
             var inputClicked = false
             for (i in 0 until nodes.length) {
                 val node = nodes.item(i)
@@ -165,20 +165,20 @@ class ShellKano {
                             "$adbPath -s localhost shell input tap $tapX $tapY",
                             context
                         )
-                        KanoLog.d("UFI_TOOLS_LOG", "点击输入框坐标：$tapX,$tapY")
+                        KanoLog.d("UFI_TOOLS_LOG", "Click input field coordinates: $tapX,$tapY")
                     }
 
-                    // 输入文本
+                    // Input text
                     if (!useClipBoard) {
-                        Thread.sleep(200) // 稍等软键盘弹出
+                        Thread.sleep(200) // Wait for soft keyboard to appear
                         runShellCommand(
                             "$adbPath -s localhost shell input text \"$escapedInput\"",
                             context
                         )
-                        KanoLog.d("UFI_TOOLS_LOG", "输入文本：$inputText")
+                        KanoLog.d("UFI_TOOLS_LOG", "Input text: $inputText")
                         inputClicked = true
                         if (escapedInput.length > 20) {
-                            Thread.sleep(500) // 稍等输入完毕
+                            Thread.sleep(500) // Wait for input to finish
                         }
                         break
                     } else {
@@ -186,18 +186,18 @@ class ShellKano {
                             "$adbPath -s localhost shell input keyevent KEYCODE_PASTE",
                             context
                         )
-                        KanoLog.d("UFI_TOOLS_LOG", "读取剪贴板，输入文本：$inputText")
+                        KanoLog.d("UFI_TOOLS_LOG", "Read clipboard, input text: $inputText")
                         inputClicked = true
-                        Thread.sleep(666) // 稍等输入完毕
+                        Thread.sleep(666) // Wait for input to finish
                         break
                     }
                 }
             }
 
-            if (!inputClicked) throw Exception("未找到 EditText 输入框")
+            if (!inputClicked) throw Exception("EditText input field not found")
 
             fun getBtnAndClick(nodes_after: NodeList): String? {
-                //找到按钮点击
+                //Find button and click
                 for (i in 0 until nodes_after.length) {
                     val node = nodes_after.item(i)
                     val attrs = node.attributes
@@ -216,14 +216,14 @@ class ShellKano {
                         )
                         KanoLog.d(
                             "UFI_TOOLS_LOG",
-                            "点击 ${btnName.joinToString(", ")} 坐标：$tapX,$tapY"
+                            "Click ${btnName.joinToString(", ")} coordinates: $tapX,$tapY"
                         )
-                        //继续检测result
+                        //Continue checking result
                         if (resId != "") {
                             val res = getTextFromUIByResourceId(resId, adbPath, context)
                             if (needBack) {
-                                //返回就完事了
-                                Thread.sleep(800) // 稍等输入完毕
+                                //Just go back
+                                Thread.sleep(800) // Wait for input to finish
                                 repeat(10) {
                                     runShellCommand(
                                         "$adbPath -s localhost shell input keyevent KEYCODE_BACK",
@@ -234,8 +234,8 @@ class ShellKano {
                             return res[0]
                         } else {
                             if (needBack) {
-                                //返回就完事了
-                                Thread.sleep(800) // 稍等输入完毕
+                                //Just go back
+                                Thread.sleep(800) // Wait for input to finish
                                 repeat(10) {
                                     runShellCommand(
                                         "$adbPath -s localhost shell input keyevent KEYCODE_BACK",
@@ -265,25 +265,25 @@ class ShellKano {
                 return res as String
             }
 
-            throw Exception("未找到 ${btnName.joinToString(", ")} 按钮")
+            throw Exception("Not found: ${btnName.joinToString(", ")} button")
         }
 
         fun createShellScript(context: Context, fileName: String, scriptContent: String): File {
             val scriptFile = File(context.getExternalFilesDir(null), fileName)
 
             try {
-                // 如果文件已存在，删除旧文件
+                // If file exists, delete old file
                 if (scriptFile.exists()) {
                     scriptFile.delete()
                 }
             } catch (e: Exception) {
-                KanoLog.d("UFI_TOOLS_LOG", "删除脚本出错：${e.message}")
+                KanoLog.d("UFI_TOOLS_LOG", "Error deleting script: ${e.message}")
             }
 
-            // 写入内容（writeText 本身就是覆盖写入）
+            // Write content (writeText itself overwrites)
             scriptFile.writeText(scriptContent)
 
-            // 设置执行权限（某些设备需要删除后重新设置权限才生效）
+            // Set execute permission (some devices need re-setting after delete)
             scriptFile.setExecutable(true)
 
             return scriptFile
@@ -312,56 +312,56 @@ class ShellKano {
 
             KanoLog.d(
                 "UFI_TOOLS_LOG",
-                "根据：$resId 共找到${resultTexts.size}条 result_text 文本：$resultTexts"
+                "Based on: $resId Found total ${resultTexts.size} result_text entries: $resultTexts"
             )
             return resultTexts
         }
 
-        //获取UI
+        //Get UI
         private fun getUiDoc(adbPath: String, context: Context, maxRetry: Int = 3): Document {
-            if (adbPath.isEmpty()) throw Exception("需要 adbPath")
+            if (adbPath.isEmpty()) throw Exception("adbPath required")
 
             repeat(maxRetry) { attempt ->
                 try {
 
-                    // 清除旧的 XML
+                    // Clear old XML
                     runShellCommand("$adbPath -s localhost shell rm /sdcard/kano_ui.xml", context)
                     Thread.sleep(200)
 
-                    // dump 当前 UI
+                    // Dump current UI
                     runShellCommand(
                         "$adbPath -s localhost shell uiautomator dump /sdcard/kano_ui.xml",
                         context
                     )
-                        ?: throw Exception("uiautomator dump 失败")
+                        ?: throw Exception("uiautomator dump failed")
 
                     Thread.sleep(300)
 
-                    // cat 读取 XML 内容
+                    // cat reads XML content
                     val xmlContent = runShellCommand(
                         "$adbPath -s localhost shell cat /sdcard/kano_ui.xml",
                         context
                     )
-                        ?: throw Exception("cat kano_ui.xml 失败")
+                        ?: throw Exception("cat kano_ui.xml failed")
 
                     if (!xmlContent.trim().endsWith("</hierarchy>")) {
-                        KanoLog.w("UFI_TOOLS_LOG", "UI XML 不完整，第 ${attempt + 1} 次尝试")
+                        KanoLog.w("UFI_TOOLS_LOG", "UI XML incomplete, attempt ${attempt + 1}  attempt(s)")
                         Thread.sleep(200)
                         return@repeat
                     }
 
-                    // 转换为 Document
+                    // Convert to Document
                     val factory = DocumentBuilderFactory.newInstance()
                     val builder = factory.newDocumentBuilder()
                     val inputStream = xmlContent.byteInputStream()
                     return builder.parse(inputStream)
                 } catch (e: Exception) {
-                    KanoLog.e("UFI_TOOLS_LOG", "解析 UI XML 失败，第 ${attempt + 1} 次：${e.message}")
+                    KanoLog.e("UFI_TOOLS_LOG", "Parse UI XML failed, attempt ${attempt + 1} : ${e.message}")
                     Thread.sleep(200)
                 }
             }
 
-            throw Exception("多次尝试后仍无法获取完整的 UI dump")
+            throw Exception("Unable to get complete UI dump after multiple attempts")
         }
 
 
@@ -376,18 +376,18 @@ class ShellKano {
                         val tokens = line.trim().split(Regex("\\s+"))
                         if (tokens.size > 1) {
                             val pid = tokens[1]
-                            KanoLog.w("UFI_TOOLS_LOG", "匹配到进程: $line，准备 kill -9 $pid")
+                            KanoLog.w("UFI_TOOLS_LOG", "Matched process: $line，Preparing kill -9 $pid")
                             try {
                                 ProcessBuilder("kill", "-9", pid).start().waitFor()
-                                KanoLog.w("UFI_TOOLS_LOG", "已 kill -9 $pid")
+                                KanoLog.w("UFI_TOOLS_LOG", "Killed -9 $pid")
                             } catch (e: Exception) {
-                                KanoLog.e("UFI_TOOLS_LOG", "kill -9 $pid 失败: ${e.message}")
+                                KanoLog.e("UFI_TOOLS_LOG", "kill -9 $pid failed: ${e.message}")
                             }
                         }
                     }
                 }
             } catch (e: Exception) {
-                KanoLog.e("UFI_TOOLS_LOG", "killProcessByName 执行失败: ${e.message}")
+                KanoLog.e("UFI_TOOLS_LOG", "killProcessByName execution failed: ${e.message}")
             }
         }
 
@@ -395,8 +395,8 @@ class ShellKano {
             context: Context,
             assetSubPath: String,
             vararg args: String,
-            timeoutMs: Long = 20000,  // 默认最多等20秒
-            onTimeout: (() -> Unit)? = null  // 超时回调
+            timeoutMs: Long = 20000,  // Default max wait 20 seconds
+            onTimeout: (() -> Unit)? = null  // Timeout callback
         ): String? {
             return try {
                 val assetManager = context.assets
@@ -410,9 +410,9 @@ class ShellKano {
                             input.copyTo(output)
                         }
                     }
-                    KanoLog.d("UFI_TOOLS_LOG", "${outFile} 文件复制完成")
+                    KanoLog.d("UFI_TOOLS_LOG", "${outFile} File copy complete")
                 } else {
-                    KanoLog.d("UFI_TOOLS_LOG", "${outFile} 文件已存在，无需复制")
+                    KanoLog.d("UFI_TOOLS_LOG", "${outFile} File already exists, no copy needed")
                 }
 
                 outFile.setExecutable(true)
@@ -422,7 +422,7 @@ class ShellKano {
                     addAll(args)
                 }
 
-                KanoLog.d("UFI_TOOLS_LOG", "执行命令: ${command.joinToString(" ")}")
+                KanoLog.d("UFI_TOOLS_LOG", "Executing command: ${command.joinToString(" ")}")
 
                 val process = ProcessBuilder(command)
                     .redirectErrorStream(true)
@@ -431,7 +431,7 @@ class ShellKano {
                     }
                     .start()
 
-                // 启动线程读输出
+                // Start thread to read output
                 val outputBuilder = StringBuilder()
                 val readerThread = Thread {
                     try {
@@ -439,72 +439,72 @@ class ShellKano {
                             outputBuilder.appendLine(it)
                         }
                     } catch (e: Exception) {
-                        KanoLog.w("UFI_TOOLS_LOG", "读取进程输出异常：${e.message}")
+                        KanoLog.w("UFI_TOOLS_LOG", "Exception reading process output: ${e.message}")
                     }
                 }
                 readerThread.start()
 
-                // 最多等待 timeoutMs 毫秒
+                // Wait max timeoutMs milliseconds
                 val finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
 
                 if (!finished) {
-                    KanoLog.w("UFI_TOOLS_LOG", "执行超时，强制销毁进程")
+                    KanoLog.w("UFI_TOOLS_LOG", "Execution timeout, force destroying process")
                     process.destroy()
 
-                    // 调用回调
+                    // Call callback
                     onTimeout?.invoke()
                 }
 
-                readerThread.join(100) // 最多等 100ms 等输出读完
+                readerThread.join(100) // Wait max 100ms for output to finish
                 outputBuilder.toString().trim()
 
             } catch (e: Exception) {
-                KanoLog.e("UFI_TOOLS_LOG", "执行异常: ${e.message}")
+                KanoLog.e("UFI_TOOLS_LOG", "Execution exception: ${e.message}")
                 null
             }
         }
 
-        //检测adb存活
+        //Check if ADB is alive
         fun ensureAdbAlive(context: Context): Boolean {
             try {
                 val adbPath = "shell/adb"
 
-                // 第一次检测
+                // First check
                 var result = executeShellFromAssetsSubfolderWithArgs(context, adbPath, "devices")
-                KanoLog.d("UFI_TOOLS_LOG", "adb device 执行状态：$result")
+                KanoLog.d("UFI_TOOLS_LOG", "adb device execution status: $result")
 
                 if (result?.contains("localhost:5555\tdevice") == true) {
-                    KanoLog.d("UFI_TOOLS_LOG", "adb存活，无需启动")
+                    KanoLog.d("UFI_TOOLS_LOG", "adbAlive, no need to start")
                     return true
                 }
 
-                KanoLog.w("UFI_TOOLS_LOG", "adb无设备或已退出，尝试启动")
+                KanoLog.w("UFI_TOOLS_LOG", "adbNo device or exited, trying to start")
 
-                // 重启 ADB server
+                // Restart ADB server
                 executeShellFromAssetsSubfolderWithArgs(context, adbPath, "kill-server")
                 Thread.sleep(1000)
                 executeShellFromAssetsSubfolderWithArgs(context, adbPath, "connect", "localhost")
 
-                // 等待最多 10 秒，设备变为 "device"
+                // Wait max 10 seconds for device to become 'device'
                 val maxWaitMs = 10_000
                 val interval = 500
                 var waited = 0
 
                 while (waited < maxWaitMs) {
                     result = executeShellFromAssetsSubfolderWithArgs(context, adbPath, "devices")
-                    KanoLog.d("UFI_TOOLS_LOG", "等待 ADB 启动中：$result")
+                    KanoLog.d("UFI_TOOLS_LOG", "Waiting for ADB to start: $result")
                     if (result?.contains("localhost:5555\tdevice") == true) {
-                        KanoLog.d("UFI_TOOLS_LOG", "ADB连接成功")
+                        KanoLog.d("UFI_TOOLS_LOG", "ADBConnection successful")
                         return true
                     }
                     Thread.sleep(interval.toLong())
                     waited += interval
                 }
 
-                KanoLog.e("UFI_TOOLS_LOG", "等待ADB device超时")
+                KanoLog.e("UFI_TOOLS_LOG", "Waiting for ADB device timeout")
                 return false
             } catch (e: Exception) {
-                KanoLog.e("UFI_TOOLS_LOG", "检测/启动ADB失败: ${e.message}")
+                KanoLog.e("UFI_TOOLS_LOG", "Check/start ADB failed: ${e.message}")
                 return false
             }
         }
@@ -542,7 +542,7 @@ class ShellKano {
 
                 return output
             } catch (e: Exception) {
-                KanoLog.d("UFI_TOOLS_LOG", "执行出错：${e.message}")
+                KanoLog.d("UFI_TOOLS_LOG", "Execution error: ${e.message}")
                 e.printStackTrace()
             }
 
@@ -551,25 +551,25 @@ class ShellKano {
 
 
         fun runADB(context: Context) {
-            //网络adb
+            //Network ADB
             //adb setprop service.adb.tcp.port 5555
             Thread {
                 try {
                     runShellCommand("/system/bin/setprop persist.service.adb.tcp.port 5555")
                     runShellCommand("/system/bin/setprop service.adb.tcp.port 5555")
-                    Log.d("UFI_TOOLS_LOG", "网络adb调试prop执行成功")
+                    Log.d("UFI_TOOLS_LOG", "Network ADB debug prop executed successfully")
                 } catch (e: Exception) {
                     try {
                         runShellCommand("/system/bin/setprop service.adb.tcp.port 5555")
                         runShellCommand("/system/bin/setprop persist.service.adb.tcp.port 5555")
-                        Log.d("UFI_TOOLS_LOG", "网络adb调试prop执行成功")
+                        Log.d("UFI_TOOLS_LOG", "Network ADB debug prop executed successfully")
                     } catch (e: Exception) {
-                        Log.d("UFI_TOOLS_LOG", "网络adb调试prop执行出错： ${e.message}")
+                        Log.d("UFI_TOOLS_LOG", "Network ADB debug prop execution error: ${e.message}")
                     }
                 }
                 Thread.sleep(500)
                 try {
-                    Log.d("UFI_TOOLS_LOG", "开始进入adb_ip激活流程")
+                    Log.d("UFI_TOOLS_LOG", "Starting ADB IP activation process")
 
                     val sharedPrefs =
                         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -581,12 +581,12 @@ class ShellKano {
                     if (ADB_IP_ENABLED == "true") {
                         val ADB_IP =
                             sharedPrefs.getString("gateway_ip", "")?.substringBefore(":")
-                                ?: throw Exception("没有ADMIN_IP")
+                                ?: throw Exception("No ADMIN_IP")
                         val ADMIN_PWD =
                             sharedPrefs.getString("ADMIN_PWD","Wa@9w+YWRtaW4=") ?: "Wa@9w+YWRtaW4="
 
                         Log.d(
-                            "UFI_TOOLS_LOG", "读取网络ADB所需配置：ADB_IP:${
+                            "UFI_TOOLS_LOG", "Reading network ADB config: ADB_IP: ${
                                 ADB_IP
                             } ADMIN_PWD:${
                                 ADMIN_PWD.take(2)
@@ -606,27 +606,27 @@ class ShellKano {
                                             "cmd" to "loginfo"
                                         )
                                     )
-                                    KanoLog.d("UFI_TOOLS_LOG", "尝试连接：$result")
+                                    KanoLog.d("UFI_TOOLS_LOG", "Trying to connect: $result")
                                     if (result != null) {
-                                        KanoLog.d("UFI_TOOLS_LOG", "http://$ip:8080 可访问")
+                                        KanoLog.d("UFI_TOOLS_LOG", "http://$ip:8080 accessible")
                                         return true
                                     }
                                 } catch (e: Exception) {
-                                    KanoLog.d("UFI_TOOLS_LOG", "连接异常: ${e.message}")
+                                    KanoLog.d("UFI_TOOLS_LOG", "Connection exception: ${e.message}")
                                 }
                                 delay(intervalMillis)
                             }
 
-                            KanoLog.e("UFI_TOOLS_LOG", "http://$ip:8080 在 $timeoutSeconds 秒内不可访问")
+                            KanoLog.e("UFI_TOOLS_LOG", "http://$ip:8080 at $timeoutSeconds  seconds not accessible")
                             return false
                         }
 
                         try {
                             runBlocking {
-                                //先等待最多30s，等待官方web后台完全启动
+                                //Wait max 30s for official web backend to fully start
                                 val reachable = waitUntilReachable(ADB_IP, 30)
                                 if (!reachable) {
-                                    KanoLog.e("UFI_TOOLS_LOG", "官方WEB服务不可达，终止执行ADB自启操作")
+                                    KanoLog.e("UFI_TOOLS_LOG", "Official web service unreachable, aborting ADB auto-start")
                                     return@runBlocking
                                 }
 
@@ -639,7 +639,7 @@ class ShellKano {
                                             "usb_port_switch" to "0"
                                         )
                                     )
-                                    KanoLog.d("UFI_TOOLS_LOG", "关闭ADBD结果: $result1")
+                                    KanoLog.d("UFI_TOOLS_LOG", "Close ADBD result: $result1")
                                     delay(500)
                                     val result2 = req.postData(
                                         cookie, mapOf(
@@ -647,7 +647,7 @@ class ShellKano {
                                             "usb_port_switch" to "1"
                                         )
                                     )
-                                    KanoLog.d("UFI_TOOLS_LOG", "开启ADBD结果: $result2")
+                                    KanoLog.d("UFI_TOOLS_LOG", "Enable ADBD result: $result2")
 
                                     val result3 = req.postData(
                                         cookie, mapOf(
@@ -658,7 +658,7 @@ class ShellKano {
                                         )
                                     )
 
-                                    KanoLog.d("UFI_TOOLS_LOG", "禁用FOTA结果: $result3")
+                                    KanoLog.d("UFI_TOOLS_LOG", "Disable FOTA result: $result3")
 
                                     val samba_result = sendShellCmd("cat /data/samba/etc/smb.conf | grep samba_exec.sh")
 
@@ -669,24 +669,24 @@ class ShellKano {
                                                 "samba_switch" to "1",
                                             )
                                         )
-                                        KanoLog.d("UFI_TOOLS_LOG", "开启samba结果: $result")
+                                        KanoLog.d("UFI_TOOLS_LOG", "Enable samba result: $result")
                                     }
 
                                     req.logout(cookie)
                                     if (result1?.getString("result") == "success" && result2?.getString("result") == "success") {
-                                        KanoLog.d("UFI_TOOLS_LOG", "ADB_WIFI自启动执行成功")
+                                        KanoLog.d("UFI_TOOLS_LOG", "ADB_WIFI auto-start execution successful")
                                     }
                                 }
                             }
 
                         } catch (e: Exception) {
-                            KanoLog.e("UFI_TOOLS_LOG", "ADB_WIFI执行错误: ${e.message}")
+                            KanoLog.e("UFI_TOOLS_LOG", "ADB_WIFI execution error: ${e.message}")
                         }
                     } else {
-                        Log.d("UFI_TOOLS_LOG", "不需要自启动ADB_WIFI")
+                        Log.d("UFI_TOOLS_LOG", "No need for ADB_WIFI auto-start")
                     }
                 } catch (e: Exception) {
-                    Log.d("UFI_TOOLS_LOG", "ADB_WIFI自启动执行错误：${e.message}")
+                    Log.d("UFI_TOOLS_LOG", "ADB_WIFIAuto-start execution error: ${e.message}")
                     e.printStackTrace()
                 }
 
@@ -699,7 +699,7 @@ class ShellKano {
         }
 
         fun openSMB (context: Context){
-            //samba开关关闭了，立马拉起
+            //Samba switch closed, restart immediately
             try {
                 val open_command = "settings put global samba_enable 1"
                 val socketPath = File(context.filesDir, "kano_root_shell.sock")
@@ -708,25 +708,25 @@ class ShellKano {
                     val outFile_adb = KanoUtils.copyFileToFilesDir(context, "shell/adb")
                     if(outFile_adb != null){
                         outFile_adb.setExecutable(true)
-                        KanoLog.d("UFI_TOOLS_LOG", "samba被关闭了，尝试打开(使用adb方式)...")
+                        KanoLog.d("UFI_TOOLS_LOG", "sambawas closed, trying to open (using ADB method)...")
                         val res = runShellCommand(
                             "${outFile_adb.absolutePath} -s localhost shell $open_command",
                             context
                         )
-                        KanoLog.d("UFI_TOOLS_LOG", "使用adb方式打开samba结果：$res")
+                        KanoLog.d("UFI_TOOLS_LOG", "Open samba using ADB method result: $res")
                     }
                 }
 
                 if (socketPath.exists()) {
-                    KanoLog.d("UFI_TOOLS_LOG", "samba被关闭了，尝试打开(使用root方式)...")
+                    KanoLog.d("UFI_TOOLS_LOG", "sambawas closed, trying to open (using root method)...")
                     val res =  RootShell.sendCommandToSocket(open_command.trimIndent(),
                         socketPath.absolutePath,
                         2000
                     )
-                    KanoLog.d("UFI_TOOLS_LOG", "使用root方式打开samba结果：$res")
+                    KanoLog.d("UFI_TOOLS_LOG", "Open samba using root method result: $res")
                 }
             } catch (e: Exception) {
-                KanoLog.e("UFI_TOOLS_LOG", "smb打开执行失败", e)
+                KanoLog.e("UFI_TOOLS_LOG", "smbOpen execution failed", e)
             }
         }
     }

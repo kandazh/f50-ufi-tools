@@ -18,23 +18,23 @@ fun Route.atModule(context: Context) {
     // Cache the sendat binary path to avoid copying on every AT call
     var cachedSendatFile: File? = null
 
-    //AT指令
+    //AT command
     get("/api/AT") {
         try {
             val command = call.request.queryParameters["command"]
-                ?: throw Exception("缺少 query 参数 command")
+                ?: throw Exception("Missing query parameter: command")
             val slot = call.request.queryParameters["slot"]?.toIntOrNull() ?: 0
 
-            KanoLog.d(TAG, "AT_command 传入参数：$command")
+            KanoLog.d(TAG, "AT_command parameter: $command")
 
             if (!command.trim().startsWith("AT", ignoreCase = true)) {
-                throw Exception("解析失败，AT指令需要以 “AT” 开头")
+                throw Exception("Parse failed, AT command must start with 'AT'")
             }
 
             val outFileAt = cachedSendatFile?.takeIf { it.exists() && it.canExecute() }
                 ?: run {
                     val f = KanoUtils.copyFileToFilesDir(context, "shell/sendat")
-                        ?: throw Exception("复制 sendat 到 filesDir 失败")
+                        ?: throw Exception("Failed to copy sendat to filesDir")
                     f.setExecutable(true)
                     cachedSendatFile = f
                     f
@@ -42,10 +42,10 @@ fun Route.atModule(context: Context) {
 
             val atCommand = "${outFileAt.absolutePath} -n $slot -c '${command.trim()}'"
             val result = ShellKano.runShellCommand(atCommand, true)
-                ?: throw Exception("AT 指令没有输出")
+                ?: throw Exception("AT Command has no output")
 
             var res = result
-                .replace("\"", "\\\"") // 转义引号
+                .replace("\"", "\\\"") // Escape quotes
                 .replace("\n", "")
                 .replace("\r", "")
                 .trimStart()
@@ -66,10 +66,10 @@ fun Route.atModule(context: Context) {
             )
 
         } catch (e: Exception) {
-            KanoLog.d(TAG, "AT指令执行错误：${e.message}")
+            KanoLog.d(TAG, "AT commandExecution error: ${e.message}")
 
             call.respondText(
-                """{"error":"AT指令执行错误：${e.message}"}""",
+                """{"error":"AT commandExecution error: ${e.message}"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

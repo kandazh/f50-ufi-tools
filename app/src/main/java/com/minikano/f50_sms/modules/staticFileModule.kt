@@ -14,7 +14,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import java.io.FileNotFoundException
 
-//静态资源 - 带LRU缓存
+//Static resources with LRU cache
 fun Route.staticFileModule(context: Context) {
     val TAG = "[$BASE_TAG]_staticFileModule"
 
@@ -32,7 +32,7 @@ fun Route.staticFileModule(context: Context) {
         val path = if (rawPath.isBlank()) "index.html" else rawPath
 
         if (path.contains("..")) {
-            KanoLog.w(TAG, "静态资源请求被拒绝(路径非法): $rawPath")
+            KanoLog.w(TAG, "Static resource rejected (invalid path): $rawPath")
             call.respond(HttpStatusCode.Forbidden, "403 Forbidden")
             return@get
         }
@@ -46,13 +46,13 @@ fun Route.staticFileModule(context: Context) {
             val contentType = ContentType.defaultForFilePath(path)
             call.respondBytes(bytes, contentType)
         } catch (e: SecurityException) {
-            KanoLog.e(TAG, "静态资源无权限访问：$path", e)
+            KanoLog.e(TAG, "Static resource access denied: $path", e)
             call.respond(HttpStatusCode.Forbidden, "403 Forbidden")
         } catch (e: FileNotFoundException) {
-            KanoLog.e(TAG, "静态资源不存在：$path", e)
+            KanoLog.e(TAG, "Static resource not found: $path", e)
             call.respond(HttpStatusCode.NotFound, "404 Not Found")
         } catch (e: Exception) {
-            KanoLog.e(TAG, "静态资源读取失败：$path", e)
+            KanoLog.e(TAG, "Static resource read failed: $path", e)
             call.respond(HttpStatusCode.InternalServerError, "500 Internal Server Error")
         }
     }

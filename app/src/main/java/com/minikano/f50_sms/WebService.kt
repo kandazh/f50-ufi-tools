@@ -33,7 +33,7 @@ class WebService : Service() {
     private val statusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val action = intent?.action
-            Log.d("UFI_TOOLS_LOG", "WebService 收到 Intent")
+            Log.d("UFI_TOOLS_LOG", "WebService Received Intent")
             if (action == UI_INTENT) {
                 val shouldStart = intent.getBooleanExtra("status", false)
                 if (shouldStart) {
@@ -48,25 +48,25 @@ class WebService : Service() {
     override fun onCreate() {
         super.onCreate()
         AppMeta.init(this)
-        // Application 或 Activity 启动时调用一次初始化：
+        // Call once to initialize when Application or Activity starts:
         UniqueDeviceIDManager.init(this)
         startForegroundNotification()
 
-        //检测IP变动，适应用户ip网段更改
+        //Detect IP changes, adapt to user IP subnet changes
         KanoUtils.adaptIPChange(applicationContext)
 
         val prefs = getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
         val needWakeLock = prefs.getString("wakeLock", "lock") ?: "lock"
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         if(needWakeLock != "lock") {
-            KanoLog.d("UFI_TOOLS_LOG","不需要唤醒锁，正在释放...")
+            KanoLog.d("UFI_TOOLS_LOG","Wake lock not needed, releasing...")
             WakeLock.releaseWakeLock()
         } else {
-            KanoLog.d("UFI_TOOLS_LOG","需要唤醒锁，正在执行...")
+            KanoLog.d("UFI_TOOLS_LOG","Wake lock needed, executing...")
             WakeLock.execWakeLock(pm)
         }
 
-        // 注册广播接收器
+        // Register broadcast receiver
         registerReceiver(statusReceiver, IntentFilter(UI_INTENT), Context.RECEIVER_EXPORTED)
         startForeground(114514, createNotification())
 
@@ -90,15 +90,15 @@ class WebService : Service() {
                 val currentIp = prefs.getString("gateway_ip", "0.0.0.0:8080") ?: "0.0.0.0:8080"
                 allowAutoStart = true
                 try {
-                    Log.d("UFI_TOOLS_LOG", "正在启动web服务，绑定地址：http://0.0.0.0:$port")
+                    Log.d("UFI_TOOLS_LOG", "Starting web service, binding to: http://0.0.0.0:$port")
                     val server = KanoWebServer(applicationContext, 2333, currentIp)
                     server.start()
                     webServer = server
                     sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", true))
-                    Log.d("UFI_TOOLS_LOG", "启动服务成功，地址：http://0.0.0.0:$port")
+                    Log.d("UFI_TOOLS_LOG", "Service started successfully, address: http://0.0.0.0:$port")
                 } catch (fallbackEx: Exception) {
                     webServer = null
-                    Log.e("UFI_TOOLS_LOG", "服务启动失败: ${fallbackEx.message}")
+                    Log.e("UFI_TOOLS_LOG", "Service start failed: ${fallbackEx.message}")
                     sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
                 }
             }
@@ -122,7 +122,7 @@ class WebService : Service() {
                     sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
                     Log.d("UFI_TOOLS_LOG", "Web server stopped")
                 } catch (e: Exception) {
-                    Log.e("UFI_TOOLS_LOG", "停止服务失败: ${e.message}", e)
+                    Log.e("UFI_TOOLS_LOG", "Failed to stop service: ${e.message}", e)
                 }
             }
         }.start()
@@ -143,7 +143,7 @@ class WebService : Service() {
 
         val builder =
             NotificationCompat.Builder(this, channelId).setContentTitle("ZTE Tools Web Server")
-                .setContentText("服务正在后台运行中")
+                .setContentText("Service running in background")
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setOngoing(true)
 
@@ -154,7 +154,7 @@ class WebService : Service() {
 
     private fun startForegroundNotification() {
         val channelId = "running_service"
-        val channelName = "服务器状态"
+        val channelName = "Server status"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val chan =
@@ -167,6 +167,6 @@ class WebService : Service() {
             .setSmallIcon(R.drawable.ic_launcher_foreground).setOngoing(true).build()
 
         startForeground(1, notification)
-        Log.d("UFI_TOOLS_LOG", "通知已建立")
+        Log.d("UFI_TOOLS_LOG", "Notification established")
     }
 }

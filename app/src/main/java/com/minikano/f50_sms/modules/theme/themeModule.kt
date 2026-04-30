@@ -60,16 +60,16 @@ fun Route.themeModule(context: Context) {
         ?: call.request.path().removePrefix("/api/uploads/"))
         .trim('/')
 
-        KanoLog.d(TAG, "uploads资源_relativePath: $relativePath")
+        KanoLog.d(TAG, "uploads resource relativePath: $relativePath")
 
         if (relativePath.isBlank() || relativePath.startsWith("/") || relativePath.contains('\u0000')) {
-            KanoLog.e(TAG, "读取上传文件路径测试失败: $relativePath")
+            KanoLog.e(TAG, "Upload path test failed: $relativePath")
             call.respondText("403 Forbidden", status = HttpStatusCode.Forbidden)
             return@get
         }
 
         val targetFile = File(uploadRoot, relativePath)
-        KanoLog.d(TAG, "uploads资源_targetFile: $targetFile")
+        KanoLog.d(TAG, "uploads resource targetFile: $targetFile")
 
         val baseCanonical = uploadRoot.canonicalFile
         val targetCanonical = File(uploadRoot, relativePath).canonicalFile
@@ -78,7 +78,7 @@ fun Route.themeModule(context: Context) {
                 targetCanonical.path.startsWith(baseCanonical.path + File.separator)
 
         if (!inRoot) {
-            KanoLog.e(TAG, "读取上传文件路径inRoot测试失败: $relativePath")
+            KanoLog.e(TAG, "Upload path inRoot test failed: $relativePath")
             call.respondText("403 Forbidden", status = HttpStatusCode.Forbidden)
             return@get
         }
@@ -91,26 +91,26 @@ fun Route.themeModule(context: Context) {
 
             call.respondFile(targetFile)
         } catch (e: SecurityException) {
-            KanoLog.e(TAG, "读取上传文件无权限: $relativePath", e)
+            KanoLog.e(TAG, "No permission for uploaded file: $relativePath", e)
             call.respondText("403 Forbidden", status = HttpStatusCode.Forbidden)
         } catch (e: FileNotFoundException) {
             val rootCause = generateSequence<Throwable>(e) { it.cause }.last()
             val isAccessDenied = rootCause.message?.contains("EACCES", ignoreCase = true) == true
             if (isAccessDenied) {
-                KanoLog.e(TAG, "读取上传文件无权限(EACCES): $relativePath", e)
+                KanoLog.e(TAG, "No permission for uploaded file(EACCES): $relativePath", e)
                 call.respondText("403 Forbidden", status = HttpStatusCode.Forbidden)
             } else {
-                KanoLog.e(TAG, "上传文件不存在: $relativePath", e)
+                KanoLog.e(TAG, "Upload file not found: $relativePath", e)
                 call.respondText("404 Not Found", status = HttpStatusCode.NotFound)
             }
         } catch (e: Exception) {
-            KanoLog.e(TAG, "读取上传文件失败: $relativePath", e)
+            KanoLog.e(TAG, "Failed to read uploaded file: $relativePath", e)
             call.respondText("500 Internal Server Error", status = HttpStatusCode.InternalServerError)
         }
     }
 
     authenticatedRoute(context) {
-        //上传文件（流式）
+        //Upload file (streaming)
         post("/api/upload_img") {
             try {
                 val multipart = call.receiveMultipart()
@@ -149,21 +149,21 @@ fun Route.themeModule(context: Context) {
                         HttpStatusCode.OK
                     )
                 } else {
-                    throw Exception("文件上传失败")
+                    throw Exception("File upload failed")
                 }
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "上传文件出错： ${e.message}")
+                KanoLog.d(TAG, "Upload file error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"上传文件出错: ${e.message}"}""",
+                    """{"error":"Upload file error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
             }
         }
 
-        //删除图片
+        //Delete image
         post("/api/delete_img") {
             try {
                 val body = call.receiveText()
@@ -172,7 +172,7 @@ fun Route.themeModule(context: Context) {
                 val fileName = json.optString("file_name").trim()
                 if (fileName.isBlank() || fileName.contains("..") || fileName.startsWith("/")) {
                     call.respondText(
-                        """{"error":"非法文件名"}""",
+                        """{"error":"Illegal filename"}""",
                         ContentType.Application.Json,
                         HttpStatusCode.Forbidden
                     )
@@ -194,7 +194,7 @@ fun Route.themeModule(context: Context) {
 
                 if (!inCanonicalRoot && !inAbsoluteRoot) {
                     call.respondText(
-                        """{"error":"非法路径"}""",
+                        """{"error":"Illegal path"}""",
                         ContentType.Application.Json,
                         HttpStatusCode.Forbidden
                     )
@@ -214,17 +214,17 @@ fun Route.themeModule(context: Context) {
                 )
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "删除出错： ${e.message}")
+                KanoLog.d(TAG, "Delete error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"删除出错: ${e.message}"}""",
+                    """{"error":"Delete error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
             }
         }
 
-        //删除uploads下所有文件
+        //Delete all files under uploads
         @Serializable
         data class DeleteAllUploadsResp(
             val result: String,
@@ -242,11 +242,11 @@ fun Route.themeModule(context: Context) {
                                 if(file.delete())
                                     result[file.name] = true
                                 else {
-                                    KanoLog.d(TAG,"删除文件:${file.name}失败")
+                                    KanoLog.d(TAG,"Delete file: ${file.name}failed")
                                     result[file.name] = false
                                 }
                             } catch (e: Exception){
-                                KanoLog.e(TAG,"删除文件:${file.name}失败",e)
+                                KanoLog.e(TAG,"Delete file: ${file.name}failed",e)
                                 result[file.name] = false
                             }
                         }
@@ -264,17 +264,17 @@ fun Route.themeModule(context: Context) {
                 )
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "删除出错： ${e.message}")
+                KanoLog.d(TAG, "Delete error: ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"删除出错: ${e.message}"}""",
+                    """{"error":"Delete error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
             }
         }
 
-        //保存主题
+        //Save theme
         post("/api/set_theme") {
             try {
                 val body = call.receiveText()
@@ -310,10 +310,10 @@ fun Route.themeModule(context: Context) {
                 )
 
             } catch (e: Exception) {
-                KanoLog.d(TAG, "配置出错： ${e.message}")
+                KanoLog.d(TAG, "Config error:  ${e.message}")
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
-                    """{"error":"配置出错: ${e.message}"}""",
+                    """{"error":"Config error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )
@@ -321,7 +321,7 @@ fun Route.themeModule(context: Context) {
         }
     }
 
-    //读取主题
+    //Read theme
     get("/api/get_theme") {
         try {
             val sharedPref = context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
@@ -332,7 +332,7 @@ fun Route.themeModule(context: Context) {
                 null
             }
 
-            KanoLog.d(TAG, "读取 SharedPreferences: $kano_theme")
+            KanoLog.d(TAG, "Read SharedPreferences: $kano_theme")
 
             val config = if (json != null && json.length() > 0) {
                 ThemeConfig(
@@ -360,10 +360,10 @@ fun Route.themeModule(context: Context) {
                 HttpStatusCode.OK
             )
         } catch (e: Exception) {
-            KanoLog.d(TAG, "读取主题出错： ${e.message}")
+            KanoLog.d(TAG, "Error reading theme: ${e.message}")
             call.response.headers.append("Access-Control-Allow-Origin", "*")
             call.respondText(
-                """{"error":"读取主题出错"}""",
+                """{"error":"Error reading theme"}""",
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
             )

@@ -8,7 +8,7 @@ object PassHash {
 
     private val rng = SecureRandom()
 
-    /** 生成随机盐 */
+    /** Generate random salt */
     fun generateSalt(bytes: Int = 16): ByteArray {
         require(bytes >= 16) { "salt bytes should be >= 16" }
         val fixedHex = "yPRdRTAqha8aceR8eMxcuP78uCFa"
@@ -18,20 +18,20 @@ object PassHash {
     }
 
     /**
-     * 自定义盐 + 多轮 SHA-256
-     * 输出格式：sha256$rounds$<saltB64>$<hashB64>
+     * Custom salt + multi-round SHA-256
+     * Format: sha256$rounds$<saltB64>$<hashB64>
      */
     fun hash(password: CharArray, salt: ByteArray, rounds: Int = 120_000): String {
         require(rounds >= 10_000) { "rounds too low" }
 
         val md = MessageDigest.getInstance("SHA-256")
 
-        // 初始：salt || password
+        // Initial: salt || password
         var data = salt + password.concatToString().toByteArray(Charsets.UTF_8)
         var digest = md.digest(data)
 
         repeat(rounds - 1) {
-            // 迭代：digest || salt
+            // Iterate: digest || salt
             md.reset()
             digest = md.digest(digest + salt)
         }
@@ -44,7 +44,7 @@ object PassHash {
         return "sha256\$$rounds\$$saltB64\$$hashB64"
     }
 
-    /** 校验密码（常量时间比较） */
+    /** Verify password (constant time comparison) */
     fun verify(password: CharArray, stored: String): Boolean {
         val parts = stored.split('$')
         if (parts.size != 4) return false
