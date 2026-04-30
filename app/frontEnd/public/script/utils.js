@@ -417,6 +417,97 @@ function createSwitch({ text, value, className = '', onChange, fontSize = 14 }) 
     return container;
 }
 
+/**
+ * Green toggle (same as root-access.js ctrl-toggle).
+ * Usage: var t = createCtrlToggle(containerId, onChange);
+ *   t.get() -> bool, t.set(bool), t.disable(), t.enable()
+ * @param {string|HTMLElement} containerOrId - container element or its ID
+ * @param {function} [onChange] - called with (newState) on click
+ */
+function createCtrlToggle(containerOrId, onChange) {
+  var container = typeof containerOrId === 'string'
+    ? document.getElementById(containerOrId)
+    : containerOrId;
+  if (!container) return { get: function () { return false; }, set: function () {}, disable: function () {}, enable: function () {} };
+  container.innerHTML = '';
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'ctrl-toggle off';
+  btn.innerHTML = '<span class="ctrl-toggle-knob"></span>';
+  var state = false;
+  btn.addEventListener('click', function () {
+    if (btn.disabled) return;
+    state = !state;
+    btn.className = 'ctrl-toggle ' + (state ? 'on' : 'off');
+    if (onChange) onChange(state);
+  });
+  container.appendChild(btn);
+  return {
+    get: function () { return state; },
+    set: function (v) {
+      state = !!v;
+      btn.className = 'ctrl-toggle ' + (state ? 'on' : 'off');
+    },
+    disable: function () { btn.disabled = true; btn.style.opacity = '0.5'; },
+    enable: function () { btn.disabled = false; btn.style.opacity = ''; }
+  };
+}
+
+/**
+ * Common save button binder — matches LAN/WiFi/APN save behavior.
+ * Disables button during save, shows toast on success/error, re-enables.
+ * @param {string} btnId - The button element ID
+ * @param {function} saveFn - Async function that performs the save (receives login cookie if needsLogin)
+ * @param {object} [opts] - Options: { needsLogin: true, successMsg: 'Saved', errorMsg: 'Save failed' }
+ */
+function bindCtrlSave(btnId, saveFn, opts) {
+  var btn = document.getElementById(btnId);
+  if (!btn) return;
+  var o = opts || {};
+  var needsLogin = o.needsLogin !== false;
+  var successMsg = o.successMsg || 'Saved';
+  var errorMsg = o.errorMsg || 'Save failed';
+  btn.addEventListener('click', async function () {
+    btn.disabled = true;
+    try {
+      if (needsLogin) {
+        var cookie = await login();
+        if (!cookie) { showCtrlToast('Login failed', 'error'); return; }
+        await saveFn(cookie);
+      } else {
+        await saveFn();
+      }
+      showCtrlToast(successMsg);
+    } catch (e) { showCtrlToast(e.message || errorMsg, 'error'); }
+    finally { btn.disabled = false; }
+  });
+}
+
+/**
+ * Common form submit binder — matches LAN/WiFi/APN save behavior.
+ * Prevents default, disables submit button, runs saveFn, shows toast, re-enables.
+ * @param {string} formId - The form element ID
+ * @param {function} saveFn - Async function that performs the save (receives FormData)
+ * @param {object} [opts] - Options: { successMsg: 'Saved', errorMsg: 'Save failed' }
+ */
+function bindCtrlFormSave(formId, saveFn, opts) {
+  var form = document.getElementById(formId);
+  if (!form) return;
+  var o = opts || {};
+  var successMsg = o.successMsg || 'Saved';
+  var errorMsg = o.errorMsg || 'Save failed';
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    try {
+      await saveFn(new FormData(form));
+      showCtrlToast(successMsg);
+    } catch (err) { showCtrlToast(err.message || errorMsg, 'error'); }
+    finally { if (btn) btn.disabled = false; }
+  });
+}
+
 
 const createCollapseObserver = (boxEl = null) => {
     try {
@@ -461,6 +552,8 @@ const createCollapseObserver = (boxEl = null) => {
 const collapseGen = (btn_id, collapse_id, storName, callback = undefined) => {
     try {
         const { el: collapseMenuEl } = createCollapseObserver(document.querySelector(collapse_id));
+        // Suppress transition on initial state set
+        collapseMenuEl.style.transition = 'none';
         if (storName) {
             const storVal = localStorage.getItem(storName)
             if (storVal) {
@@ -473,6 +566,9 @@ const collapseGen = (btn_id, collapse_id, storName, callback = undefined) => {
         } else {
             collapseMenuEl.dataset.name = 'open'; // 默认打开
         }
+        // Restore transition after layout
+        void collapseMenuEl.offsetHeight;
+        collapseMenuEl.style.transition = '';
         const collapseBtn = document.querySelector(btn_id);
         const switchComponent = createSwitch({
             value: collapseMenuEl.dataset.name == 'open',

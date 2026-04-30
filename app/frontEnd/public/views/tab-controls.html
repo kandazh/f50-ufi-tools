@@ -10,60 +10,24 @@
                         <button class="ctrl-nav-btn" data-ctrl-tab="clients"><span class="ctrl-nav-icon">👥</span><span>Devices</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="firewall"><span class="ctrl-nav-icon">🛡️</span><span>Firewall</span></button>
 
-                        <div class="ctrl-nav-group-title">Messaging</div>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="sms"><span class="ctrl-nav-icon">💬</span><span>SMS</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="sms_forward"><span class="ctrl-nav-icon">↗️</span><span>SMS Forwarding</span></button>
-
                         <div class="ctrl-nav-group-title">Tools</div>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="root_access"><span class="ctrl-nav-icon">🔓</span><span>Root Access</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="adguard"><span class="ctrl-nav-icon">🛡️</span><span>AdGuard Home</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="quick_shell"><span class="ctrl-nav-icon">⚡</span><span>Quick Shell</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="speedtest"><span class="ctrl-nav-icon">⚡</span><span>Speed Test</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="cellular_speedtest"><span class="ctrl-nav-icon">📡</span><span>Cellular Speed Test</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="at"><span class="ctrl-nav-icon">⌨️</span><span>AT Commands</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="data_mgmt"><span class="ctrl-nav-icon">📊</span><span>Data Management</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="swap_memory"><span class="ctrl-nav-icon">💾</span><span>Virtual Memory</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="plugin"><span class="ctrl-nav-icon">🧩</span><span>Plugins</span></button>
+
+                        <div class="ctrl-nav-group-title">Messaging</div>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="sms"><span class="ctrl-nav-icon">💬</span><span>Messaging</span></button>
 
                         <div class="ctrl-nav-group-title">System</div>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="root_access"><span class="ctrl-nav-icon">🔓</span><span>Root Access</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="quick_shell"><span class="ctrl-nav-icon">⚡</span><span>Quick Shell</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="data_mgmt"><span class="ctrl-nav-icon">📊</span><span>Data Management</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="changepwd"><span class="ctrl-nav-icon">🔑</span><span>Change Password</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot"><span class="ctrl-nav-icon">🔄</span><span>Scheduled Reboot</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="scheduled_task"><span class="ctrl-nav-icon">📋</span><span>Scheduled Task</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="plugin"><span class="ctrl-nav-icon">🧩</span><span>Plugin</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot"><span class="ctrl-nav-icon">🔄</span><span>Scheduling</span></button>
+
                         <button class="ctrl-nav-btn" data-ctrl-tab="advanced"><span class="ctrl-nav-icon">⚙️</span><span>Advanced</span></button>
-                    </div>
-                    <!-- Dropdowns kept below nav -->
-                    <div class="ctrl-selects">
-                        <select class="select" id="NET_TYPE" onchange="changeNetwork(event)">
-                            <option value="WL_AND_5G">5G/4G/3G</option>
-                            <option value="LTE_AND_5G">5G NSA</option>
-                            <option value="Only_5G">5G SA</option>
-                            <option value="WCDMA_AND_LTE">4G/3G</option>
-                            <option value="Only_LTE">4G Only</option>
-                            <option value="Only_WCDMA">3G Only</option>
-                        </select>
-                        <select class="select" id="USB_TYPE" onchange="changeUSBNetwork(event)">
-                            <option value="0">USB: Auto</option>
-                            <option value="1">RNDIS</option>
-                            <option value="2">CDC-ECM</option>
-                        </select>
-                        <select class="select" id="SIM_CARD_TYPE" style="display:none" onchange="changeSimCard(event)">
-                            <option value="0">SIM1</option>
-                            <option value="1">SIM2</option>
-                        </select>
-                        <select class="select" id="SIM_CARD_TYPE_V50" style="display:none" onchange="changeSimCard(event)">
-                            <option value="0">Mobile</option>
-                            <option value="1">Telecom</option>
-                            <option value="2">Unicom</option>
-                            <option value="11">External</option>
-                        </select>
-                        <select class="select" id="SLEEP_TIME" style="display:none" onchange="changeSleepTime(event)">
-                            <option value="-1">Never Sleep</option>
-                            <option value="5">5 min</option>
-                            <option value="10">10 min</option>
-                            <option value="20">20 min</option>
-                            <option value="30">30 min</option>
-                            <option value="60">1 hr</option>
-                            <option value="120">2 hr</option>
-                        </select>
-                        <select class="select" id="LANG"></select>
                     </div>
                 </div>
                 <!-- Right content: detail panels -->
@@ -392,12 +356,31 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- QR Code section -->
-                            <div class="ctrl-section" id="wifiCtrlQR" style="display:none">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📱</span> <span>QR Code</span></div>
-                                <div class="ctrl-qr-container">
-                                    <img id="WifiQRCodeImg" class="ctrl-qr-img" src="" alt="WiFi QR Code">
-                                    <p class="ctrl-qr-hint">Scan to connect</p>
+                            <!-- QR Code & Sleep Timer -->
+                            <div id="wifiCtrlQR" style="display:none;gap:12px;flex-wrap:wrap">
+                                <div class="ctrl-section" style="flex:1;min-width:140px;margin-bottom:0;padding:10px 14px">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">📱</span> <span>QR Code</span></div>
+                                    <div style="text-align:center">
+                                        <img id="WifiQRCodeImg" class="ctrl-qr-img" src="" alt="WiFi QR Code">
+                                        <p class="ctrl-qr-hint">Scan to connect</p>
+                                    </div>
+                                </div>
+                                <div class="ctrl-section" id="wifiCtrlSleep" style="flex:1;min-width:180px;display:none;margin-bottom:0;padding:10px 14px">
+                                    <div class="ctrl-section-title" style="display:flex;align-items:center;justify-content:space-between">
+                                        <span><span class="ctrl-section-icon">💤</span> <span>Idle Sleep</span></span>
+                                        <span id="sleepToggleContainer"></span>
+                                    </div>
+                                    <div class="ctrl-form" id="sleepSelectRow">
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Sleep after idle:</span>
+                                            <select class="ctrl-select" id="SLEEP_TIME" onchange="changeSleepTime(event)">
+                                                <option value="-1">Never Sleep</option>
+                                                <option value="30">30 min</option>
+                                                <option value="60">1 hr</option>
+                                                <option value="120">2 hr</option>
+                                            </select>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="ctrl-actions">
@@ -613,8 +596,18 @@
                             </div>
                             <div class="ctrl-adv-shell-editor" id="ADV_SHELL_EDITOR_WRAP" style="margin-top:12px;flex:1;display:flex;flex-direction:column;position:relative">
                                 <textarea id="ADV_SHELL_EDITOR" spellcheck="false" placeholder="#!/system/bin/sh&#10;# Write your script here...&#10;sync&#10;" style="flex:1;min-height:200px;resize:none">#!/system/bin/sh
-# Write your script here
-sync
+
+# Device info
+getprop ro.product.model
+getprop ro.build.version.release
+getprop ro.product.cpu.abi
+
+# Network info
+ip addr show wlan0 | grep inet
+getprop gsm.operator.alpha
+
+# Storage
+df -h /data
 </textarea>
                             </div>
                             <div class="ctrl-adv-shell-log" id="ADV_SHELL_LOG" style="margin-top:12px">
@@ -631,18 +624,785 @@ sync
                             <details style="margin-top:4px">
                                 <summary style="cursor:pointer;font-size:10px;opacity:.7">📖 Example script</summary>
                                 <pre class="ctrl-adv-code-block" style="margin-top:6px;font-size:10px">#!/system/bin/sh
-# Enable WiFi ADB
-setprop service.adb.tcp.port 5555
-stop adbd; start adbd
 
-# Grant UFI Tools permissions
-pm grant com.minikano.f50_sms android.permission.READ_SMS
-pm grant com.minikano.f50_sms android.permission.SEND_SMS
-pm grant com.minikano.f50_sms android.permission.READ_PHONE_STATE
+# Device info
+echo "--- Device ---"
+getprop ro.product.model
+getprop ro.build.version.release
 
-# Keep screen on for 5 min
-settings put system screen_off_timeout 300000</pre>
+# Battery status
+echo "--- Battery ---"
+cat /sys/class/power_supply/battery/capacity
+cat /sys/class/power_supply/battery/status
+
+# Network
+echo "--- Network ---"
+getprop gsm.operator.alpha
+getprop gsm.network.type
+
+# List connected WiFi clients
+ip neigh show
+
+# Uptime
+echo "--- Uptime ---"
+uptime</pre>
                             </details>
+                        </div>
+                    </div>
+
+                    <!-- SMS Panel (Merged: Inbox & Auto Forward) -->
+                    <div class="ctrl-panel" data-ctrl-panel="sms" style="display:none">
+                        <div class="ctrl-panel-title">Messaging</div>
+                        <!-- Accordion: Inbox & Chat -->
+                        <div class="sched-accordion-item open" id="sms_acc_inbox">
+                            <button type="button" class="sched-accordion-header">
+                                <span><span class="ctrl-section-icon">💬</span> Inbox & Chat</span>
+                                <span class="sched-accordion-arrow">▾</span>
+                            </button>
+                            <div class="sched-accordion-body">
+                                <div class="sms-app">
+                                    <!-- Inbox view: list of conversations -->
+                                    <div class="sms-app__inbox" id="smsPanel_inbox">
+                                        <div class="sms-app__inbox-header">
+                                            <span class="sms-app__inbox-title">Messages</span>
+                                            <button class="sms-app__new-btn" onclick="window._smsPanelNewChat && window._smsPanelNewChat()" title="New message">✨</button>
+                                        </div>
+                                        <div class="sms-app__inbox-list" id="smsPanel_inbox-list"></div>
+                                    </div>
+                                    <!-- Chat view: single conversation -->
+                                    <div class="sms-app__chat" id="smsPanel_chat" style="display:none">
+                                        <div class="sms-app__chat-header">
+                                            <button class="sms-app__back" onclick="window._smsPanelBack && window._smsPanelBack()">👈</button>
+                                            <span class="sms-app__chat-contact" id="smsPanel_chatContact"></span>
+                                        </div>
+                                        <div class="sms-app__messages" id="smsPanel_list">
+                                            <div class="sms-app__list" id="smsPanel_sms-list"></div>
+                                        </div>
+                                        <div class="sms-app__compose">
+                                            <input class="sms-app__input" id="smsPanel_SMSInput" type="text" placeholder="Message...">
+                                            <button class="sms-app__send" onclick="window._smsPanelSend && window._smsPanelSend()">🚀</button>
+                                        </div>
+                                    </div>
+                                    <!-- New message compose (floating over inbox) -->
+                                    <div class="sms-app__new" id="smsPanel_new" style="display:none">
+                                        <div class="sms-app__chat-header">
+                                            <button class="sms-app__back" onclick="window._smsPanelBack && window._smsPanelBack()">👈</button>
+                                            <span class="sms-app__chat-contact">New Message</span>
+                                        </div>
+                                        <div class="sms-app__new-form">
+                                            <input class="sms-app__input" id="smsPanel_PhoneInput" type="tel" placeholder="Recipient phone number...">
+                                            <input class="sms-app__input" id="smsPanel_NewMsgInput" type="text" placeholder="Type your message...">
+                                            <button class="sms-app__send-full" onclick="window._smsPanelSend && window._smsPanelSend()">Send</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Accordion: Auto Forward -->
+                        <div class="sched-accordion-item" id="sms_acc_forward">
+                            <button type="button" class="sched-accordion-header">
+                                <span><span class="ctrl-section-icon">🔔</span> Auto Forward <span style="font-size:11px;opacity:0.5;font-weight:400">(Beta)</span></span>
+                                <span class="sched-accordion-arrow">▾</span>
+                            </button>
+                            <div class="sched-accordion-body">
+                                <!-- Status & Format -->
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">⚡</span> <span>Status & Format</span></div>
+                                    <div class="ctrl-form" style="gap:0">
+                                        <!-- SMS Row -->
+                                        <div style="display:flex;align-items:center;gap:8px;padding:12px 0">
+                                            <span style="font-weight:600;font-size:13px;color:var(--accent);white-space:nowrap">SMS</span>
+                                            <input class="ctrl-input" id="fwd_sms_format" type="text" style="flex:1;min-width:0;max-width:none;font-size:11px;padding:8px 8px" value="[SMS] {{from}} | {{time}} | {{body}}" placeholder="[SMS] {{from}} | {{time}} | {{body}}">
+                                            <span style="font-size:11px;opacity:0.7;white-space:nowrap">Forward</span>
+                                            <div id="smsForwardPanel_switch" style="flex-shrink:0"></div>
+                                        </div>
+                                        <!-- Divider -->
+                                        <div style="height:1px;background:rgba(226,232,240,0.15);margin:0"></div>
+                                        <!-- Call Row -->
+                                        <div style="display:flex;align-items:center;gap:8px;padding:12px 0">
+                                            <span style="font-weight:600;font-size:13px;color:var(--accent);white-space:nowrap">Call</span>
+                                            <input class="ctrl-input" id="fwd_call_format" type="text" style="flex:1;min-width:0;max-width:none;font-size:11px;padding:8px 8px" value="📞 [CALL] {{from}} | {{time}}" placeholder="📞 [CALL] {{from}} | {{time}}">
+                                            <span style="font-size:11px;opacity:0.7;white-space:nowrap">Notify</span>
+                                            <div id="callNotifyPanel_switch" style="flex-shrink:0"></div>
+                                        </div>
+                                        <!-- Save & Help -->
+                                        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid rgba(226,232,240,0.1)">
+                                            <div style="font-size:10px;opacity:0.5;line-height:1.4">
+                                                Placeholders: <code>{{from}}</code> <code>{{time}}</code> <code>{{body}}</code>
+                                            </div>
+                                            <button type="button" class="ctrl-submit-btn" id="fwd_format_save_btn">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Method selector -->
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">🔧</span> <span>Method</span></div>
+                                    <div class="sms-fwd-tabs" id="smsForwardPanel_tabs">
+                                        <button class="sms-fwd-tab active" data-method="sms">SMS</button>
+                                        <button class="sms-fwd-tab" data-method="smtp">SMTP</button>
+                                        <button class="sms-fwd-tab" data-method="curl">CURL</button>
+                                        <button class="sms-fwd-tab" data-method="whatsapp">WhatsApp</button>
+                                        <button class="sms-fwd-tab" data-method="dingtalk">DingTalk</button>
+                                    </div>
+                                    <!-- SMS Forward Form -->
+                                    <form id="smsForwardPanel_sms" class="ctrl-form" style="margin-top:12px">
+                                        <div class="ctrl-panel-desc" style="margin-bottom:8px">Forward incoming SMS to another phone number via the device's SIM card. <b>Most secure</b> — no internet APIs, stays on cellular network. Message content is always included using the format configured above.</div>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Forward To Number</span>
+                                            <input class="ctrl-input" name="sms_forward_number" type="tel" placeholder="9876543210" value="+91">
+                                        </label>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Device Info</span>
+                                            <div id="smsForwardPanel_devinfo_switch"></div>
+                                        </div>
+                                        <div class="ctrl-actions">
+                                            <button type="submit" class="ctrl-submit-btn">Save</button>
+                                        </div>
+                                    </form>
+                                    <!-- SMTP Form -->
+                                    <form id="smsForwardPanel_smtp" class="ctrl-form" style="margin-top:12px;display:none">
+                                        <div class="ctrl-panel-desc" style="margin-bottom:8px">Receiver email can also be the sender email</div>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Host</span>
+                                            <input class="ctrl-input" name="smtp_host" type="text" placeholder="smtp.gmail.com">
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Port</span>
+                                            <input class="ctrl-input" name="smtp_port" type="number" placeholder="465">
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Username</span>
+                                            <input class="ctrl-input" name="smtp_username" type="text" placeholder="user@gmail.com">
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Password</span>
+                                            <input class="ctrl-input" name="smtp_password" type="password" autocomplete="off" placeholder="App password">
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Send To</span>
+                                            <input class="ctrl-input" name="smtp_to" type="email" placeholder="recipient@example.com">
+                                        </label>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Device Info</span>
+                                            <div id="smtpPanel_devinfo_switch"></div>
+                                        </div>
+                                        <div class="ctrl-actions">
+                                            <button type="submit" class="ctrl-submit-btn">Save</button>
+                                        </div>
+                                    </form>
+                                    <!-- CURL Form -->
+                                    <form id="smsForwardPanel_curl" class="ctrl-form" style="margin-top:12px;display:none">
+                                        <div class="ctrl-panel-desc" style="margin-bottom:8px">Enter a single-line curl command. Use placeholders: <code>{{sms-body}}</code> <code>{{sms-time}}</code> <code>{{sms-from}}</code></div>
+                                        <div style="display:grid;gap:6px;grid-template-columns:1fr 1fr;margin-bottom:10px">
+                                            <button type="button" class="ctrl-delete-btn" onclick="window._smsFwdFillCurl && window._smsFwdFillCurl('tg')">Telegram</button>
+                                            <button type="button" class="ctrl-delete-btn" onclick="window._smsFwdFillCurl && window._smsFwdFillCurl('whatsapp')">WhatsApp</button>
+                                            <button type="button" class="ctrl-delete-btn" onclick="window._smsFwdFillCurl && window._smsFwdFillCurl('wechat')">WeChat Work</button>
+                                            <button type="button" class="ctrl-delete-btn" onclick="window._smsFwdFillCurl && window._smsFwdFillCurl('pushplus')">PushPlus</button>
+                                            <button type="button" class="ctrl-delete-btn" onclick="window._smsFwdFillCurl && window._smsFwdFillCurl('bark')">Bark</button>
+                                            <button type="button" class="ctrl-delete-btn" onclick="window._smsFwdFillCurl && window._smsFwdFillCurl('discord')">Discord</button>
+                                        </div>
+                                        <label class="ctrl-field" style="flex-direction:column;align-items:stretch;gap:6px">
+                                            <span class="ctrl-label">Command</span>
+                                            <textarea class="ctrl-input" name="curl_text" rows="5" style="resize:vertical;font-family:var(--font-mono);font-size:11px" placeholder="curl 'https://api.telegram.org/bot.../sendMessage' -d 'chat_id=...&text={{sms-body}}'"></textarea>
+                                        </label>
+                                        <div class="ctrl-actions">
+                                            <button type="submit" class="ctrl-submit-btn">Save</button>
+                                        </div>
+                                    </form>
+                                    <!-- WhatsApp Form -->
+                                    <form id="smsForwardPanel_whatsapp" class="ctrl-form" style="margin-top:12px;display:none">
+                                        <div class="ctrl-panel-desc" style="margin-bottom:8px">Forward SMS via WhatsApp Business Cloud API. For <b>personal accounts</b>, use the CURL tab with the WhatsApp (CallMeBot) preset instead. <a href="https://developers.facebook.com" target="_blank" style="color:var(--accent)">Meta Developer Portal</a></div>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Phone Number ID</span>
+                                            <input class="ctrl-input" name="wa_phone_id" type="text" placeholder="10xxxxxxxxxx">
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Access Token</span>
+                                            <input class="ctrl-input" name="wa_token" type="password" autocomplete="off" placeholder="EAAxxxxxxx...">
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Recipient Number</span>
+                                            <input class="ctrl-input" name="wa_to" type="tel" placeholder="919876543210 (with country code, no +)">
+                                        </label>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Device Info</span>
+                                            <div id="waPanel_devinfo_switch"></div>
+                                        </div>
+                                        <div class="ctrl-actions">
+                                            <button type="submit" class="ctrl-submit-btn">Save</button>
+                                        </div>
+                                    </form>
+                                    <!-- DingTalk Form -->
+                                    <form id="smsForwardPanel_dingtalk" class="ctrl-form" style="margin-top:12px;display:none">
+                                        <div class="ctrl-panel-desc" style="margin-bottom:8px">Configure DingTalk group robot webhook (supports signature verification)</div>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Webhook URL</span>
+                                            <input class="ctrl-input" name="dingtalk_webhook" type="text" placeholder="https://oapi.dingtalk.com/robot/send?access_token=...">
+                                        </label>
+                                        <label class="ctrl-field">
+                                            <span class="ctrl-label">Secret Key</span>
+                                            <input class="ctrl-input" name="dingtalk_secret" type="text" placeholder="SEC...">
+                                        </label>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Device Info</span>
+                                            <div id="dingtalkPanel_devinfo_switch"></div>
+                                        </div>
+                                        <div class="ctrl-actions">
+                                            <button type="submit" class="ctrl-submit-btn">Save</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Speed Test Panel (Combined) -->
+                    <div class="ctrl-panel" data-ctrl-panel="speedtest" style="display:none">
+                        <div class="ctrl-panel-title">Speed Test</div>
+
+                        <!-- Mode Selector -->
+                        <div class="speedtest-mode-toggle">
+                            <button class="speedtest-mode-btn active" data-mode="cellular">
+                                <svg class="speedtest-mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>
+                                <span class="speedtest-mode-label">Cellular</span>
+                                <span class="speedtest-mode-desc-icons">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                                    <span class="speedtest-mode-arrow">⇄</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                                </span>
+                            </button>
+                            <div class="speedtest-mode-separator"></div>
+                            <button class="speedtest-mode-btn" data-mode="local">
+                                <svg class="speedtest-mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+                                <span class="speedtest-mode-label">Local</span>
+                                <span class="speedtest-mode-desc-icons">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                    <span class="speedtest-mode-arrow">⇄</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- CELLULAR Speed Test -->
+                        <div class="ctrl-section speedtest-panel-cellular" id="speedtest_cellular_panel">
+                            <div class="speedtest-container">
+                                <div class="speedtest-gauge-wrap">
+                                    <svg class="speedtest-gauge" viewBox="0 0 200 120" width="200" height="120">
+                                        <path class="speedtest-gauge-bg" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="rgba(226,232,240,0.1)" stroke-width="12" stroke-linecap="round"/>
+                                        <path class="speedtest-gauge-fill" id="cell_speedtest_gauge_fill" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="#10b981" stroke-width="12" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                                    </svg>
+                                    <div class="speedtest-speed-display">
+                                        <span class="speedtest-speed-value" id="cell_speedtest_speed">0.00</span>
+                                        <span class="speedtest-speed-unit">MB/s</span>
+                                    </div>
+                                </div>
+                                <div class="speedtest-status" id="cell_speedtest_status">Ready to test</div>
+                                <button type="button" class="ctrl-submit-btn speedtest-start-btn" id="cell_speedtest_start_btn" style="padding:10px 32px;font-size:13px;font-weight:700;letter-spacing:0.05em;background:linear-gradient(135deg,#10b981,#059669) !important">
+                                    ▶ START
+                                </button>
+                                <div class="speedtest-results" id="cell_speedtest_results" style="display:none">
+                                    <div class="speedtest-result-card">
+                                        <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                                        <span class="speedtest-result-label">Download</span>
+                                        <span class="speedtest-result-value" id="cell_speedtest_download">--</span>
+                                    </div>
+                                    <div class="speedtest-result-card">
+                                        <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+                                        <span class="speedtest-result-label">Upload</span>
+                                        <span class="speedtest-result-value" id="cell_speedtest_upload">--</span>
+                                    </div>
+                                    <div class="speedtest-result-card">
+                                        <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                        <span class="speedtest-result-label">Latency</span>
+                                        <span class="speedtest-result-value" id="cell_speedtest_latency">--</span>
+                                    </div>
+                                </div>
+                                <div class="speedtest-settings">
+                                    <div class="ctrl-field" style="justify-content:center;gap:10px;flex-wrap:wrap;align-items:center">
+                                        <span class="ctrl-label" style="width:auto">Server:</span>
+                                        <select class="ctrl-select" id="cell_speedtest_server" style="width:auto;min-width:160px">
+                                            <optgroup label="── Auto ──">
+                                                <option value="auto" selected>🔍 Find Best Server</option>
+                                            </optgroup>
+                                            <optgroup label="── Global CDN ──">
+                                                <option value="http://speed.cloudflare.com/__down?bytes=25000000">Cloudflare (25MB)</option>
+                                                <option value="http://speed.cloudflare.com/__down?bytes=100000000">Cloudflare (100MB)</option>
+                                            </optgroup>
+                                            <optgroup label="── Asia ──">
+                                                <option value="http://lg-sin.fdcservers.net/100MBtest.bin">Singapore (100MB)</option>
+                                                <option value="http://speedtest.tokyo2.linode.com/100MB-tokyo2.bin">Tokyo (100MB)</option>
+                                            </optgroup>
+                                            <optgroup label="── Europe ──">
+                                                <option value="http://ipv4.download.thinkbroadband.com/50MB.zip">London (50MB)</option>
+                                                <option value="http://speedtest.frankfurt.linode.com/100MB-frankfurt.bin">Frankfurt (100MB)</option>
+                                            </optgroup>
+                                            <optgroup label="── Americas ──">
+                                                <option value="http://speedtest.newark.linode.com/100MB-newark.bin">New York (100MB)</option>
+                                                <option value="http://speedtest.fremont.linode.com/100MB-fremont.bin">California (100MB)</option>
+                                            </optgroup>
+                                        </select>
+                                        <span class="speedtest-server-status" id="cell_speedtest_server_status"></span>
+                                    </div>
+                                </div>
+                                <div class="cell-speedtest-log" id="cell_speedtest_log" style="display:none"></div>
+                            </div>
+                        </div>
+
+                        <!-- LOCAL Speed Test -->
+                        <div class="ctrl-section speedtest-panel-local" id="speedtest_local_panel" style="display:none">
+                            <div class="speedtest-container">
+                                <div class="speedtest-gauge-wrap">
+                                    <svg class="speedtest-gauge" viewBox="0 0 200 120" width="200" height="120">
+                                        <path class="speedtest-gauge-bg" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="rgba(226,232,240,0.1)" stroke-width="12" stroke-linecap="round"/>
+                                        <path class="speedtest-gauge-fill" id="speedtest_gauge_fill" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                                    </svg>
+                                    <div class="speedtest-speed-display">
+                                        <span class="speedtest-speed-value" id="speedtest_speed">0.00</span>
+                                        <span class="speedtest-speed-unit">MB/s</span>
+                                    </div>
+                                </div>
+                                <div class="speedtest-status" id="speedtest_status">Ready to test</div>
+                                <button type="button" class="ctrl-submit-btn speedtest-start-btn" id="speedtest_start_btn" style="padding:10px 32px;font-size:13px;font-weight:700;letter-spacing:0.05em">
+                                    ▶ START
+                                </button>
+                                <div class="speedtest-results" id="speedtest_results" style="display:none">
+                                    <div class="speedtest-result-card">
+                                        <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                                        <span class="speedtest-result-label">Download</span>
+                                        <span class="speedtest-result-value" id="speedtest_download">--</span>
+                                    </div>
+                                    <div class="speedtest-result-card">
+                                        <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+                                        <span class="speedtest-result-label">Upload</span>
+                                        <span class="speedtest-result-value" id="speedtest_upload">--</span>
+                                    </div>
+                                    <div class="speedtest-result-card">
+                                        <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                        <span class="speedtest-result-label">Ping</span>
+                                        <span class="speedtest-result-value" id="speedtest_ping">--</span>
+                                    </div>
+                                </div>
+                                <div class="speedtest-settings">
+                                    <div class="ctrl-field" style="justify-content:center;gap:12px">
+                                        <span class="ctrl-label" style="width:auto">Chunk Size:</span>
+                                        <select class="ctrl-select" id="speedtest_cksize" style="width:auto;min-width:80px">
+                                            <option value="4">4 MB</option>
+                                            <option value="8">8 MB</option>
+                                            <option value="16" selected>16 MB</option>
+                                            <option value="32">32 MB</option>
+                                            <option value="64">64 MB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AT Commands Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="at" style="display:none">
+                        <div class="ctrl-panel-title">AT Commands</div>
+                        <div class="ctrl-section">
+                            <div class="at-cmd-container">
+                                <div class="at-cmd-terminal" id="at_cmd_output">
+                                    <div class="at-cmd-welcome">Ready. Type an AT command below.</div>
+                                </div>
+                                <div class="at-cmd-input-row">
+                                    <span class="at-cmd-prompt">AT&gt;</span>
+                                    <input type="text" class="at-cmd-input" id="at_cmd_input" placeholder="e.g. AT+CSQ" spellcheck="false" autocomplete="off">
+                                    <button type="button" class="ctrl-submit-btn at-cmd-send-btn" id="at_cmd_send">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                    </button>
+                                </div>
+                                <div class="at-cmd-controls">
+                                    <div class="at-cmd-slot">
+                                        <span class="ctrl-label" style="width:auto;font-size:11px">SIM Slot:</span>
+                                        <select class="ctrl-select at-cmd-slot-select" id="at_cmd_slot">
+                                            <option value="0">SIM 1</option>
+                                            <option value="1">SIM 2</option>
+                                        </select>
+                                        <button type="button" class="at-cmd-clear-btn" id="at_cmd_clear">Clear</button>
+                                    </div>
+                                    <div class="at-cmd-presets">
+                                        <div class="at-cmd-presets-label">Quick:</div>
+                                        <div class="at-cmd-presets-btns">
+                                            <button class="at-cmd-preset-btn" data-cmd="AT+CSQ">Signal</button>
+                                            <button class="at-cmd-preset-btn" data-cmd="AT+COPS?">Operator</button>
+                                            <button class="at-cmd-preset-btn" data-cmd="AT+CPIN?">SIM Status</button>
+                                            <button class="at-cmd-preset-btn" data-cmd="ATI">Device Info</button>
+                                            <button class="at-cmd-preset-btn" data-cmd="AT+QENG=&quot;servingcell&quot;">Cell Info</button>
+                                            <button class="at-cmd-preset-btn" data-cmd="AT+CGDCONT?">APN List</button>
+                                            <button class="at-cmd-preset-btn" data-cmd="AT+QTEMP">Temperature</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Management Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="data_mgmt" style="display:none">
+                        <div class="ctrl-panel-title">Data Management</div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📊</span> Current Usage</div>
+                            <div class="data-mgmt-usage-cards">
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Total Used</span>
+                                        <span class="data-mgmt-card-value" id="dm_total_used">--</span>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Downloaded</span>
+                                        <span class="data-mgmt-card-value" id="dm_downloaded">--</span>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Uploaded</span>
+                                        <span class="data-mgmt-card-value" id="dm_uploaded">--</span>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Connection Time</span>
+                                        <span class="data-mgmt-card-value" id="dm_conn_time">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">⚙️</span> Data Limit Settings</div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Data Limit</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="DM_LIMIT_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Limit Size (GB)</span>
+                                    <input type="number" class="ctrl-input" id="dm_limit_size" placeholder="e.g. 50" min="1" step="1">
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Alert at (%)</span>
+                                    <input type="number" class="ctrl-input" id="dm_alert_percent" placeholder="e.g. 90" min="1" max="100">
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Auto Clear Monthly</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="DM_AUTO_CLEAR_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Billing Cycle Day</span>
+                                    <input type="number" class="ctrl-input" id="dm_clear_date" placeholder="1-28" min="1" max="28">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ctrl-actions" style="gap:10px">
+                            <button type="button" class="ctrl-submit-btn" id="dm_save_btn">Save</button>
+                            <button type="button" class="ctrl-submit-btn" id="dm_reset_btn" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="changepwd" style="display:none">
+                        <div class="ctrl-panel-title">Change Password</div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔑</span> Admin Password</div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">New Password</span>
+                                    <div class="pwd-input-wrap">
+                                        <input type="password" class="ctrl-input" id="pwd_new" placeholder="Enter new password" autocomplete="new-password">
+                                        <button type="button" class="pwd-eye-btn" data-target="pwd_new">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Confirm Password</span>
+                                    <div class="pwd-input-wrap">
+                                        <input type="password" class="ctrl-input" id="pwd_confirm" placeholder="Confirm new password" autocomplete="new-password">
+                                        <button type="button" class="pwd-eye-btn" data-target="pwd_confirm">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pwd-strength" id="pwd_strength"></div>
+                        </div>
+                        <div class="ctrl-actions">
+                            <button type="button" class="ctrl-submit-btn" id="pwd_save_btn">Update Password</button>
+                        </div>
+                    </div>
+
+                    <!-- Scheduled Reboot Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="schedule_reboot" style="display:none">
+                        <div class="ctrl-panel-title">Scheduling</div>
+                        <!-- Accordion: Scheduled Reboot -->
+                        <div class="sched-accordion-item open" id="sched_acc_reboot">
+                            <button type="button" class="sched-accordion-header">
+                                <span><span class="ctrl-section-icon">🔄</span> Scheduled Reboot</span>
+                                <span class="sched-accordion-arrow">▾</span>
+                            </button>
+                            <div class="sched-accordion-body">
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">⏰</span> Set Reboot Schedule</div>
+                                    <div class="ctrl-form">
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Reboot Time</span>
+                                            <div class="ctrl-time-wrap" id="reboot_time_wrap">
+                                                <div class="ctrl-time-stepper">
+                                                    <div class="ctrl-time-unit">
+                                                        <button type="button" class="ctrl-time-arrow" id="hour_up">▲</button>
+                                                        <span class="ctrl-time-num" id="reboot_hour_display">04</span>
+                                                        <button type="button" class="ctrl-time-arrow" id="hour_down">▼</button>
+                                                    </div>
+                                                    <span class="ctrl-time-colon">:</span>
+                                                    <div class="ctrl-time-unit">
+                                                        <button type="button" class="ctrl-time-arrow" id="min_up">▲</button>
+                                                        <span class="ctrl-time-num" id="reboot_min_display">00</span>
+                                                        <button type="button" class="ctrl-time-arrow" id="min_down">▼</button>
+                                                    </div>
+                                                    <div class="ctrl-time-ampm-toggle" id="reboot_ampm_toggle">
+                                                        <button type="button" class="ctrl-ampm-btn selected" data-val="AM">AM</button>
+                                                        <button type="button" class="ctrl-ampm-btn" data-val="PM">PM</button>
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" id="reboot_time" value="04:00">
+                                            </div>
+                                        </div>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Repeat Daily</span>
+                                            <div style="display:flex;align-items:center;gap:8px">
+                                                <div id="REBOOT_REPEAT_SWITCH"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">📋</span> Active Reboot Tasks</div>
+                                    <div class="sched-reboot-list" id="reboot_task_list">
+                                        <div class="sched-empty">No scheduled reboots</div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-actions" style="gap:10px">
+                                    <button type="button" class="ctrl-submit-btn" id="reboot_add_btn">Schedule</button>
+                                    <button type="button" class="ctrl-submit-btn" id="reboot_now_btn" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Reboot Now</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Accordion: Scheduled Tasks -->
+                        <div class="sched-accordion-item" id="sched_acc_task">
+                            <button type="button" class="sched-accordion-header">
+                                <span><span class="ctrl-section-icon">📋</span> Scheduled Tasks</span>
+                                <span class="sched-accordion-arrow">▾</span>
+                            </button>
+                            <div class="sched-accordion-body">
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">➕</span> New Task</div>
+                                    <div class="ctrl-form">
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Task ID</span>
+                                            <input type="text" class="ctrl-input" id="task_id" placeholder="e.g. reboot_daily">
+                                        </div>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Time</span>
+                                            <div class="ctrl-time-wrap" id="task_time_wrap">
+                                                <div class="ctrl-time-stepper">
+                                                    <div class="ctrl-time-unit">
+                                                        <button type="button" class="ctrl-time-arrow" id="task_hour_up">▲</button>
+                                                        <span class="ctrl-time-num" id="task_hour_display">03</span>
+                                                        <button type="button" class="ctrl-time-arrow" id="task_hour_down">▼</button>
+                                                    </div>
+                                                    <span class="ctrl-time-colon">:</span>
+                                                    <div class="ctrl-time-unit">
+                                                        <button type="button" class="ctrl-time-arrow" id="task_min_up">▲</button>
+                                                        <span class="ctrl-time-num" id="task_min_display">00</span>
+                                                        <button type="button" class="ctrl-time-arrow" id="task_min_down">▼</button>
+                                                    </div>
+                                                    <div class="ctrl-time-ampm-toggle" id="task_ampm_toggle">
+                                                        <button type="button" class="ctrl-ampm-btn selected" data-val="AM">AM</button>
+                                                        <button type="button" class="ctrl-ampm-btn" data-val="PM">PM</button>
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" id="task_time" value="03:00">
+                                            </div>
+                                        </div>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Repeat Daily</span>
+                                            <div style="display:flex;align-items:center;gap:8px">
+                                                <div id="TASK_REPEAT_SWITCH"></div>
+                                            </div>
+                                        </div>
+                                        <div class="ctrl-field">
+                                            <span class="ctrl-label">Action (goformId)</span>
+                                            <select class="ctrl-select" id="task_action">
+                                                <option value="REBOOT_DEVICE">Reboot Device</option>
+                                                <option value="DISCONNECT_NETWORK">Disconnect Network</option>
+                                                <option value="CONNECT_NETWORK">Connect Network</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">📋</span> Task List</div>
+                                    <div class="sched-task-list" id="task_list">
+                                        <div class="sched-empty">No scheduled tasks</div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-actions" style="gap:10px">
+                                    <button type="button" class="ctrl-submit-btn" id="task_add_btn">Add Task</button>
+                                    <button type="button" class="ctrl-submit-btn" id="task_clear_btn" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Clear All</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Virtual Memory Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="swap_memory" style="display:none">
+                        <div class="ctrl-panel-title">Virtual Memory</div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">💾</span> Virtual Memory</div>
+                            <p class="plugin-desc">Creates a 1.5 GB virtual memory (swap) file on the device to expand available RAM. Persists across reboots. Requires root access.</p>
+                            <div class="swap-status-cards">
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Status</span>
+                                        <span class="data-mgmt-card-value" id="swap_status">Checking...</span>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M22 12H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Size</span>
+                                        <span class="data-mgmt-card-value" id="swap_size">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-adv-toggle-row">
+                                <span class="ctrl-adv-indicator" id="swap_status_dot"></span>
+                                <span class="ctrl-adv-toggle-label">Virtual Memory</span>
+                                <div id="SWAP_TOGGLE_SWITCH"></div>
+                            </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📋</span> Installation Log</div>
+                            <div class="swap-log-output" id="swap_log"></div>
+                        </div>
+                    </div>
+
+                    <!-- AdGuard Home Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="adguard" style="display:none">
+                        <div class="ctrl-panel-title">AdGuard Home</div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🛡️</span> Status</div>
+                            <p class="plugin-desc">Network-wide ad blocking and DNS privacy via AdGuard Home. Requires root access.</p>
+                            <div class="swap-status-cards">
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Service</span>
+                                        <span class="data-mgmt-card-value" id="agh_service_status">Checking...</span>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Version</span>
+                                        <span class="data-mgmt-card-value" id="agh_version">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">⚙️</span> Controls</div>
+                            <div class="ctrl-actions" style="gap:8px;flex-wrap:wrap">
+                                <button type="button" class="ctrl-submit-btn" id="agh_install_btn">Install</button>
+                                <button type="button" class="ctrl-submit-btn" id="agh_restart_btn" style="background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:#38bdf8">Restart</button>
+                                <button type="button" class="ctrl-submit-btn" id="agh_stop_btn" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.3);color:#fbbf24">Stop</button>
+                                <button type="button" class="ctrl-submit-btn" id="agh_uninstall_btn" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Uninstall</button>
+                            </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔗</span> Utilities</div>
+                            <div class="ctrl-actions" style="gap:8px;flex-wrap:wrap">
+                                <button type="button" class="ctrl-submit-btn" id="agh_open_btn" style="background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:#38bdf8">Home Page</button>
+                                <button type="button" class="ctrl-submit-btn" id="agh_export_btn" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.3);color:#a78bfa">Export Config</button>
+                                <button type="button" class="ctrl-submit-btn" id="agh_download_btn" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.3);color:#fbbf24">Download</button>
+                                <button type="button" class="ctrl-submit-btn" id="agh_update_btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#22c55e">Check Update</button>
+                            </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📋</span> Log</div>
+                            <div class="swap-log-output" id="agh_log"></div>
+                        </div>
+                    </div>
+
+                    <!-- Plugin Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="plugin" style="display:none">
+                        <div class="ctrl-panel-title">Plugins</div>
+                        <!-- Accordion: Plugin Actions -->
+                        <div class="sched-accordion-item open" id="plugin_acc_actions">
+                            <button type="button" class="sched-accordion-header">
+                                <span><span class="ctrl-section-icon">⚡</span> Plugin Actions</span>
+                                <span class="sched-accordion-arrow">▾</span>
+                            </button>
+                            <div class="sched-accordion-body">
+                                <div class="ctrl-section">
+                                    <p class="plugin-desc">Buttons and controls injected by installed plugins appear here.</p>
+                                    <div class="actions-buttons" id="plugin_actions_container" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Accordion: Custom Plugin Code -->
+                        <div class="sched-accordion-item" id="plugin_acc_code">
+                            <button type="button" class="sched-accordion-header">
+                                <span><span class="ctrl-section-icon">🧩</span> Custom Plugin Code</span>
+                                <span class="sched-accordion-arrow">▾</span>
+                            </button>
+                            <div class="sched-accordion-body">
+                                <div class="ctrl-section">
+                                    <p class="plugin-desc">Inject custom JavaScript that runs on the device. Plugins are stored persistently and execute on page load.</p>
+                                    <textarea class="plugin-editor" id="plugin_code" rows="12" spellcheck="false" placeholder="// Enter your plugin JavaScript code here..."></textarea>
+                                </div>
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">🏪</span> Plugin Store</div>
+                                    <div class="plugin-store-list" id="plugin_store_list">
+                                        <div class="sched-empty">Loading store...</div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-actions" style="gap:10px">
+                                    <button type="button" class="ctrl-submit-btn" id="plugin_save_btn">Save & Apply</button>
+                                    <button type="button" class="ctrl-submit-btn" id="plugin_load_btn" style="background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:#38bdf8">Load Current</button>
+                                    <button type="button" class="ctrl-submit-btn" id="plugin_clear_btn" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Clear</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -651,6 +1411,41 @@ settings put system screen_off_timeout 300000</pre>
                         <div class="ctrl-panel-title">
                             <span>Advanced Features</span>
                             <span class="ctrl-adv-title-warn">⚠️ Advanced users only</span>
+                        </div>
+
+                        <!-- Network & USB Mode -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📶</span> <span>Network & USB Mode</span></div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Network Mode</span>
+                                    <select class="select" id="NET_TYPE" onchange="changeNetwork(event)">
+                                        <option value="WL_AND_5G">5G/4G/3G</option>
+                                        <option value="LTE_AND_5G">5G NSA</option>
+                                        <option value="Only_5G">5G SA</option>
+                                        <option value="WCDMA_AND_LTE">4G/3G</option>
+                                        <option value="Only_LTE">4G Only</option>
+                                        <option value="Only_WCDMA">3G Only</option>
+                                    </select>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">USB Mode</span>
+                                    <select class="select" id="USB_TYPE" onchange="changeUSBNetwork(event)">
+                                        <option value="0">Auto</option>
+                                        <option value="1">RNDIS</option>
+                                        <option value="2">CDC-ECM</option>
+                                    </select>
+                                </div>
+                                <div class="ctrl-field" id="SIM_CARD_TYPE_V50_FIELD" style="display:none">
+                                    <span class="ctrl-label">SIM Card</span>
+                                    <select class="select" id="SIM_CARD_TYPE_V50" onchange="changeSimCard(event)">
+                                        <option value="0">Mobile</option>
+                                        <option value="1">Telecom</option>
+                                        <option value="2">Unicom</option>
+                                        <option value="11">External</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- FOTA / OTA Update section -->

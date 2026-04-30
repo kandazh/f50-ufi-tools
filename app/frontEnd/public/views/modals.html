@@ -40,11 +40,10 @@
             </div>
             <!-- çŸ­ä¿¡æ¨¡æ€æ¡† -->
             <div class="modal" id="smsList" style="display: none;">
-                <div class="title" data-i18n="sms_modal_title" style="margin-bottom: 6px;">çŸ­ä¿¡åˆ—è¡¨</div>
+                <div class="title" style="margin-bottom: 6px;">SMS</div>
                 <div class="action" style="margin-top: 10px;background-color: var(--dark-tag-color);">
-                    <span data-i18n="sms_modal_recipient">æ”¶ä»¶äººï¼š</span>
-                    <input id="PhoneInput" type="number" style="flex: 1" placeholder="æ‰‹æœºå·"
-                        data-i18n-placeholder="sms_modal_input_recipient">
+                    <span>To:</span>
+                    <input id="PhoneInput" type="number" style="flex: 1" placeholder="Phone number">
                 </div>
 
                 <div class="content" id="content" style="flex: 1;">
@@ -52,17 +51,15 @@
                 </div>
 
                 <div class="action" style="background-color: var(--dark-tag-color);">
-                    <input id="SMSInput" type="text" style="flex: 1;margin-right: 6px" placeholder="è¾“å…¥çŸ­ä¿¡å†…å®¹"
-                        data-i18n-placeholder="sms_modal_input_content">
+                    <input id="SMSInput" type="text" style="flex: 1;margin-right: 6px" placeholder="Type a message">
                     <div class="btn"
                         style="height: 100%;min-width: 103px;display: flex;justify-content: space-between;gap: 6px;align-items: center;">
-                        <button onclick="sendSMS()" style="height: 100%;" data-i18n="sms_modal_send_btn">å‘é€</button>
-                        <button onclick="closeModal('#smsList')" style="height: 100%;"
-                            data-i18n="sms_modal_close_btn">å…³é—­</button>
+                        <button onclick="sendSMS()" style="height: 100%;">Send</button>
+                        <button onclick="closeModal('#smsList')" style="height: 100%;">Close</button>
                     </div>
                 </div>
             </div>
-            <!-- cpuæ¸©åº¦ä¿¡æ¯æ¨¡æ€æ¡† -->
+            <!-- CPU Temperature Info Modal -->
             <div class="modal" id="cpuTempInfoModal" style="width: 77%;max-width: 300px;display: none">
                 <div class="title" data-i18n="temperature_info">æ¸©åº¦ä¿¡æ¯</div>
                 <div class="content" style="max-height: 350px;padding: 15px 0px 0 0px;">
@@ -1167,37 +1164,31 @@
             <!-- çŸ­ä¿¡è½¬å‘æ¨¡æ€æ¡† -->
             <div class="mask" id="smsForwardModal" style="display: none">
                 <div class="modal">
-                    <div class="title" style="justify-content: space-between;"><span
-                            data-i18n="sms_forward_title">çŸ­ä¿¡è½¬å‘(Beta)</span> <button type="button"
-                            onclick="closeModal('#smsForwardModal')" data-i18n="close_btn">å…³é—­</button></div>
-                    <span data-i18n="sms_forward_toggle">æ€»å¼€å…³:</span>
+                    <div class="title" style="justify-content: space-between;"><span>SMS Forwarding (Beta)</span> <button type="button"
+                            onclick="closeModal('#smsForwardModal')">Close</button></div>
+                    <span>Enabled:</span>
                     <div style="margin-top: 8px;display: inline-block;" id="collapse_smsforward_btn"></div>
                     <!-- tab -->
                     <div class="tabs" onclick="switchSmsForwardMethodTab(event)"
                         style="width: 100%;display: flex;margin-top: 10px;gap: 10px;">
-                        <button id="smtp_btn" data-method="smtp" id="smtpForwardBtn" style="flex: 1;" class="tab-btn"
-                            data-i18n="smtp_method">SMTPæ–¹å¼</button>
-                        <button id="curl_btn" data-method="curl" id="curlForwardBtn" style="flex: 1;" class="tab-btn"
-                            data-i18n="curl_method">CURLæ–¹å¼</button>
+                        <button id="smtp_btn" data-method="smtp" id="smtpForwardBtn" style="flex: 1;" class="tab-btn">SMTP</button>
+                        <button id="curl_btn" data-method="curl" id="curlForwardBtn" style="flex: 1;" class="tab-btn">CURL</button>
                         <button id="dingtalk_btn" data-method="dingtalk" id="dingtalkForwardBtn" style="flex: 1;"
-                            class="tab-btn" data-i18n="dingtalk_method">é’‰é’‰æ–¹å¼</button>
+                            class="tab-btn">DingTalk</button>
                     </div>
                     <div id="collapse_smsforward" class="collapse">
                         <div class="collapse_box">
                             <div style="display: flex;gap: 10px;">
-                                <!-- ç”µé‡æé†’ -->
+                                <!-- Power status -->
                                 <div style="padding-top: 8px;display: flex;align-items: center;"
                                     id="collapse_smsforward_power_status_btn">
-                                    <span data-i18n="power_status_forward_title"
-                                        style="font-size: .8rem;min-width: fit-content;flex-shrink: 0;">ç”µæºçŠ¶æ€è½¬å‘</span>
+                                    <span style="font-size: .8rem;min-width: fit-content;flex-shrink: 0;">Power Status Forward</span>
                                 </div>
-                                <!-- è½¬å‘è§„åˆ™ -->
-                                <button style="margin-top: 8px;flex: 1;" id="forward_method_setting_btn"
-                                    data-i18n="forward_method_setting_btn">è½¬å‘è§„åˆ™</button>
-                                <button style="margin-top: 8px;flex: 1;" id="forward_nickname_setting_btn"
-                                    data-i18n="forward_nickname_setting_btn">è®¾ç½®åˆ«å</button>
+                                <!-- Forward rules -->
+                                <button style="margin-top: 8px;flex: 1;" id="forward_method_setting_btn">Forward Rules</button>
+                                <button style="margin-top: 8px;flex: 1;" id="forward_nickname_setting_btn">Set Nickname</button>
                             </div>
-                            <!-- smtpè½¬å‘ -->
+                            <!-- SMTP forwarding -->
                             <form onsubmit="handleSmsForwardForm(event)" id="smsForwardForm">
                                 <div class="content" style="
                         overflow:hidden;
@@ -1205,14 +1196,14 @@
                         width: 80vw;
                         font-size: .9rem;
                         max-width: 400px;">
-                                    <div class="title" style="font-size: 12px;" data-i18n="smtp_hint">
-                                        æŽ¥æ”¶æ–¹é‚®ç®±ä¹Ÿå¯ä»¥æ˜¯è½¬å‘æ–¹é‚®ç®±
+                                    <div class="title" style="font-size: 12px;">
+                                        Receiver email can be the same as sender
                                     </div>
                                     <div class="item" style="margin: 10px auto;">
                                         <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span data-i18n="smtp_host">ä¸»æœºï¼š</span><input
+                            "><span>Host:</span><input
                                                 style="flex: 1;padding: 4px 6px;width: 100%;" id="smtp_host"
                                                 name="smtp_host" type="text" placeholder="smtp.xxx.com"></label>
                                     </div>
@@ -1220,7 +1211,7 @@
                                         <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span data-i18n="smtp_port">ç«¯å£ï¼š</span><input
+                            "><span>Port:</span><input
                                                 style="flex: 1;padding: 4px 6px;width: 100%;" id="smtp_port"
                                                 name="smtp_port" type="number" placeholder="465"></label>
                                     </div>
@@ -1228,7 +1219,7 @@
                                         <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span data-i18n="smtp_username">ç”¨æˆ·ï¼š</span><input
+                            "><span>User:</span><input
                                                 style="flex: 1;padding: 4px 6px;width: 100%;" id="smtp_username"
                                                 name="smtp_username" type="text" placeholder="example@xx.com"></label>
                                     </div>
@@ -1236,7 +1227,7 @@
                                         <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span data-i18n="smtp_password">å¯†ç ï¼š</span><input autocomplete="off"
+                            "><span>Password:</span><input autocomplete="off"
                                                 style="flex: 1;padding: 4px 6px;width: 100%;" id="smtp_password"
                                                 name="smtp_password" type="password" placeholder=""></label>
                                     </div>
@@ -1244,23 +1235,22 @@
                                         <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span data-i18n="smtp_to">å‘ç»™ï¼š</span><input style="flex: 1;padding: 4px 6px;width: 100%;"
+                            "><span>To:</span><input style="flex: 1;padding: 4px 6px;width: 100%;"
                                                 id="smtp_to" name="smtp_to" type="email"
                                                 placeholder="to@xxx.com"></label>
                                     </div>
                                     <div class="item" style="margin: 10px auto;">
-                                        <label style="display: flex;align-items: center;"><span
-                                                data-i18n="forward_dev_info_text">åŒæ—¶è½¬å‘è®¾å¤‡ä¿¡æ¯ï¼š</span><input
+                                        <label style="display: flex;align-items: center;"><span>Also forward device info:</span><input
                                                 name="forward_dev_info" type="checkbox" class="checkbox"></label>
                                     </div>
                                 </div>
                                 <div class="btn" style="text-align: right;">
-                                    <button type="submit" data-i18n="submit_btn">æäº¤</button>
-                                    <button type="button" data-i18n="close_btn"
-                                        onclick="closeModal('#smsForwardModal')">å…³é—­</button>
+                                    <button type="submit">Submit</button>
+                                    <button type="button"
+                                        onclick="closeModal('#smsForwardModal')">Close</button>
                                 </div>
                             </form>
-                            <!-- curlè¯·æ±‚è½¬å‘ -->
+                            <!-- CURL forwarding -->
                             <form onsubmit="handleSmsForwardCurlForm(event)" id="smsForwardCurlForm"
                                 style="display: none;">
                                 <div class="content" style="
@@ -1269,8 +1259,7 @@
                                     width: 80vw;
                                     max-width: 400px;">
                                     <div class="title user_select" style="display:block;font-size: .7rem;">
-                                        <span data-i18n="curl_hint">æ³¨æ„ï¼šå‘½ä»¤éœ€æ˜¯â€œä¸€å£æ°”â€è¾“å…¥çš„ï¼Œä¸è¦ä¸­é€”æŒ‰å›žè½¦æ¢è¡Œæˆ–ç”¨ \ æŽ¥ç»­ï¼Œæ³¨æ„å‚æ•°é—´çš„ç©ºæ ¼
-                                            çŸ­ä¿¡å†…å®¹å ä½ç¬¦ï¼š</span>
+                                        <span>Note: Command must be a single line, no line breaks or backslash continuations. Placeholders:</span>
                                         <br>
                                         <span onclick="copyText(event)">{{sms-body}} {{sms-time}}
                                             {{sms-from}}
@@ -1287,8 +1276,7 @@
                                         style="display: grid;gap: 10px;margin-top: 10px;grid-template-columns: 1fr 1fr;">
                                         <button style="width: 100%;"
                                             onclick="event.preventDefault();fillCurl('tg')">Telegram</button>
-                                        <button style="width: 100%;" onclick="event.preventDefault();fillCurl('wechat')"
-                                            data-i18n="wechat_group">ä¼ä¸šå¾®ä¿¡</button>
+                                        <button style="width: 100%;" onclick="event.preventDefault();fillCurl('wechat')">WeChat Work</button>
                                         <button style="width: 100%;"
                                             onclick="event.preventDefault();fillCurl('pushplus')">PushPlus</button>
                                         <button style="width: 100%;"
@@ -1306,12 +1294,12 @@
                                     </div>
                                 </div>
                                 <div class="btn" style="text-align: right;">
-                                    <button type="submit" data-i18n="submit_btn">æäº¤</button>
-                                    <button type="button" data-i18n="close_btn"
-                                        onclick="closeModal('#smsForwardModal')">å…³é—­</button>
+                                    <button type="submit">Submit</button>
+                                    <button type="button"
+                                        onclick="closeModal('#smsForwardModal')">Close</button>
                                 </div>
                             </form>
-                            <!-- é’‰é’‰webhookè½¬å‘ -->
+                            <!-- DingTalk webhook forwarding -->
                             <form onsubmit="handleSmsForwardDingTalkForm(event)" id="smsForwardDingTalkForm"
                                 style="display: none;">
                                 <div class="content" style="
@@ -1319,15 +1307,14 @@
                                     margin: 10px 0;
                                     width: 80vw;
                                     max-width: 400px;">
-                                    <div class="title" style="font-size: .7rem;" data-i18n="dingtalk_hint">
-                                        é…ç½®é’‰é’‰ç¾¤æœºå™¨äººwebhookåœ°å€ï¼Œæ”¯æŒåŠ ç­¾å®‰å…¨è®¾ç½®
+                                    <div class="title" style="font-size: .7rem;">
+                                        Configure DingTalk robot webhook URL (supports signature verification)
                                     </div>
                                     <div class="item" style="margin: 10px auto;">
                                         <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span data-i18n="dingtalk_webhook"
-                                                style="display: inline-block; width:110px;font-size: .8rem;">Webhookåœ°å€ï¼š</span><input
+                            "><span style="display: inline-block; width:110px;font-size: .8rem;">Webhook URL:</span><input
                                                 style="flex: 1;padding: 4px 6px;width: 100%;" id="dingtalk_webhook"
                                                 name="dingtalk_webhook" type="text"
                                                 placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx"></label>
@@ -1336,22 +1323,20 @@
                                         <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span data-i18n="dingtalk_secret"
-                                                style="display: inline-block; width:110px;font-size: .8rem;">åŠ ç­¾å¯†é’¥ï¼š</span><input
+                            "><span style="display: inline-block; width:110px;font-size: .8rem;">Secret Key:</span><input
                                                 style="flex: 1;padding: 4px 6px;width: 100%;" id="dingtalk_secret"
                                                 name="dingtalk_secret" type="text"
                                                 placeholder="SEC000000000000000000000" optional></label>
                                     </div>
                                     <div class="item" style="margin: 10px auto;">
-                                        <label style="font-size: .8rem;display: flex;align-items: center;"><span
-                                                data-i18n="forward_dev_info_text">åŒæ—¶è½¬å‘è®¾å¤‡ä¿¡æ¯ï¼š</span><input
+                                        <label style="font-size: .8rem;display: flex;align-items: center;"><span>Also forward device info:</span><input
                                                 name="forward_dev_info" type="checkbox" class="checkbox"></label>
                                     </div>
                                 </div>
                                 <div class="btn" style="text-align: right;">
-                                    <button type="submit" data-i18n="submit_btn">æäº¤</button>
-                                    <button type="button" data-i18n="close_btn"
-                                        onclick="closeModal('#smsForwardModal')">å…³é—­</button>
+                                    <button type="submit">Submit</button>
+                                    <button type="button"
+                                        onclick="closeModal('#smsForwardModal')">Close</button>
                                 </div>
                             </form>
                         </div>

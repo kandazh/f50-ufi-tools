@@ -235,40 +235,22 @@
 
   /* --- Save all --- */
   function bindSaveButton() {
-    var btn = document.getElementById('ADV_SAVE_BTN');
-    if (!btn) return;
-    btn.addEventListener('click', async function () {
-      btn.disabled = true; btn.textContent = 'Saving...';
-      try {
-        var cookie = await login();
-        if (!cookie) { createToast('Please login first', 'red'); return; }
-        var interval = document.getElementById('ADV_FOTA_INTERVAL');
-        await postData(cookie, { goformId: 'SetUpgAutoSetting', UpgMode: switches.fota.get() ? '1' : '0', UpgIntervalDay: interval ? interval.value : '7', UpgRoamPermission: switches.fotaRoam.get() ? '1' : '0', zte_update_enabled: switches.zteUpdate.get() ? '1' : '0' });
-        await postData(cookie, { goformId: 'INDICATOR_LIGHT_SETTING', indicator_light_switch: switches.light.get() ? '1' : '0' });
-        await postData(cookie, { goformId: 'PERFORMANCE_MODE_SETTING', performance_mode: switches.perf.get() ? '1' : '0' });
-        createToast('Settings saved', 'green');
-      } catch (e) { createToast('Save failed: ' + e.message, 'red'); }
-      finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
+    bindCtrlSave('ADV_SAVE_BTN', async function (cookie) {
+      var interval = document.getElementById('ADV_FOTA_INTERVAL');
+      await postData(cookie, { goformId: 'SetUpgAutoSetting', UpgMode: switches.fota.get() ? '1' : '0', UpgIntervalDay: interval ? interval.value : '7', UpgRoamPermission: switches.fotaRoam.get() ? '1' : '0', zte_update_enabled: switches.zteUpdate.get() ? '1' : '0' });
+      await postData(cookie, { goformId: 'INDICATOR_LIGHT_SETTING', indicator_light_switch: switches.light.get() ? '1' : '0' });
+      await postData(cookie, { goformId: 'PERFORMANCE_MODE_SETTING', performance_mode: switches.perf.get() ? '1' : '0' });
     });
   }
 
   function bindLanNetSave() {
-    var btn = document.getElementById('LAN_NET_SAVE_BTN');
-    if (!btn) return;
-    btn.addEventListener('click', async function () {
-      btn.disabled = true; btn.textContent = 'Saving...';
-      try {
-        var cookie = await login();
-        if (!cookie) { createToast('Please login first', 'red'); return; }
-        var natSel = document.getElementById('ADV_NAT_MODE');
-        await postData(cookie, { goformId: 'NAT_SETTING', nat_mode: natSel ? natSel.value : '0' });
-        await postData(cookie, { goformId: 'UPNP_SETTING', upnpEnabled: switches.upnp.get() ? '1' : '0' });
-        var dmzHidden = document.querySelector('#ADV_DMZ_IP_WRAP input[type="hidden"]');
-        await postData(cookie, { goformId: 'DMZ_SETTING', DMZEnable: switches.dmz.get() ? '1' : '0', DMZIPAddress: dmzHidden ? dmzHidden.value : '' });
-        await postData(cookie, { goformId: 'FW_SYS', RemoteManagement: switches.remote.get() ? '1' : '0', WANPingFilter: switches.wanPing.get() ? '1' : '0' });
-        createToast('Settings saved', 'green');
-      } catch (e) { createToast('Save failed: ' + e.message, 'red'); }
-      finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
+    bindCtrlSave('LAN_NET_SAVE_BTN', async function (cookie) {
+      var natSel = document.getElementById('ADV_NAT_MODE');
+      await postData(cookie, { goformId: 'NAT_SETTING', nat_mode: natSel ? natSel.value : '0' });
+      await postData(cookie, { goformId: 'UPNP_SETTING', upnpEnabled: switches.upnp.get() ? '1' : '0' });
+      var dmzHidden = document.querySelector('#ADV_DMZ_IP_WRAP input[type="hidden"]');
+      await postData(cookie, { goformId: 'DMZ_SETTING', DMZEnable: switches.dmz.get() ? '1' : '0', DMZIPAddress: dmzHidden ? dmzHidden.value : '' });
+      await postData(cookie, { goformId: 'FW_SYS', RemoteManagement: switches.remote.get() ? '1' : '0', WANPingFilter: switches.wanPing.get() ? '1' : '0' });
     });
   }
 

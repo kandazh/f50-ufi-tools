@@ -160,6 +160,21 @@
       });
     }
 
+    function bindShellBtn(btn, loadingMsg, actionFn) {
+      if (!btn) return;
+      btn.addEventListener('click', async function () {
+        setButtonsDisabled(true);
+        showOutput('<span style="opacity:0.6">⏳ ' + loadingMsg + '</span>');
+        try {
+          await actionFn();
+        } catch (e) {
+          showOutput('<span style="color:#f87171">' + escapeHtml(e.message || 'Error') + '</span>');
+        } finally {
+          setButtonsDisabled(false);
+        }
+      });
+    }
+
     async function saveScript() {
       var content = editor ? editor.value : '';
       if (!content.trim()) {
@@ -176,66 +191,40 @@
     }
 
     // Load current script from device
-    if (loadBtn) loadBtn.addEventListener('click', async function () {
-      setButtonsDisabled(true);
-      showOutput('<span style="opacity:0.6">⏳ Loading script...</span>');
-      try {
-        var res = await runShellWithRoot('timeout 5s cat /sdcard/quick_shell.sh');
-        if (res.success && res.content) {
-          if (editor) editor.value = res.content;
-          showOutput('<span style="color:#4ade80">✓ Script loaded from device</span>');
-        } else {
-          if (editor) editor.value = '#!/system/bin/sh\n# quick_shell.sh not found on device\nsync\n';
-          showOutput('<span style="color:#fbbf24">⚠ No script found at /sdcard/quick_shell.sh</span>');
-        }
-      } catch (e) {
-        showOutput('<span style="color:#f87171">' + escapeHtml(e.message || 'Failed to load') + '</span>');
-      } finally {
-        setButtonsDisabled(false);
+    bindShellBtn(loadBtn, 'Loading script...', async function () {
+      var res = await runShellWithRoot('timeout 5s cat /sdcard/quick_shell.sh');
+      if (res.success && res.content) {
+        if (editor) editor.value = res.content;
+        showOutput('<span style="color:#4ade80">✓ Script loaded from device</span>');
+      } else {
+        if (editor) editor.value = '#!/system/bin/sh\n# quick_shell.sh not found on device\nsync\n';
+        showOutput('<span style="color:#fbbf24">⚠ No script found at /sdcard/quick_shell.sh</span>');
       }
     });
 
     // Save only
-    if (saveBtn) saveBtn.addEventListener('click', async function () {
-      setButtonsDisabled(true);
-      showOutput('<span style="opacity:0.6">⏳ Saving script...</span>');
-      try {
-        var ok = await saveScript();
-        if (ok) showOutput('<span style="color:#4ade80">✓ Script saved to /sdcard/quick_shell.sh</span>');
-      } catch (e) {
-        showOutput('<span style="color:#f87171">' + escapeHtml(e.message || 'Save failed') + '</span>');
-      } finally {
-        setButtonsDisabled(false);
-      }
+    bindShellBtn(saveBtn, 'Saving script...', async function () {
+      var ok = await saveScript();
+      if (ok) showOutput('<span style="color:#4ade80">✓ Script saved to /sdcard/quick_shell.sh</span>');
     });
 
     // Save & Run
-    if (runBtn) runBtn.addEventListener('click', async function () {
-      setButtonsDisabled(true);
-      showOutput('<span style="opacity:0.6">⏳ Saving script...</span>');
-      try {
-        var ok = await saveScript();
-        if (!ok) { setButtonsDisabled(false); return; }
-        showOutput('<span style="opacity:0.6">⏳ Running quick_shell.sh...</span>');
-        var adbOk = await adbKeepAlive();
-        if (!adbOk) {
-          showOutput('<span style="color:#f87171">ADB not connected. Please initialize ADB first.</span>');
-          setButtonsDisabled(false);
-          return;
-        }
-        var resp = await fetch(KANO_baseURL + '/quick_shell', { headers: common_headers || {} });
-        var data = await resp.json();
-        if (data && data.error) {
-          showOutput('<span style="color:#f87171">' + escapeHtml(data.error) + '</span>');
-        } else if (data && data.result) {
-          showOutput('<pre>' + escapeHtml(data.result) + '</pre>');
-        } else {
-          showOutput('<span style="color:#f87171">No response from device</span>');
-        }
-      } catch (e) {
-        showOutput('<span style="color:#f87171">' + escapeHtml(e.message || 'Error') + '</span>');
-      } finally {
-        setButtonsDisabled(false);
+    bindShellBtn(runBtn, 'Saving script...', async function () {
+      var ok = await saveScript();
+      if (!ok) return;
+      showOutput('<span style="opacity:0.6">⏳ Running quick_shell.sh...</span>');
+      var adbOk = await adbKeepAlive();
+      if (!adbOk) {
+        showOutput('<span style="color:#f87171">ADB not connected. Please initialize ADB first.</span>');
+        return;
+      }
+      var res = await runShellWithRoot('sh /sdcard/quick_shell.sh', 15000);
+      if (res.success && res.content) {
+        showOutput('<pre>' + escapeHtml(res.content) + '</pre>');
+      } else if (res.content) {
+        showOutput('<span style="color:#f87171">' + escapeHtml(res.content) + '</span>');
+      } else {
+        showOutput('<span style="color:#fbbf24">Script executed (no output)</span>');
       }
     });
   }

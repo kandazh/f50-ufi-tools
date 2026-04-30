@@ -72,6 +72,18 @@ const toggleState = {
   // Device options
   indicator_light_switch: '0',
   performance_mode: '1',
+  // SMS messages (dynamic mock)
+  smsMessages: (() => {
+    const now = new Date();
+    return [
+      { id: '1', number: '+919876543210', content: Buffer.from('Hello! How are you doing today?').toString('base64'), date: `${now.getFullYear()},${now.getMonth()+1},${now.getDate()},${now.getHours()},${String(now.getMinutes()).padStart(2,'0')},00,0`, tag: '1' },
+      { id: '2', number: '+919123456789', content: Buffer.from('Your OTP is 482917. Valid for 5 minutes.').toString('base64'), date: `${now.getFullYear()},${now.getMonth()+1},${now.getDate()},${now.getHours()-1},30,00,0`, tag: '1' },
+      { id: '3', number: '+919876543210', content: Buffer.from('OK, I will call you later').toString('base64'), date: `${now.getFullYear()},${now.getMonth()+1},${now.getDate()},${now.getHours()-2},15,00,0`, tag: '2' },
+      { id: '4', number: '+918765432109', content: Buffer.from('Meeting at 3pm tomorrow. Please confirm.').toString('base64'), date: `${now.getFullYear()},${now.getMonth()+1},${now.getDate()-1},14,00,00,0`, tag: '1' },
+      { id: '5', number: '+919876543210', content: Buffer.from('Sure, see you there!').toString('base64'), date: `${now.getFullYear()},${now.getMonth()+1},${now.getDate()-1},14,05,00,0`, tag: '3' },
+    ];
+  })(),
+  smsNextId: 6,
 };
 
 // Assemble index.html from template + partials
@@ -146,6 +158,95 @@ app.use('/api/root_shell', (req, res) => {
         } else if (cmd.includes('mv ')) {
           // saveConfig: move file to target path
           res.json({ result: '' });
+        } else if (cmd.startsWith('ping')) {
+          // Mock ping response with varied latency based on host
+          let pingMs = 22.4;
+          if (cmd.includes('cloudflare')) pingMs = 8 + Math.random() * 5;
+          else if (cmd.includes('sin') || cmd.includes('singapore')) pingMs = 35 + Math.random() * 10;
+          else if (cmd.includes('tokyo')) pingMs = 55 + Math.random() * 15;
+          else if (cmd.includes('thinkbroadband') || cmd.includes('london')) pingMs = 150 + Math.random() * 20;
+          else if (cmd.includes('frankfurt')) pingMs = 130 + Math.random() * 15;
+          else if (cmd.includes('newark') || cmd.includes('new')) pingMs = 200 + Math.random() * 20;
+          else if (cmd.includes('fremont') || cmd.includes('california')) pingMs = 220 + Math.random() * 25;
+          const host = cmd.match(/ping\s+.*?\s+(\S+)$/)?.[1] || '8.8.8.8';
+          if (cmd.includes('-c 1')) {
+            res.json({ output: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = ${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/0.000 ms` });
+          } else {
+            res.json({ output: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${(pingMs+1.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=2 ttl=117 time=${(pingMs-0.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=3 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2003ms\nrtt min/avg/max/mdev = ${(pingMs-0.6).toFixed(1)}/${pingMs.toFixed(1)}/${(pingMs+1.6).toFixed(1)}/0.683 ms` });
+          }
+        } else if (cmd.includes('curl') && cmd.includes('speed_download')) {
+          // Mock curl download speed test - simulate ~45 Mbps
+          const bytes = 10000000;
+          const speed = 5625000; // bytes/sec = 45 Mbps
+          const time = (bytes / speed).toFixed(3);
+          res.json({ output: speed + ' ' + bytes + ' ' + time });
+        } else if (cmd.includes('curl') && cmd.includes('speed_upload')) {
+          // Mock curl upload speed test - simulate ~12 Mbps
+          const upSpeed = 1500000; // bytes/sec = 12 Mbps
+          const upBytes = 1048576;
+          const upTime = (upBytes / upSpeed).toFixed(3);
+          res.json({ output: upSpeed + ' ' + upBytes + ' ' + upTime });
+        } else if (cmd.includes('cat /proc/swaps')) {
+          // Mock swap status
+          if (toggleState._swapEnabled) {
+            res.json({ result: 'Filename\t\t\tType\t\tSize\tUsed\tPriority\n/data/swapfile\t\t\tfile\t\t1572860\t0\t-2' });
+          } else {
+            res.json({ result: 'Filename\t\t\tType\t\tSize\tUsed\tPriority' });
+          }
+        } else if (cmd.includes('cat') && cmd.includes('swap_setup.log')) {
+          // Mock log reading during install
+          if (toggleState._swapInstalling) {
+            toggleState._swapStep = (toggleState._swapStep || 0) + 1;
+            var steps = [
+              '=== Starting swap file setup ===',
+              '[1/5] Creating 1536MB swap file...',
+              '[2/5] Setting permissions...',
+              '[3/5] Formatting as swap...',
+              '[4/5] Enabling swap...',
+              '[5/5] Current swap status:\nFilename Type Size Used Priority\n/data/swapfile file 1572860 0 -2\n=== Swap setup completed ==='
+            ];
+            var idx = Math.min(toggleState._swapStep, steps.length - 1);
+            var log = steps.slice(0, idx + 1).join('\n');
+            if (idx >= steps.length - 1) {
+              toggleState._swapInstalling = false;
+              toggleState._swapEnabled = true;
+            }
+            res.json({ result: log });
+          } else {
+            res.json({ result: '' });
+          }
+        } else if (cmd.includes('sh') && cmd.includes('kano_swap.sh')) {
+          toggleState._swapInstalling = true;
+          toggleState._swapStep = 0;
+          res.json({ result: '' });
+        } else if (cmd.includes('swapoff')) {
+          toggleState._swapEnabled = false;
+          res.json({ result: '' });
+        } else if (cmd.includes('grep') && cmd.includes('swapon')) {
+          res.json({ result: '' });
+        } else if (cmd.includes('sed') && cmd.includes('swapon')) {
+          res.json({ result: '' });
+        } else if (cmd.includes('AdGuardHome --version')) {
+          if (toggleState._aghInstalled) {
+            res.json({ result: 'AdGuard Home, version v0.107.52' });
+          } else {
+            res.json({ result: '' });
+          }
+        } else if (cmd.includes('action.sh toggle') || cmd.includes('action.sh stop')) {
+          var action = cmd.includes('stop') ? 'Stopped' : 'Started';
+          res.json({ result: action + ' AdGuard Home' });
+        } else if (cmd.includes('agh/boot.sh')) {
+          res.json({ result: '' });
+        } else if (cmd.includes('adg_customize.sh')) {
+          toggleState._aghInstalled = true;
+          res.json({ result: 'AdGuard Home installed successfully' });
+        } else if (cmd.includes('agh/uninstall.sh')) {
+          toggleState._aghInstalled = false;
+          res.json({ result: 'AdGuard Home removed' });
+        } else if (cmd.includes('AdGuardHome.yaml')) {
+          res.json({ result: 'bind_host: 0.0.0.0\nbind_port: 3000\nusers:\n  - name: admin\n    password: $2y$10$mock' });
+        } else if (cmd.includes('api.github.com') && cmd.includes('AdGuardHome')) {
+          res.json({ result: JSON.stringify({ tag_name: 'v0.107.53', assets: [{ name: 'AdGuardHome_linux_arm64.tar.gz', browser_download_url: 'https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.107.53/AdGuardHome_linux_arm64.tar.gz' }] }) });
         } else {
           res.json({ result: 'mock: ' + cmd });
         }
@@ -285,15 +386,102 @@ app.use('/api/usb_status', (req, res) => {
 
 // Mock AT command (QoS RDP)
 app.use('/api/AT', (req, res) => {
-  const cmd = req.query.command || '';
+  const cmd = (req.query.command || '').toUpperCase().trim();
   if (cmd.includes('CGEQOSRDP')) {
-    // +CGEQOSRDP: cid,qci,dl_gbr,ul_gbr,dl_mbr,ul_mbr,dl_max,ul_max
     res.json({ result: '+CGEQOSRDP: 1,9,0,0,0,0,150000,50000 OK' });
-  } else if (cmd.includes('sim_slot') || cmd.includes('dual_sim_support')) {
+  } else if (cmd.includes('CSQ')) {
+    res.json({ result: '+CSQ: 21,99 OK' });
+  } else if (cmd.includes('COPS?')) {
+    res.json({ result: '+COPS: 0,0,"CHN-UNICOM",7 OK' });
+  } else if (cmd.includes('CPIN?')) {
+    res.json({ result: '+CPIN: READY OK' });
+  } else if (cmd === 'ATI') {
+    res.json({ result: 'Quectel EC25\nRevision: EC25EFAR06A06M4G OK' });
+  } else if (cmd.includes('SERVINGCELL')) {
+    res.json({ result: '+QENG: "servingcell","NOCONN","LTE","FDD",460,01,1A2B3C4,123,100,1,5,5,6E14,-95,-9,-67,16,44 OK' });
+  } else if (cmd.includes('CGDCONT?')) {
+    res.json({ result: '+CGDCONT: 1,"IP","cmnet","10.45.12.98",0,0,0,0\n+CGDCONT: 2,"IPV4V6","ims","",0,0,0,0 OK' });
+  } else if (cmd.includes('QTEMP')) {
+    res.json({ result: '+QTEMP: "mdm-modem0",38,"mdm-modem1",36,"soc_thermal",41 OK' });
+  } else if (cmd.includes('SIM_SLOT') || cmd.includes('DUAL_SIM_SUPPORT')) {
     res.json({ sim_slot: '0', dual_sim_support: '0' });
   } else {
     res.json({ result: 'OK' });
   }
+});
+
+// SMS Forwarding mock endpoints
+app.get('/api/sms_forward_enabled', (req, res) => {
+  if (req.query.enable !== undefined) {
+    toggleState.smsForwardEnabled = req.query.enable;
+    console.log('[SMS Forward] Enabled:', req.query.enable);
+    return res.json({ result: 'success' });
+  }
+  res.json({ enabled: toggleState.smsForwardEnabled || '0' });
+});
+app.get('/api/call_notify_enabled', (req, res) => {
+  if (req.query.enable !== undefined) {
+    toggleState.callNotifyEnabled = req.query.enable;
+    console.log('[Call Notify] Enabled:', req.query.enable);
+    return res.json({ result: 'success' });
+  }
+  res.json({ enabled: toggleState.callNotifyEnabled || '0' });
+});
+app.get('/api/sms_forward_format', (req, res) => {
+  res.json(toggleState.smsForwardFormat || { sms_format: '[SMS] From: {{from}} | {{time}} | {{body}}', call_format: '📞 [CALL] From: {{from}} | {{time}}' });
+});
+app.post('/api/sms_forward_format', express.json(), (req, res) => {
+  toggleState.smsForwardFormat = req.body;
+  console.log('[Forward Format] Saved:', req.body);
+  res.json({ result: 'success' });
+});
+app.get('/api/sms_forward_method', (req, res) => {
+  res.json({ sms_forward_method: toggleState.smsForwardMethod || 'sms' });
+});
+app.get('/api/sms_forward_mail', (req, res) => {
+  res.json(toggleState.smsForwardSmtp || { smtp_host: '', smtp_port: '', smtp_username: '', smtp_password: '', smtp_to: '', forward_dev_info: '0' });
+});
+app.post('/api/sms_forward_mail', express.json(), (req, res) => {
+  toggleState.smsForwardSmtp = req.body;
+  toggleState.smsForwardMethod = 'smtp';
+  console.log('[SMS Forward] SMTP saved:', req.body);
+  res.json({ result: 'success' });
+});
+app.get('/api/sms_forward_curl', (req, res) => {
+  res.json(toggleState.smsForwardCurl || { curl_text: '' });
+});
+app.post('/api/sms_forward_curl', express.json(), (req, res) => {
+  toggleState.smsForwardCurl = req.body;
+  toggleState.smsForwardMethod = 'curl';
+  console.log('[SMS Forward] CURL saved:', req.body);
+  res.json({ result: 'success' });
+});
+app.get('/api/sms_forward_dingtalk', (req, res) => {
+  res.json(toggleState.smsForwardDingtalk || { webhook_url: '', secret: '', forward_dev_info: '0' });
+});
+app.post('/api/sms_forward_dingtalk', express.json(), (req, res) => {
+  toggleState.smsForwardDingtalk = req.body;
+  toggleState.smsForwardMethod = 'dingtalk';
+  console.log('[SMS Forward] DingTalk saved:', req.body);
+  res.json({ result: 'success' });
+});
+app.get('/api/sms_forward_whatsapp', (req, res) => {
+  res.json(toggleState.smsForwardWhatsapp || { wa_phone_id: '', wa_token: '', wa_to: '', forward_dev_info: '0' });
+});
+app.post('/api/sms_forward_whatsapp', express.json(), (req, res) => {
+  toggleState.smsForwardWhatsapp = req.body;
+  toggleState.smsForwardMethod = 'whatsapp';
+  console.log('[SMS Forward] WhatsApp saved:', req.body);
+  res.json({ result: 'success' });
+});
+app.get('/api/sms_forward_sms', (req, res) => {
+  res.json(toggleState.smsForwardSms || { sms_forward_number: '', sms_forward_prefix: '[FWD from {{from}}]', forward_dev_info: '0' });
+});
+app.post('/api/sms_forward_sms', express.json(), (req, res) => {
+  toggleState.smsForwardSms = req.body;
+  toggleState.smsForwardMethod = 'sms';
+  console.log('[SMS Forward] SMS saved:', req.body);
+  res.json({ result: 'success' });
 });
 
 // Mock goform_get_cmd_process (main device poll)
@@ -429,6 +617,46 @@ app.use('/api/goform', (req, res) => {
         if (goformId === 'PERFORMANCE_MODE_SETTING') {
           if (params.get('performance_mode') !== null) toggleState.performance_mode = params.get('performance_mode');
         }
+        // SMS: Send
+        if (goformId === 'SEND_SMS') {
+          const number = params.get('Number') || '';
+          const body = params.get('MessageBody') || '';
+          const now = new Date();
+          const id = String(toggleState.smsNextId++);
+          // Decode GSM-encoded (hex) content back to text for storage as base64
+          let text = '';
+          try {
+            for (let i = 0; i < body.length; i += 4) {
+              text += String.fromCharCode(parseInt(body.substr(i, 4), 16));
+            }
+          } catch(e) { text = body; }
+          toggleState.smsMessages.push({
+            id,
+            number,
+            content: Buffer.from(text).toString('base64'),
+            date: `${now.getFullYear()},${now.getMonth()+1},${now.getDate()},${now.getHours()},${String(now.getMinutes()).padStart(2,'0')},00,0`,
+            tag: '2' // sent
+          });
+          console.log(`[SMS] Sent to ${number}: "${text}"`);
+          return res.json({ result: 'success' });
+        }
+        // SMS: Delete
+        if (goformId === 'DELETE_SMS') {
+          const msgId = params.get('msg_id') || '';
+          const ids = msgId.split(';').filter(Boolean);
+          toggleState.smsMessages = toggleState.smsMessages.filter(m => !ids.includes(m.id));
+          console.log(`[SMS] Deleted id(s): ${msgId}`);
+          return res.json({ result: 'success' });
+        }
+        // SMS: Mark read
+        if (goformId === 'SET_MSG_READ') {
+          const msgId = params.get('msg_id') || '';
+          const ids = msgId.split(';').filter(Boolean);
+          toggleState.smsMessages.forEach(m => {
+            if (ids.includes(m.id) && m.tag === '1') m.tag = '0'; // mark as read
+          });
+          return res.json({ result: 'success' });
+        }
         res.json({ result: '0' });
       });
       return;
@@ -467,6 +695,10 @@ app.use('/api/goform', (req, res) => {
   // Password fail check
   if (cmd.includes('psw_fail_num_str')) {
     return res.json({ psw_fail_num_str: '0', login_lock_time: '0' });
+  }
+  // SMS list
+  if (cmd.includes('sms_data_total')) {
+    return res.json({ messages: toggleState.smsMessages, sms_data_total: String(toggleState.smsMessages.length) });
   }
   // lan_station_list: separate response
   if (cmd === 'lan_station_list') {
@@ -589,8 +821,11 @@ app.use('/api/goform', (req, res) => {
     data_volume_limit_switch: '1',
     data_volume_limit_size: '50_1024',
     data_volume_alert_percent: '90',
+    wan_auto_clear_flow_data_switch: '1',
+    traffic_clear_date: '1',
     // WiFi
     wifi_access_sta_num: '1',
+    sleep_sysIdleTimeToSleep: '30',
     // USB
     usb_port_switch: toggleState.usb_port_switch,
     // Toggle states
@@ -676,6 +911,72 @@ app.post('/api/update_admin_pwd', express.json(), (req, res) => {
   res.json({ result: 'success' });
 });
 
+// Mock scheduled tasks
+if (!toggleState.scheduledTasks) toggleState.scheduledTasks = [];
+
+app.get('/api/list_tasks', (req, res) => {
+  res.json({ tasks: toggleState.scheduledTasks });
+});
+
+app.post('/api/add_task', express.json(), (req, res) => {
+  const { id, time, repeatDaily, action } = req.body;
+  if (!id || !time) return res.status(400).json({ error: 'Missing id or time' });
+  toggleState.scheduledTasks.push({
+    key: Date.now(),
+    id,
+    time,
+    repeatDaily: repeatDaily !== false,
+    actionMap: action || {},
+    lastRunTimestamp: null,
+    hasTriggered: false
+  });
+  console.log('[Task] Added:', id, time);
+  res.json({ result: 'success' });
+});
+
+app.post('/api/remove_task', express.json(), (req, res) => {
+  const { id } = req.body;
+  toggleState.scheduledTasks = toggleState.scheduledTasks.filter(t => t.id !== id);
+  console.log('[Task] Removed:', id);
+  res.json({ result: 'removed' });
+});
+
+app.post('/api/clear_task', express.json(), (req, res) => {
+  toggleState.scheduledTasks = [];
+  console.log('[Task] Cleared all');
+  res.json({ result: 'success' });
+});
+
+// Mock plugin endpoints
+if (!toggleState.pluginCode) toggleState.pluginCode = '';
+
+app.get('/api/get_custom_head', (req, res) => {
+  res.json({ text: toggleState.pluginCode });
+});
+
+app.post('/api/set_custom_head', express.json(), (req, res) => {
+  toggleState.pluginCode = req.body.text || '';
+  console.log('[Plugin] Saved, length:', toggleState.pluginCode.length);
+  res.json({ result: 'success' });
+});
+
+app.get('/api/plugins_store', (req, res) => {
+  res.json({
+    download_url: 'https://example.com/plugins',
+    res: {
+      code: 200,
+      data: {
+        content: [
+          { name: 'signal-logger.js', size: 2048, modified: '2025-12-01T10:00:00Z' },
+          { name: 'band-lock.js', size: 1536, modified: '2025-11-15T08:30:00Z' },
+          { name: 'auto-reconnect.js', size: 3072, modified: '2025-10-20T14:00:00Z' },
+          { name: 'sms-notify.js', size: 1024, modified: '2025-09-05T09:00:00Z' }
+        ]
+      }
+    }
+  });
+});
+
 app.use('/api', createProxyMiddleware({
   target: 'http://192.168.0.1:2333/api',
   changeOrigin: false,
@@ -685,6 +986,44 @@ app.use('/api', createProxyMiddleware({
 app.get('/', (req, res) => {
   res.type('html').send(assembleHTML());
 });
+// Speed test mock endpoint - generates random data for download
+app.get('/api/speedtest', (req, res) => {
+  const ckSize = parseInt(req.query.ckSize) || 16;
+  if (ckSize === 0) {
+    // Ping request
+    return res.json({ ok: true });
+  }
+  const bytes = ckSize * 1024 * 1024;
+  res.set('Content-Type', 'application/octet-stream');
+  res.set('Content-Length', bytes.toString());
+  // Generate in chunks to avoid memory issues
+  const chunkSize = 64 * 1024;
+  let remaining = bytes;
+  function sendChunk() {
+    while (remaining > 0) {
+      const size = Math.min(chunkSize, remaining);
+      const buf = Buffer.alloc(size, 0x42);
+      const ok = res.write(buf);
+      remaining -= size;
+      if (!ok) {
+        res.once('drain', sendChunk);
+        return;
+      }
+    }
+    res.end();
+  }
+  sendChunk();
+});
+
+// Speed test upload mock endpoint
+app.post('/api/speedtest_upload', (req, res) => {
+  let size = 0;
+  req.on('data', (chunk) => { size += chunk.length; });
+  req.on('end', () => {
+    res.json({ result: 'success', bytes_received: size });
+  });
+});
+
 app.get('/index.html', (req, res) => {
   res.type('html').send(assembleHTML());
 });

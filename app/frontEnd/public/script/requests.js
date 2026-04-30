@@ -254,8 +254,8 @@ const reboot = async (cookie) => {
 
 // 发送短信
 const sendSms_UFI = async ({ content, number }) => {
-    if (!content) throw new Error('请提供短信内容')
-    if (!number) throw new Error('请提供手机号')
+    if (!content) throw new Error('SMS content required')
+    if (!number) throw new Error('Phone number required')
     const cookie = await login()
     const res = await postData(cookie, {
         goformId: 'SEND_SMS',
@@ -266,9 +266,8 @@ const sendSms_UFI = async ({ content, number }) => {
     return await res.json()
 }
 
-//删除短信
 const removeSmsById = async (id) => {
-    if (!id) throw new Error('请提供短信id')
+    if (!id) throw new Error('SMS id required')
     const cookie = await login()
     const res = await postData(cookie, {
         goformId: 'DELETE_SMS',
@@ -279,33 +278,24 @@ const removeSmsById = async (id) => {
     return await res.json()
 }
 
-// 已读短信
+// Mark SMS as read (batch: semicolon-separated IDs)
 const readSmsByIds = async (ids) => {
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-        throw new Error('请提供短信id数组');
-    }
-
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return [];
     const cookie = await login();
-    const results = [];
-
-    for (const id of ids) {
-        try {
-            const response = await postData(cookie, {
-                goformId: 'SET_MSG_READ',
-                msg_id: id,
-                notCallback: true,
-            });
-
-            const data = await response.json();
-            results.push({ id, success: data?.result == 'success', data });
-        } catch (err) {
-            console.error(`处理短信 ID ${id} 时出错:`, err);
-            results.push({ id, success: false, error: err.message || String(err) });
-        }
+    try {
+        const response = await postData(cookie, {
+            goformId: 'SET_MSG_READ',
+            msg_id: ids.join(';'),
+            notCallback: true,
+        });
+        const data = await response.json();
+        return [{ ids, success: data?.result == 'success', data }];
+    } catch (err) {
+        console.error('Mark SMS read failed:', err);
+        return [{ ids, success: false, error: err.message || String(err) }];
+    } finally {
+        await logout(cookie);
     }
-
-    await logout(cookie);
-    return results;
 };
 
 //获取短信列表（base64编码）

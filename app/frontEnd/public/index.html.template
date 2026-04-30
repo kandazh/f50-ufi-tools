@@ -200,6 +200,17 @@
     <script src="/script/controls/root-access.js"></script>
     <script src="/script/controls/quick-shell.js"></script>
     <script src="/script/controls/advanced.js"></script>
+    <script src="/script/controls/sms-panel.js"></script>
+    <script src="/script/controls/speedtest.js"></script>
+    <script src="/script/controls/cell-speedtest.js"></script>
+    <script src="/script/controls/at-cmd.js"></script>
+    <script src="/script/controls/data-mgmt.js"></script>
+    <script src="/script/controls/changepwd.js"></script>
+    <script src="/script/controls/schedule-reboot.js"></script>
+    <script src="/script/controls/scheduled-task.js"></script>
+    <script src="/script/controls/plugin.js"></script>
+    <script src="/script/controls/virtual-memory.js"></script>
+    <script src="/script/controls/adguard-home.js"></script>
     <script src="/script/memory-cleaner.js"></script>
 </body>
 

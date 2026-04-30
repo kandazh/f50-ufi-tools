@@ -838,14 +838,12 @@ function main_func() {
         try {
             let res = await getSmsInfo()
             if (!res) {
-                // out()
-                createToast(t('client_mgmt_fetch_error') + res.error, 'red')
+                createToast(t('client_mgmt_fetch_error'), 'red')
                 return null
             }
             return res.messages ? res.messages : []
-        } catch {
-            // out()
-            createToast(t('client_mgmt_fetch_error') + res.error, 'red')
+        } catch (e) {
+            createToast(t('client_mgmt_fetch_error'), 'red')
             return null
         }
     }
@@ -884,16 +882,14 @@ function main_func() {
     const deleteSMS = async (id, flag = false) => {
         const message = document.querySelector(`#message${id}`);
         if (!message) return;
-        // 获取当前 id 的删除状态
         let state = deleteState.get(id) || { confirmCount: 0, timer: null, isDeleting: false };
 
-        if (state.isDeleting) return; // 正在删除时禁止操作
+        if (state.isDeleting) return;
 
         state.confirmCount += 1;
         if (!flag) {
             message.style.display = '';
         }
-        // 清除之前的计时器，重新设置 2 秒后重置状态
         clearTimeout(state.timer);
         state.timer = setTimeout(() => {
             state.confirmCount = 0;
@@ -904,9 +900,8 @@ function main_func() {
         deleteState.set(id, state);
 
         if (!flag) {
-            if (state.confirmCount < 2) return; // 第一次点击时仅提示
+            if (state.confirmCount < 2) return;
         }
-        // 进入删除状态，防止重复点击
         state.isDeleting = true;
         deleteState.set(id, state);
 
@@ -927,13 +922,11 @@ function main_func() {
             createToast(t('toast_opration_failed_network'), 'red');
         }
 
-        // 删除完成后，清理状态
         deleteState.delete(id);
     };
 
     let deleteAndReSendSms = async (id) => {
         await deleteSMS(id, true)
-        //填充
         let smsListEl = document.querySelectorAll("#sms-list .sms-item")
         if (!smsListEl || !smsListEl.length) return
         let smsList = Array.from(smsListEl)
@@ -963,7 +956,7 @@ function main_func() {
         showModal('#smsList')
         let res = await getSms()
         if (res && res.length) {
-            //防止重复渲染
+            // Skip re-render if same messages
             let ids = res.map(item => item.id).join('')
             if (ids === lastRequestSmsIds) return
             lastRequestSmsIds = ids
@@ -975,15 +968,10 @@ function main_func() {
                 date_b.pop()
                 return Number(date_b.join('')) - Number(date_a.join(''))
             })
-            // 收集所有id，已读操作
+            // Mark unread messages as read (batch)
             const allIds = res?.filter(item => item.tag == '1')?.map(item => item.id)
             if (allIds && allIds.length > 0) {
-                try {
-                    console.log(allIds, '批量已读短信');
-                    readSmsByIds(allIds)
-                } catch (error) {
-                    console.log('批量已读短信失败', error);
-                }
+                readSmsByIds(allIds).catch(e => console.error('Mark read failed', e))
             }
             list.innerHTML = res.map(item => {
                 let date = item.date.split(',')
@@ -997,7 +985,7 @@ function main_func() {
                 <path d="M815.36 184.96V128a36.48 36.48 0 0 1 10.24-26.88 37.76 37.76 0 0 1 52.48 0 40.96 40.96 0 0 1 11.52 26.88v172.16a40.32 40.32 0 0 1-37.12 37.12h-173.44a40.32 40.32 0 0 1-26.88-11.52 37.76 37.76 0 0 1 0-52.48 35.84 35.84 0 0 1 26.88-10.24h108.8a372.48 372.48 0 0 0-453.12-75.52A367.36 367.36 0 0 0 170.24 364.8a374.4 374.4 0 0 0-19.84 242.56 369.92 369.92 0 0 0 132.48 202.24A375.04 375.04 0 0 0 512 888.32a368.64 368.64 0 0 0 263.68-108.8A376.32 376.32 0 0 0 885.12 512H960A448 448 0 1 1 136.32 270.08a438.4 438.4 0 0 1 192-164.48 444.16 444.16 0 0 1 256-32 455.68 455.68 0 0 1 230.4 111.36z"></path>
             </svg>`: ""}
                                         <div class="icon" onclick="deleteSMS(${item.id})">
-                                            <span id="message${item.id}" style="color: red;position: absolute;width: 100px;top: 2px;right: 30px;background: var(--dark-tag-color-active);display: none;text-align: center;padding: 4px;border-radius: 8px;backdrop-filter: blur(var(--blur-rate));">确定要删除吗？</span>
+                                            <span id="message${item.id}" style="color: red;position: absolute;width: 100px;top: 2px;right: 30px;background: var(--dark-tag-color-active);display: none;text-align: center;padding: 4px;border-radius: 8px;backdrop-filter: blur(var(--blur-rate));">Tap again to delete</span>
                                             <svg fill="var(--dark-text-color)" stroke="currentColor"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" t="1742373390977" class="icon" viewBox="0 0 1024 1024" version="1.1" p-id="2837" width="16" height="16"><path d="M848 144H608V96a48 48 0 0 0-48-48h-96a48 48 0 0 0-48 48v48H176a48 48 0 0 0-48 48v48h768v-48a48 48 0 0 0-48-48zM176 928a48 48 0 0 0 48 48h576a48 48 0 0 0 48-48V288H176v640z m480-496a48 48 0 1 1 96 0v400a48 48 0 1 1-96 0V432z m-192 0a48 48 0 1 1 96 0v400a48 48 0 1 1-96 0V432z m-192 0a48 48 0 1 1 96 0v400a48 48 0 1 1-96 0V432z" p-id="2838"/></svg>
                                         </div>
                                         <p style="color:#adadad;font-size:16px;margin:4px 0">${item.number}${item.tag == '3' ? ` <span style="font-size:.7rem;color:red">(${t("toast_sms_send_failed")})</span>` : ""}</p>
@@ -3781,6 +3769,8 @@ function main_func() {
         const { model } = await (await fetch(`${KANO_baseURL}/version_info`, { headers: common_headers })).json()
         if (model.toLowerCase() == 'v50') {
             selectEl = document.querySelector('#SIM_CARD_TYPE_V50')
+            var simField = document.querySelector('#SIM_CARD_TYPE_V50_FIELD');
+            if (simField) simField.style.display = '';
         }
 
         //查询是否支持双卡
@@ -4157,7 +4147,6 @@ function main_func() {
 
     //初始化短信转发表单
     const initSmsForward = async (needSwitch = true, method = undefined) => {
-        //判断是SMTP还是CURL转发
         if (!method) {
             const { sms_forward_method } = await (await fetchWithTimeout(`${KANO_baseURL}/sms_forward_method`, {
                 method: 'GET',
@@ -4166,7 +4155,6 @@ function main_func() {
             method = sms_forward_method
         }
         if (method.toLowerCase() == 'smtp') {
-            //获取模态框数据
             const data = await (await fetch(`${KANO_baseURL}/sms_forward_mail`, {
                 method: 'GET',
                 headers: common_headers
@@ -4186,7 +4174,6 @@ function main_func() {
             smtpToEl.value = smtp_to || ''
             needSwitch && switchSmsForwardMethodTab({ target: document.querySelector('#smtp_btn') })
         } else if (method.toLowerCase() == 'curl') {
-            //获取模态框数据
             const data = await (await fetch(`${KANO_baseURL}/sms_forward_curl`, {
                 method: 'GET',
                 headers: common_headers
@@ -4196,7 +4183,6 @@ function main_func() {
             curlTextEl.value = curl_text || ''
             needSwitch && switchSmsForwardMethodTab({ target: document.querySelector('#curl_btn') })
         } else if (method.toLowerCase() == 'dingtalk') {
-            //获取模态框数据
             const data = await (await fetch(`${KANO_baseURL}/sms_forward_dingtalk`, {
                 method: 'GET',
                 headers: common_headers
@@ -4214,7 +4200,6 @@ function main_func() {
         }
     }
 
-    //初始化短信转发开关
     const initSmsForwardSwitch = async () => {
         const { enabled } = await (await fetch(`${KANO_baseURL}/sms_forward_enabled`, {
             method: 'GET',
@@ -4232,7 +4217,6 @@ function main_func() {
         }
     }
 
-    //切换短信转发方式
     const switchSmsForwardMethod = (method) => {
         const smsForwardForm = document.querySelector('#smsForwardForm')
         const smsForwardCurlForm = document.querySelector('#smsForwardCurlForm')
@@ -4263,7 +4247,6 @@ function main_func() {
         return method.toLowerCase()
     }
 
-    // 短信转发-电源转发开关
     const collapse_smsforward_power_status_btn = document.querySelector('#collapse_smsforward_power_status_btn')
     const collapse_smsforward_power_status_btn_component = createSwitch({
         value: false,
@@ -4288,7 +4271,6 @@ function main_func() {
         collapse_smsforward_power_status_btn.appendChild(collapse_smsforward_power_status_btn_component)
     }
 
-    //初始化短信转发模态框
     const initSmsForwardModal = async () => {
         const btn = document.querySelector('#smsForward')
         if (!btn) return null
@@ -6515,8 +6497,12 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     }
 
     //初始化休眠选项卡     
+    let sleepToggle = null;
+    let lastSleepValue = '30'; // remember last non-disabled value
     const initSleepTime = async () => {
         const target = document.querySelector("#SLEEP_TIME")
+        const section = document.querySelector("#wifiCtrlSleep")
+        const selectRow = document.querySelector("#sleepSelectRow")
         if (!target) return
         if (!(await initRequestData())) {
             target.disabed = true
@@ -6525,17 +6511,43 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
         target.disabed = false
         target.style.background = ""
+        // Create toggle if not already created
+        if (!sleepToggle) {
+            sleepToggle = createCtrlToggle('sleepToggleContainer', function(on) {
+                if (on) {
+                    // Enable sleep - set to last remembered value
+                    if (selectRow) selectRow.style.display = ''
+                    target.value = lastSleepValue
+                    if (target._ctrlDropdown) target._ctrlDropdown.updateValue()
+                    target.dispatchEvent(new Event('change', { bubbles: true }))
+                } else {
+                    // Disable sleep - set to Never
+                    if (selectRow) selectRow.style.display = 'none'
+                    target.value = '-1'
+                    if (target._ctrlDropdown) target._ctrlDropdown.updateValue()
+                    target.dispatchEvent(new Event('change', { bubbles: true }))
+                }
+            })
+        }
         // 从设备获取数据
         const { sleep_sysIdleTimeToSleep } = await getData(new URLSearchParams({
             cmd: "sleep_sysIdleTimeToSleep"
         }))
         if (sleep_sysIdleTimeToSleep == "") {
-            target.style.display = 'none'
+            if (section) section.style.display = 'none'
         } else {
-            target.style.display = ''
+            if (section) section.style.display = ''
         }
         target.value = sleep_sysIdleTimeToSleep
-
+        // Set toggle state based on value
+        const isOn = sleep_sysIdleTimeToSleep !== '-1' && sleep_sysIdleTimeToSleep !== ''
+        sleepToggle.set(isOn)
+        if (isOn) {
+            lastSleepValue = sleep_sysIdleTimeToSleep
+            if (selectRow) selectRow.style.display = ''
+        } else {
+            if (selectRow) selectRow.style.display = 'none'
+        }
     }
     initSleepTime()
 
@@ -6547,6 +6559,8 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
         const target = e.target
         if (!target) return
+        // Remember last non-disabled value
+        if (target.value !== '-1') lastSleepValue = target.value
 
         try {
 

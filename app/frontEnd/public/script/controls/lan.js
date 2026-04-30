@@ -66,9 +66,17 @@
       if (mtuInput) mtuInput.value = res.mtu || '';
       if (mssInput) mssInput.value = res.tcp_mss || '';
 
-      // DHCP toggle
+      // DHCP toggle — suppress animation on initial load
+      var collapseEl = document.getElementById('collapse_dhcp');
+      if (collapseEl) collapseEl.style.transition = 'none';
       initDhcpToggle();
       if (dhcpToggle) dhcpToggle.set(dhcpEnabled === '1');
+      // Restore transition after ResizeObserver has a chance to fire
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          if (collapseEl) collapseEl.style.transition = '';
+        });
+      });
     }).catch(function () { /* silent */ });
   }
 

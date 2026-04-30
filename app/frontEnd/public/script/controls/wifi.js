@@ -95,7 +95,7 @@
       var qrSection = document.getElementById('wifiCtrlQR');
       var qrImg = document.getElementById('WifiQRCodeImg');
       if (qrImg && ap.QrImageUrl) {
-        if (qrSection) qrSection.style.display = '';
+        if (qrSection) qrSection.style.display = 'flex';
         var qrUrl = ap.QrImageUrl.startsWith('http') ? ap.QrImageUrl : ('/api' + ap.QrImageUrl);
         fetch(qrUrl, { headers: common_headers })
           .then(function (res) { return res.blob(); })
