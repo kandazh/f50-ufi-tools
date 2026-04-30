@@ -2988,6 +2988,7 @@ function main_func() {
             try {
                 const res = await seConntHostName(mac, hostname.value.trim())
                 if (res.result == 'success') {
+                    try { var o = JSON.parse(localStorage.getItem('kano_hostname_overrides')) || {}; o[mac] = hostname.value.trim(); localStorage.setItem('kano_hostname_overrides', JSON.stringify(o)); } catch(e){}
                     createToast(t("toast_save_success"), 'pink')
                     initClientManagementModal()
                 } else {

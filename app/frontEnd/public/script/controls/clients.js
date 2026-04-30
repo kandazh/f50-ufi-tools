@@ -4,6 +4,16 @@
  */
 (function () {
   var userIp = '';
+  var HOSTNAME_STORAGE_KEY = 'kano_hostname_overrides';
+
+  function getHostnameOverrides() {
+    try { return JSON.parse(localStorage.getItem(HOSTNAME_STORAGE_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function saveHostnameOverride(mac, name) {
+    var overrides = getHostnameOverrides();
+    overrides[mac] = name;
+    localStorage.setItem(HOSTNAME_STORAGE_KEY, JSON.stringify(overrides));
+  }
 
   // Check if WPS is active on any chip
   async function isWpsActive() {
@@ -22,12 +32,20 @@
     if (!connList) return;
     try {
       var res = await getData(new URLSearchParams({
-        cmd: 'station_list,lan_station_list,queryDeviceAccessControlList,user_ip_addr',
+        cmd: 'station_list,lan_station_list,queryDeviceAccessControlList,user_ip_addr,hostNameList',
         multi_data: '1'
       }));
       if (!res) return;
 
       userIp = res.user_ip_addr || '';
+
+      // Build hostname lookup from firmware's hostNameList
+      var firmwareNames = {};
+      if (Array.isArray(res.devices)) {
+        res.devices.forEach(function (d) {
+          if (d.mac && d.hostname && d.hostname !== '--') firmwareNames[d.mac] = d.hostname;
+        });
+      }
 
       // Merge WiFi + LAN clients
       var wifiClients = Array.isArray(res.station_list) ? res.station_list : [];
@@ -45,8 +63,9 @@
       if (allClients.length === 0) {
         connList.innerHTML = '<div class="ctrl-device-empty">No devices connected</div>';
       } else {
+        var overrides = getHostnameOverrides();
         connList.innerHTML = allClients.map(function (d) {
-          var name = d.hostname || 'Unknown';
+          var name = overrides[d.mac_addr] || firmwareNames[d.mac_addr] || (d.hostname && d.hostname !== '--' ? d.hostname : '') || 'Unknown';
           var isWifi = wifiClients.includes(d);
           var deviceIcon = isWifi
             ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'
@@ -168,6 +187,7 @@
         return;
       }
       el.innerHTML = escapeHtml(newName) + ' ' + badgeHTML;
+      saveHostnameOverride(mac, newName);
       login().then(function (cookie) {
         if (!cookie) return;
         postData(cookie, { goformId: 'EDIT_HOSTNAME', mac: mac, hostname: newName }).then(function () {
