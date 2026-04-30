@@ -213,11 +213,6 @@
       var ok = await saveScript();
       if (!ok) return;
       showOutput('<span style="opacity:0.6">⏳ Running quick_shell.sh...</span>');
-      var adbOk = await adbKeepAlive();
-      if (!adbOk) {
-        showOutput('<span style="color:#f87171">ADB not connected. Please initialize ADB first.</span>');
-        return;
-      }
       var res = await runShellWithRoot('sh /sdcard/quick_shell.sh', 15000);
       if (res.success && res.content) {
         showOutput('<pre>' + escapeHtml(res.content) + '</pre>');
