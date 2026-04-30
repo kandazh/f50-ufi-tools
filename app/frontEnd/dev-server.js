@@ -977,15 +977,6 @@ app.get('/api/plugins_store', (req, res) => {
   });
 });
 
-app.use('/api', createProxyMiddleware({
-  target: 'http://192.168.0.1:2333/api',
-  changeOrigin: false,
-}));
-
-// Serve assembled index.html (re-assembled on every request for live editing)
-app.get('/', (req, res) => {
-  res.type('html').send(assembleHTML());
-});
 // Speed test mock endpoint - generates random data for download
 app.get('/api/speedtest', (req, res) => {
   const ckSize = parseInt(req.query.ckSize) || 16;
@@ -1022,6 +1013,16 @@ app.post('/api/speedtest_upload', (req, res) => {
   req.on('end', () => {
     res.json({ result: 'success', bytes_received: size });
   });
+});
+
+app.use('/api', createProxyMiddleware({
+  target: 'http://192.168.0.1:2333/api',
+  changeOrigin: false,
+}));
+
+// Serve assembled index.html (re-assembled on every request for live editing)
+app.get('/', (req, res) => {
+  res.type('html').send(assembleHTML());
 });
 
 app.get('/index.html', (req, res) => {
