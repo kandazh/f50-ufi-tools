@@ -8,10 +8,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.server.request.receiveStream
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondOutputStream
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
@@ -80,6 +83,42 @@ fun Route.speedTestModule(context: Context) {
                     }
                     flush()
                 }
+            }
+        } finally {
+            speedTestLimiter.release()
+        }
+    }
+
+    // Upload speed test — consume incoming data and report bytes received
+    post("/api/speedtest_upload") {
+        if (!speedTestLimiter.tryAcquire()) {
+            call.respond(HttpStatusCode.TooManyRequests, "Too many speed test requests, try later")
+            return@post
+        }
+        try {
+            withContext(SpeedTestDispatchers.dispatcher) {
+                val parms = call.request.queryParameters
+                val enableCors = parms.contains("cors") || true
+
+                if (enableCors) {
+                    call.response.headers.append("Access-Control-Allow-Origin", "*")
+                    call.response.headers.append("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                }
+
+                val inputStream = call.receiveStream()
+                val buffer = ByteArray(65536)
+                var totalBytes = 0L
+                while (true) {
+                    val read = inputStream.read(buffer)
+                    if (read == -1) break
+                    totalBytes += read
+                }
+
+                call.respondText(
+                    """{"bytes":$totalBytes}""",
+                    ContentType.Application.Json,
+                    HttpStatusCode.OK
+                )
             }
         } finally {
             speedTestLimiter.release()
