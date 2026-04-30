@@ -1,13 +1,13 @@
 # 🧰 UFI-TOOLS
 
-> 一款面向某兴随身WIFI（F50/U30 Air）的多功能管理与扩展工具  
-> 支持远程管理、信号监控、系统控制、插件扩展等丰富功能  
-> 同时也提供其他某兴展锐Android手机/平板支持
+> A multi-functional management and extension tool for ZTE portable WiFi devices (F50/U30 Air)  
+> Supports remote management, signal monitoring, system control, plugin extensions, and more  
+> Also supports other ZTE Unisoc Android phones/tablets
 
-**[UFI-TOOLS使用说明](https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/User_Doc.md)**
+**[UFI-TOOLS User Guide](https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/User_Doc.md)**
 
-F50 / U30Air 通用安装教程：[📺 B站视频](https://www.bilibili.com/video/BV1qUHpzeEDd)  
-Magisk 模块版本（畅行60 / 云电脑）安装教程：[📺 B站视频](https://www.bilibili.com/video/BV1nsW4zpE1T)
+F50 / U30Air universal installation tutorial: [📺 Video Tutorial](https://www.bilibili.com/video/BV1qUHpzeEDd)  
+Magisk module version (ChangXing60 / Cloud PC) installation tutorial: [📺 Video Tutorial](https://www.bilibili.com/video/BV1nsW4zpE1T)
 
 ---
 
@@ -23,155 +23,155 @@ Magisk 模块版本（畅行60 / 云电脑）安装教程：[📺 B站视频](ht
 
 ---
 
-## 🧩 版本区分
+## 🧩 Version Differences
 
-UFI-TOOLS 提供 **Pocket Edition（PE版）** 与 **完整版本** 两种使用形态，满足不同场景需求：
+UFI-TOOLS offers **Pocket Edition (PE)** and **Full Version** to meet different scenario requirements:
 
-| 版本类型 | 部署方式 | 适用设备 | 功能支持 | 典型用途 |
+| Version | Deployment | Target Devices | Features | Typical Use |
 |-----------|-----------|-----------|-----------|-----------|
-| 📱 **[Pocket Edition (PE版)](https://github.com/kanoqwq/UFI-TOOLS/tree/main)** | 仅需安装在手机上 | 手机端连接MIFI/UFI设备 | ⭐ 精简功能集<br>🚫 无需安装到随身WiFi<br>⚙️ 可远程控制随身WiFi | 手机控制随身WiFi设备，轻量远程管理 |
-| 💻 **[完整版 (Full)](https://github.com/kanoqwq/UFI-TOOLS/tree/http-server-version)** | 安装在目标设备（随身WiFi / 平板 / 路由） | 随身WIFI（U30 Air/F50 等） | 🌟 全功能支持<br>🧠 插件商店完整可用<br>🔐 可开启高级功能 | 深度系统管理与插件扩展，完全控制目标机器 |
+| 📱 **[Pocket Edition (PE)](https://github.com/kanoqwq/UFI-TOOLS/tree/main)** | Install on phone only | Phone connects to MIFI/UFI device | ⭐ Simplified features<br>🚫 No need to install on portable WiFi<br>⚙️ Can remotely control portable WiFi | Phone controls portable WiFi, lightweight remote management |
+| 💻 **[Full Version](https://github.com/kanoqwq/UFI-TOOLS/tree/http-server-version)** | Install on target device (portable WiFi / tablet / router) | Portable WiFi (U30 Air/F50, etc.) | 🌟 Full feature support<br>🧠 Complete plugin store<br>🔐 Can enable advanced features | Deep system management and plugin extensions, full device control |
 
-> 💡 PE版适合普通用户快速使用；完整版为进阶用户或发烧友设计。
+> 💡 PE version is for casual users; Full version is for advanced users and enthusiasts.
 
-> 💡 如何知道自己的设备是否支持UFI-TOOLS？
+> 💡 How to know if your device supports UFI-TOOLS?
 >
-> - 只要你是某兴随身WiFi，紫光平台，Android系统，就可以尝试使用UFI-TOOLS进行设备管理。
-> - 直接下载PE版本连接设备进行尝试。
+> - As long as you have a ZTE portable WiFi with Unisoc platform and Android OS, you can try UFI-TOOLS for device management.
+> - Download the PE version directly and try connecting to your device.
 
 ---
 
-## 📘 项目简介
+## 📘 Project Overview
 
-**UFI-TOOLS** 是为 **zxe（某兴）+ 展锐 / 紫光平台设备** 打造的全能系统管理与扩展框架。  
-支持在 **便携路由器、手机、平板** 等多种设备上运行，可通过 **Web UI / APK / Magisk 模块** 等方式部署。
+**UFI-TOOLS** is an all-in-one system management and extension framework built for **ZTE + Unisoc platform devices**.  
+Supports running on **portable routers, phones, tablets** and various devices, deployable via **Web UI / APK / Magisk Module**.
 
-- ✅ 适配设备：zxe F50、U30 Air、畅行60、远航60系列、某兴云电脑平板等  
-- 🧩 模块化插件系统  
-- 🌐 支持远程网页控制与设备集群管理  
-- ⚙️ 可作为后台服务运行，支持开机自启  
-
----
-
-## ⚙️ 核心功能模块
-
-### 🔧 系统与设备控制
-- 一键开启高级功能，获取系统最高权限（Root 级控制）  
-- **性能模式切换 / CPU 核心控制 / 电池定量停充**  
-- **USB 调试自动启用** 与 **网络 USB 调试自动启动**  
-- 支持 **文件共享 / 指示灯控制 / OTA 更新**  
-- 支持 **开机自启脚本与后台服务**  
+- ✅ Compatible devices: ZTE F50, U30 Air, ChangXing60, YuanHang60 series, ZTE Cloud PC tablet, etc.  
+- 🧩 Modular plugin system  
+- 🌐 Supports remote web control and device cluster management  
+- ⚙️ Can run as background service with auto-start on boot  
 
 ---
 
-### 📶 网络与信号管理
-- **免重启锁频段 / 锁小区**（即时生效）  
-- 支持 **3G / 4G / 5G 网络模式切换**  
-- 实时监测：RSRP、SINR、PCI、Band、QCI、SNR、QoS、IPv6 等信号、频段，速率等指标  
-- **内网测速** 与实时速率图表可视化  
+## ⚙️ Core Features
+
+### 🔧 System & Device Control
+- One-click enable advanced features for highest system privileges (Root-level control)  
+- **Performance mode switching / CPU core control / Battery charge limit**  
+- **USB debug auto-enable** and **Network USB debug auto-start**  
+- Supports **file sharing / LED control / OTA updates**  
+- Supports **boot scripts and background services**  
 
 ---
 
-### 💬 通信与命令功能
-- 短信发送、接收与 **自动转发**  
-- 内置 **AT 命令终端**（支持自定义命令交互）  
-- 支持 **远程 SSH 管理** 与命令行访问（需开启高级功能）  
-- 提供轻量 **Web 控制台**，支持局域网 / 穿透远控  
+### 📶 Network & Signal Management
+- **Lock band / Lock cell without restart** (takes effect immediately)  
+- Supports **3G / 4G / 5G network mode switching**  
+- Real-time monitoring: RSRP, SINR, PCI, Band, QCI, SNR, QoS, IPv6 and other signal, band, rate indicators  
+- **LAN speed test** with real-time rate chart visualization  
 
 ---
 
-### 🧩 插件商店系统
-UFI-TOOLS 内置 **插件商店**，可在线下载、安装多种功能插件。  
-插件服务器已收录常用组件，涵盖系统扩展、AI、网络、自动化等领域：
+### 💬 Communication & Commands
+- SMS send, receive and **auto-forward**  
+- Built-in **AT command terminal** (supports custom command interaction)  
+- Supports **remote SSH management** and command-line access (requires advanced features)  
+- Provides lightweight **Web console**, supports LAN / tunneling remote control  
 
-| 类别 | 插件名称 | 功能说明 |
+---
+
+### 🧩 Plugin Store
+UFI-TOOLS has a built-in **Plugin Store** for online download and installation of various plugins.  
+The plugin server includes common components covering system extensions, AI, networking, automation and more:
+
+| Category | Plugin Name | Description |
 |------|-----------|-----------|
-| 🛡️ 系统安全 | ADGuardHome | 广告过滤、DNS 管理 |
-| 📊 状态监控 | 流量状态卡片 | 实时显示设备流量与速率 |
-| 🤖 智能应用 | AI 看板 | 智能监控信息展示 |
-| 🔑 远程访问 | SSH 工具 | 提供远程命令行访问入口 |
-| ⚙️ 系统控制 | CPU 核心控制 | 动态管理核心启停 |
-| 🎨 外观自定义 | 主题布局编辑 | 自定义界面主题与排版 |
-| 🔋 电源管理 | 电池定量停充 | 延长电池寿命，智能控制充电阈值 |
-| 🏫 网络支持 | EasyConnect | 校园网 VPN 支持 |
-| ⏰ 自动化 | Crontab 定时任务 | 定时推送与脚本任务 |
-| 🌐 远程互联 | EasyTier 异地组网 | 多设备跨地域组网互通 |
+| 🛡️ System Security | ADGuardHome | Ad filtering, DNS management |
+| 📊 Status Monitoring | Data Usage Card | Real-time device data usage and rate display |
+| 🤖 Smart Apps | AI Dashboard | Smart monitoring information display |
+| 🔑 Remote Access | SSH Tool | Provides remote command-line access |
+| ⚙️ System Control | CPU Core Control | Dynamic core start/stop management |
+| 🎨 Appearance | Theme Layout Editor | Custom interface themes and layout |
+| 🔋 Power Management | Battery Charge Limit | Extend battery life, smart charge threshold control |
+| 🏫 Network Support | EasyConnect | Campus VPN support |
+| ⏰ Automation | Crontab Scheduler | Scheduled push and script tasks |
+| 🌐 Remote Networking | EasyTier Mesh | Multi-device cross-region networking |
 
-> 🔓 插件系统模块化设计，以上仅展示部分插件，未来将持续扩展更多功能。
-
----
-
-### 🧠 高级功能
-开启“高级功能”后可解锁系统特权功能：
-- 获取设备最高系统权限  
-- 访问隐藏接口与底层管理模块  
-- 解锁全部插件商店插件  
-- 启用极速更新通道（更新零等待）  
-- 支持远程SSH访问、文件推送、系统级调试  
+> 🔓 Plugin system is modular; above shows only partial plugins. More features will be added in the future.
 
 ---
 
-### 📱 平台兼容性
-支持以下设备及运行方式：
+### 🧠 Advanced Features
+Enabling 'Advanced Features' unlocks system privileges:
+- Obtain highest system privileges  
+- Access hidden interfaces and low-level management modules  
+- Unlock all plugin store plugins  
+- Enable fast update channel (zero-wait updates)  
+- Supports remote SSH access, file push, system-level debugging  
 
-- 📲 **Magisk 模块安装** (适合手机/平板)
-- 💻 **一键安装 / 投屏安装** （推荐，适合随身WiFi）   
+---
 
-**适配机型：**
+### 📱 Platform Compatibility
+Supports the following devices and deployment methods:
 
-- 某兴畅行60 / 远航60 / 畅行60Plus  
-- 某兴云电脑平板（W200DS系列）  
+- 📲 **Magisk Module Install** (suitable for phones/tablets)
+- 💻 **One-click Install / Screen-cast Install** (recommended for portable WiFi)   
+
+**Compatible Models:**
+
+- ZTE ChangXing60 / YuanHang60 / ChangXing60Plus  
+- ZTE Cloud PC Tablet (W200DS series)  
 - F50、U30 Air  
-- 以及其他紫光 CPU + 某兴 MyOS 13 系统设备（理论兼容）  
+- And other Unisoc CPU + ZTE MyOS 13 devices (theoretically compatible)  
 
 ---
 
-### 🌐 远程管理与网页控制
-- 内置轻量级 Web Server，可通过浏览器访问控制界面  
-- 支持：
-  - 设备状态卡片  
-  - 实时性能监控  
-  - 插件商店  
-  - 网络控制与调试  
-- 默认访问地址：`http://设备IP:2333`  
+### 🌐 Remote Management & Web Control
+- Built-in lightweight Web Server, accessible via browser  
+- Supports:
+    - Device status cards  
+    - Real-time performance monitoring  
+    - Plugin store  
+    - Network control and debugging  
+- Default access URL: `http://device-IP:2333`  
 
 ---
 
-## 🌟 项目特点与优势
-- 🧩 模块化设计：核心 + 插件架构，灵活扩展  
-- ⚡ 免重启锁频段 / 锁小区：调试更高效  
-- 📈 实时可视化监控：信号、CPU、温度、内存、速率  
-- 🔐 高级功能：一键获取系统权限、为极客用户定制提供专属功能
-- 🧠 多平台支持：手机 / 平板 / 随身WiFi 全面兼容  
-- 🔄 极速更新机制：自动保持最新版本  
-- 🖥️ 双端控制：浏览器操作支持移动端与PC端  
-- ☁️ 异地组网：通过 EasyTier 轻松实现远程互联  
-- 🐱 猫猫插件：智能访问互联网（需额外配置）  
+## 🌟 Project Highlights
+- 🧩 Modular design: core + plugin architecture, flexible extension  
+- ⚡ Lock band/cell without restart: more efficient debugging  
+- 📈 Real-time visual monitoring: signal, CPU, temperature, memory, speed  
+- 🔐 Advanced features: one-click system privileges, exclusive functions for power users
+- 🧠 Multi-platform support: phones / tablets / portable WiFi fully compatible  
+- 🔄 Fast update mechanism: automatically stays up-to-date  
+- 🖥️ Dual-platform control: browser supports both mobile and PC  
+- ☁️ Cross-location networking: easily achieve remote connectivity via EasyTier  
+- 🐱 Cat plugin: Smart internet access (requires additional configuration)  
 
 ---
 
-## ⚠️ 注意事项
-- 部分功能依赖于具体设备型号或系统版本。  
-- 插件商店部分插件需启用「高级功能」后才能使用。  
-- 使用高级功能前，请备份重要数据。  
-- 项目测试环境：  
-  `U30Air_SSVB14 / MU300_ZYV1.0.0B09 / 畅行60（Rooted） / 畅行60Plus（Rooted） / 远航60（Rooted） / 云电脑平板（Rooted）`  
+## ⚠️ Notes
+- Some features depend on specific device model or system version.  
+- Some plugin store plugins require 'Advanced Features' to be enabled.  
+- Before using advanced features, please backup important data.  
+- Test environment:  
+  `U30Air_SSVB14 / MU300_ZYV1.0.0B09 / ChangXing60 (Rooted) / ChangXing60Plus (Rooted) / YuanHang60 (Rooted) / Cloud PC Tablet (Rooted)`  
 
 ---
 
-## 📜 开源协议
-本项目遵循 **MIT License**  
-可自由使用、修改与分发，但请保留作者署名。
+## 📜 Open Source License
+This project follows the **MIT License**  
+Free to use, modify, and distribute, but please retain author attribution.
 
-欢迎提交 Issue / Pull Request 一起完善项目 💡  
+Welcome to submit Issues / Pull Requests to help improve the project 💡  
 
-> 本项目完全开源免费，如果你喜欢这个项目的话，也可以请我喝一杯咖啡~
+> This project is completely open-source and free. If you like it, you can buy me a coffee~
 >
 > | ![ali_pay](./images/ali_pay.jpeg) | ![wechat_pay](./images/zsm.png) |
 > | ------------------------------- | ------------------------------- |
 >
 
-> 欢迎加入群聊一起讨论！
+> Welcome to join the group chat for discussion!
 > TG：[t.me/ufi_tools_chat](https://github.com/kanoqwq/UFI-TOOLS/tree/http-server-version)
 >
 > | ![group2](./images/group_2.jpg) | ![group3](./images/group_3.jpg) |

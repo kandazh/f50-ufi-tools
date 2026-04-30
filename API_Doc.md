@@ -1,74 +1,74 @@
-## 0. 写在前面
+## 0. Preface
 
-> **本API文档适用于 `UFI-TOOLS v3.1.5`版本**
-> **本文档中所有`POST`请求体(除官方API外)均为`JSON`格式**
-> **本文档中所有`GET`请求参数均为`query`参数**
+> **This API documentation applies to `UFI-TOOLS v3.1.5`version**
+> **All `POST` request bodies in this document (except official APIs) are in `JSON` format**
+> **All `GET` request parameters in this document are `query` parameters**
 
-## 1. 请求签名规则
+## 1. Request Signature Rules
 
-签名机制起到如下作用：
+The signature mechanism serves the following purposes:
 
-- 防止请求被伪造（如跨站、重放等）
-- 服务器可验证 `kano-sign` 是否有效、是否与 `kano-t` 匹配
-- 简单的“认证 + 防篡改”方式
+- Prevents request forgery (e.g., cross-site, replay attacks)
+- Server can verify whether `kano-sign` is valid and matches `kano-t`
+- Simple "authentication + tamper-proof" approach
 
-### 1. **添加请求头**
+### 1. **Adding Request Headers**
 
-每个请求都会自动附加两个自定义请求头：
+Each request automatically appends two custom request headers:
 
-| Header 键   | 说明                             |
+| Header Key  | Description                             |
 | ----------- | -------------------------------- |
-| `kano-t`    | 当前时间戳（毫秒，`Date.now()`） |
-| `kano-sign` | 用于验证请求合法性的签名字符串   |
-| `Authorization` | 密码进过sha256后的字符串（小写）   |
+| `kano-t`    | Current timestamp (milliseconds, `Date.now()`) |
+| `kano-sign` | Signature string for request validation   |
+| `Authorization` | SHA256 hash of the password (lowercase)   |
 
 ------
 
-### 2. **签名计算逻辑**
+### 2. **Signature Calculation Logic**
 
-签名的核心公式如下：
+The core signature formula is:
 
 ```
 kano-sign = SHA256( SHA256(part1) + SHA256(part2) )
 ```
 
-具体步骤如下：
+Steps are as follows:
 
-#### (1) 构造原始数据：
+#### (1) Construct raw data:
 
 ```js
-rawData = "minikano" + HTTP_METHOD + URL_PATH + 时间戳
+rawData = "minikano" + HTTP_METHOD + URL_PATH + timestamp
 ```
 
-- `HTTP_METHOD`：请求方法，如 `GET` / `POST`（全大写）
-- `URL_PATH`：请求路径（不包含 query 参数），如 `/api/data`
-- `时间戳`：`Date.now()`，即当前毫秒时间戳
+- `HTTP_METHOD`：Request method, e.g., `GET` / `POST` (uppercase)
+- `URL_PATH`：Request path (without query parameters), e.g., `/api/data`
+- `timestamp`：`Date.now()`，current millisecond timestamp
 
-#### (2) 使用 HMAC-MD5 进行第一步加密：
+#### (2) Use HMAC-MD5 for the first encryption step:
 
 ```js
 hmac = HMAC_MD5(rawData, secretKey)
 ```
 
-- 密钥固定为：
+- Fixed secret key:
 
   ```js
   "minikano_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd"
   ```
 
-#### (3) 将 HMAC 值二分为两部分：
+#### (3) Split the HMAC value into two halves:
 
-- `part1`：前半部分的字节
-- `part2`：后半部分的字节
+- `part1`：First half of the bytes
+- `part2`：Second half of the bytes
 
-#### (4) 各部分再做 SHA256：
+#### (4) SHA256 each part:
 
 ```js
 sha1 = SHA256(part1)
 sha2 = SHA256(part2)
 ```
 
-#### (5) 连接并最终 SHA256：
+#### (5) Concatenate and final SHA256:
 
 ```js
 finalHash = SHA256(sha1 + sha2)
@@ -76,50 +76,50 @@ finalHash = SHA256(sha1 + sha2)
 
 ------
 
-### 3. **使用示例**
+### 3. **Usage Example**
 
-假设请求为：
+Assuming the request is:
 
 ```js
 fetch("/api/user?id=123", { method: "POST" });
 ```
 
-内部处理流程如下：
+Internal processing flow:
 
-- 提取方法：`POST`
+- Extract method: `POST`
 
-- 提取路径：`/api/user`
+- Extract path: `/api/user`
 
-- 获取当前时间戳：例如 `1718438543772`
+- Get current timestamp: e.g., `1718438543772`
 
-- 构造签名原始数据：
+- Construct signature raw data:
 
   ```
   minikanoPOST/api/user1718438543772
   ```
 
-- 使用上述算法生成签名，并添加请求头：
+- Generate signature using the above algorithm and add request headers:
 
 ```http
 kano-t: 1718438543772
-kano-sign: <计算后的SHA256哈希>
+kano-sign: <calculated SHA256 hash>
 ```
 
-**JS代码参考：[https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/app/frontEnd/public/script/requests.js](https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/app/frontEnd/public/script/requests.js)**
+**JSCode reference:[https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/app/frontEnd/public/script/requests.js](https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/app/frontEnd/public/script/requests.js)**
 
 
 
-## 2. API示例
+## 2. API Examples
 
-> **注：本文提到的POST接口请求体格式均为JSON**、**GET请求均为Query或无参数**
+> **Note: All POST request bodies mentioned here are in JSON format**、**GET requests use Query or no parameters**
 
-**GET请求示例**
+**GET Request Example**
 
 ```
 GET /api/AT?command=AT+CSQ&slot=0
 ```
 
-返回：
+Returns:
 
 ```json
 {
@@ -127,7 +127,7 @@ GET /api/AT?command=AT+CSQ&slot=0
 }
 ```
 
-**POST请求实例**
+**POST Request Example**
 
 ``` 
 POST http://192.168.1.1/goform/login
@@ -136,7 +136,7 @@ Content-Type: application/json
 { "username": "admin", "password": "123456" }
 ```
 
-返回：
+Returns:
 
 ```json
 {
@@ -148,72 +148,72 @@ Content-Type: application/json
 
 
 
-### ADB 模块 （ADB Module）
+### ADB Module
 
-| 方法 | 路径                    | 描述                    | 参数                  | 是否认证 |
+| Method | Path                    | Description                    | Parameters            | Auth Required |
 | ---- | ----------------------- | ----------------------- | --------------------- | -------- |
-| GET  | `/api/adb_wifi_setting` | 获取网络 ADB 自启状态   | 无                    | 是       |
-| POST | `/api/adb_wifi_setting` | 设置网络 ADB 自启状态   | `enabled`，`password` | 是       |
-| GET  | `/api/adb_alive`        | 获取网络 ADB 是否已启动 | 无                    | 是       |
+| GET  | `/api/adb_wifi_setting` | Get network ADB auto-start status   | None                    | Yes      |
+| POST | `/api/adb_wifi_setting` | Set network ADB auto-start status   | `enabled`, `password` | Yes      |
+| GET  | `/api/adb_alive`        | Check if network ADB is running | None                    | Yes      |
 
 ------
 
 
 
-### 高级功能模块（Advanced Tools Module）
+### Advanced Tools Module（Advanced Tools Module）
 
-| 方法 | 路径                   | 描述                              | 参数简要                     | 是否认证 |
+| Method | Path                   | Description                              | Parameters                     | Auth Required |
 | ---- | ---------------------- | --------------------------------- | ---------------------------- | -------- |
-| GET  | `/api/smbPath`         | 更改 Samba 分享地址为根目录       | `enable=1/0` 开启或关闭      | 是       |
-| GET  | `/api/hasTTYD`         | 判断是否存在 ttyd 服务            | `port=端口号`                | 是       |
-| GET  | `/api/quick_shell` | 启动一键进入工程模式 + 执行脚本   | 无参数                       | 是       |
-| POST | `/api/root_shell`      | 发送指令到 Root Shell Socket 执行 | JSON: `{ "command": "..." }` | 是       |
+| GET  | `/api/smbPath`         | Change Samba share path to root directory       | `enable=1/0` enable or disable      | Yes      |
+| GET  | `/api/hasTTYD`         | Check if TTYD service exists            | `port=port_number`                | Yes      |
+| GET  | `/api/quick_shell` | Launch one-click engineering mode + execute script   | No parameters                       | Yes      |
+| POST | `/api/root_shell`      | Send command to Root Shell Socket for execution | JSON: `{ "command": "..." }` | Yes      |
 
 ------
 
 
 
-### 反向代理模块 （Any Proxy Module）
+### Reverse Proxy Module （Any Proxy Module）
 
-**反向代理接口**，用于将客户端请求转发到指定的目标地址，并返回其响应结果。路径格式为：
+**Reverse proxy endpoint**，Used to forward client requests to a specified target address and return the response. Path format:
 
 ```shell
 GET /api/proxy/--http://example.com/api/xxx
 ```
 
-#### 请求方式支持：`GET` `POST` `PUT` `PATCH`
+#### Supported request methods:`GET` `POST` `PUT` `PATCH`
 
-请求体（如 POST 的 JSON）将会原样转发给目标地址。
+Request body (e.g., POST JSON) will be forwarded as-is to the target address.
 
-**注意：**
+**Notes:**
 
-1. 该接口也需要进行auth验证
-2. 为了避免UFI-TOOLS authToken和需要转发头部冲突，代理验证token时可以以`kano-authorization`携带token进行验证(见下表)
-3. 为了避免内网服务暴露在外网，反向代理接口默认会阻止以此方式访问内网地址
-4. 该接口固定超时时间为30秒，超过时间到了会截断输出并返回不完整的数据。
+1. This endpoint also requires auth verification
+2. To avoid conflicts between UFI-TOOLS authToken and forwarded headers, proxy auth can use `kano-authorization` to carry the token (see table below)
+3. To prevent internal network services from being exposed externally, the reverse proxy blocks internal address access by default
+4. This endpoint has a fixed 30-second timeout; when exceeded, output is truncated and incomplete data is returned.
 
 ------
 
-#### 可自定义的请求头（自动转发）：
+#### Customizable Request Headers (auto-forwarded):
 
-- 默认会自动转发 **常规安全请求头**（如 `Accept`、`User-Agent`）。
-- 想要手动注入敏感头（如 `Authorization`）时，使用 **`kano-` 前缀**：
+- By default, **standard safe request headers** (such as `Accept`, `User-Agent`) are automatically forwarded.
+- To manually inject sensitive headers (such as `Authorization`), use the **`kano-` prefix**:
 
-| 自定义头部名         | 实际转发为      |
+| Custom Header Name         | Actually Forwarded As      |
 | -------------------- | --------------- |
 | `kano-Authorization` | `Authorization` |
 | `kano-Cookie`        | `Cookie`        |
 
 ------
 
-#### 响应处理：
+#### Response Handling:
 
-- 普通响应：按原格式返回（含状态码、Content-Type）。
-- HTML 响应：会自动将 `/` 开头的资源路径（如 `/static/js/app.js`）改写为代理路径，确保前端页面可正常加载资源。
+- Normal response: returned in original format (with status code, Content-Type).
+- HTML response: automatically rewrites resource paths starting with `/` (e.g., `/static/js/app.js`) to proxy paths, ensuring frontend pages load resources correctly.
 
 ------
 
-#### 示例：
+#### Example:
 
 ```http
 POST /api/proxy/--http://192.168.1.1/goform/login
@@ -223,7 +223,7 @@ kano-Authorization: Bearer abc123
 { "username": "admin", "password": "123456" }
 ```
 
-会被代理为：
+Will be proxied as:
 
 ```http
 POST http://192.168.1.1/goform/login
@@ -237,119 +237,119 @@ Content-Type: application/json
 
 
 
-### AT指令模块（AT Module）
+### AT Command Module（AT Module）
 
-| 方法 | 路径      | 描述                   | 参数简要                                         | 是否认证 |
+| Method | Path      | Description                   | Parameters                                         | Auth Required |
 | ---- | --------- | ---------------------- | ------------------------------------------------ | -------- |
-| GET  | `/api/AT` | 执行 AT 指令并返回结果 | `command=AT指令`（必填），`slot=卡槽号（默认0）` | 是       |
+| GET  | `/api/AT` | Execute AT command and return result | `command=AT_command` (required), `slot=SIM_slot (default 0)` | Yes      |
 
 ------
 
 
 
-### 设备基础信息模块（Base Device Info Module）
+### Base Device Info Module（Base Device Info Module）
 
-| 方法 | 路径                  | 描述                                            | 参数简要 | 是否认证 |
+| Method | Path                  | Description                                            | Parameters | Auth Required |
 | ---- | --------------------- | ----------------------------------------------- | -------- | -------- |
-| GET  | `/api/baseDeviceInfo` | 获取基础设备信息（电量、IP、CPU、内存、存储等） | 无       | 是       |
-| GET  | `/api/version_info`   | 获取应用版本号与设备型号                        | 无       | 否       |
-| GET  | `/api/need_token`     | 获取是否启用登录验证（token）                   | 无       | 否       |
+| GET  | `/api/baseDeviceInfo` | Get basic device info (battery, IP, CPU, memory, storage, etc.) | None       | Yes      |
+| GET  | `/api/version_info`   | Get app version and device model                        | None       | No       |
+| GET  | `/api/need_token`     | Check if login verification (token) is enabled                   | None       | No       |
 
 ------
 
-你的 `otaModule` 是一个完整的 OTA（Over-The-Air）更新模块，使用 Ktor 搭建后端 Web 服务，运行在 Android 环境中（比如嵌入式设备或手机），功能齐全、逻辑严密，涵盖以下主要接口功能：
+The `otaModule` is a complete OTA (Over-The-Air) update module built with Ktor web service, running in Android environment (embedded devices or phones), covering the following API endpoints:
 
 ------
 
 
 
-### OTA模块（OTA Module）
+### OTA Module（OTA Module）
 
-| 方法 | 路径                       | 描述                      | 参数      | 认证 | 备注                                |
+| Method | Path                       | Description                      | Params    | Auth | Notes                                |
 | ---- | -------------------------- | ------------------------- | --------- | ---- | ----------------------------------- |
-| GET  | `/api/check_update`        | 拉取 changelog 和文件列表 | 无        | 是   | 调用 Alist 接口获取 OTA 包信息      |
-| POST | `/api/download_apk`        | 开始下载 APK 文件         | {apk_url} | 是   | 后台线程下载，支持状态查询          |
-| GET  | `/api/download_apk_status` | 查询下载进度与状态        | 无        | 是   | 下载状态、百分比、错误信息          |
-| POST | `/api/install_apk`         | 安装已下载的 APK 文件     | 无        | 是   | 使用 socat（root）或 ADB（非 root） |
+| GET  | `/api/check_update`        | Fetch changelog and file list | None        | Yes  | Calls Alist API to get OTA package info      |
+| POST | `/api/download_apk`        | Start downloading APK file         | {apk_url} | Yes  | Background thread download, supports status query          |
+| GET  | `/api/download_apk_status` | Query download progress and status        | None        | Yes  | Download status, percentage, error info          |
+| POST | `/api/install_apk`         | Install downloaded APK file     | None        | Yes  | Uses socat (root) or ADB (non-root) |
 
 ------
 
 
 
-### 插件模块 （Plugins Module）
+### Plugins Module （Plugins Module）
 
-| 方法 | 路径                   | 描述               | 参数                                    | 是否认证 |
+| Method | Path                   | Description               | Parameters                              | Auth Required |
 | ---- | ---------------------- | ------------------ | --------------------------------------- | -------- |
-| POST | `/api/set_custom_head` | 设置自定义头部文本 | JSON：`{ "text": "..." }`（限制1145KB） | 是       |
-| GET  | `/api/get_custom_head` | 获取自定义头部文本 | 无                                      | 否       |
+| POST | `/api/set_custom_head` | Set custom header text | JSON: `{ "text": "..." }` (limit 1145KB) | Yes      |
+| GET  | `/api/get_custom_head` | Get custom header text | None                                      | No       |
 
 ---
 
 
 
-### 短信转发模块 （SMS Forward Module）
+### SMS Forward Module （SMS Forward Module）
 
-| 方法 | 路径                       | 描述                   | 参数                                                         | 是否认证 |
+| Method | Path                       | Description                   | Parameters                                                   | Auth Required |
 | ---- | -------------------------- | ---------------------- | ------------------------------------------------------------ | -------- |
-| GET  | `/api/sms_forward_method`  | 获取当前短信转发方式   | 无                                                           | 是       |
-| POST | `/api/sms_forward_mail`    | 配置邮件方式的短信转发 | {`smtp_host`, `smtp_port`, `smtp_to`, `smtp_username`, `smtp_password`} | 是       |
-| GET  | `/api/sms_forward_mail`    | 获取邮件转发配置       | 无                                                           | 是       |
-| POST | `/api/sms_forward_curl`    | 配置 curl 方式的转发   | {`curl_text`}（需包含 `{{sms-body}}`、`{{sms-time}}`、`{{sms-from}}`） | 是       |
-| GET  | `/api/sms_forward_curl`    | 获取 curl 转发配置     | 无                                                           | 是       |
-| POST | `/api/sms_forward_dingtalk` | 配置钉钉webhook方式的转发 | {`webhook_url`, `secret`}（`secret`为可选的加签密钥） | 是       |
-| GET  | `/api/sms_forward_dingtalk` | 获取钉钉webhook转发配置 | 无                                                           | 是       |
-| POST | `/api/sms_forward_enabled` | 设置短信转发总开关     | Query 参数：`enable`（字符串）                               | 是       |
-| GET  | `/api/sms_forward_enabled` | 获取短信转发开关状态   | 无                                                           | 是       |
+| GET  | `/api/sms_forward_method`  | Get current SMS forward method   | None                                                           | Yes      |
+| POST | `/api/sms_forward_mail`    | Configure email SMS forwarding | {`smtp_host`, `smtp_port`, `smtp_to`, `smtp_username`, `smtp_password`} | Yes      |
+| GET  | `/api/sms_forward_mail`    | Get email forward configuration       | None                                                           | Yes      |
+| POST | `/api/sms_forward_curl`    | Configure CURL forwarding   | {`curl_text`}(must contain `{{sms-body}}`, `{{sms-time}}`, `{{sms-from}}`) | Yes      |
+| GET  | `/api/sms_forward_curl`    | Get CURL forward configuration     | None                                                           | Yes      |
+| POST | `/api/sms_forward_dingtalk` | Configure DingTalk webhook forwarding | {`webhook_url`, `secret`}(`secret` is an optional signing key) | Yes      |
+| GET  | `/api/sms_forward_dingtalk` | Get DingTalk webhook forward configuration | None                                                           | Yes      |
+| POST | `/api/sms_forward_enabled` | Set SMS forward master switch     | Query parameter: `enable` (string)                               | Yes      |
+| GET  | `/api/sms_forward_enabled` | Get SMS forward switch status   | None                                                           | Yes      |
 
 ---
 
 
 
-### 网路测速模块 （Speedtest Module）
+### Speedtest Module （Speedtest Module）
 
-| 方法 | 路径             | 描述                 | 参数                                   | 是否认证 |
+| Method | Path             | Description                 | Parameters                              | Auth Required |
 | ---- | ---------------- | -------------------- | -------------------------------------- | -------- |
-| GET  | `/api/speedtest` | 下载测速数据（限流） | Query：`ckSize`（块数量），`cors` 可选 | 是       |
+| GET  | `/api/speedtest` | Download speed test data (rate-limited) | Query: `ckSize` (chunk count), `cors` optional | Yes      |
 
 ---
 
 
 
-### 主题模块 （Theme Module）
+### Theme Module （Theme Module）
 
-| 方法 | 路径              | 描述                       | 参数（简述）                                               | 是否认证 |
+| Method | Path              | Description                       | Parameters (Brief)                                               | Auth Required |
 | ---- | ----------------- | -------------------------- | ---------------------------------------------------------- | -------- |
-| POST | `/api/upload_img` | 上传图片，返回图片访问 URL | Multipart 表单，图片文件                                   | 是       |
-| POST | `/api/delete_img` | 删除图片                   | JSON，`file_name`：要删除的文件名                          | 是       |
-| POST | `/api/set_theme`  | 保存主题配置               | JSON，主题配置字段（如`backgroundEnabled`、`textColor`等） | 是       |
-| GET  | `/api/get_theme`  | 获取当前主题配置           | 无                                                         | 否       |
+| POST | `/api/upload_img` | Upload image, return image access URL | Multipart form, image file                                   | Yes      |
+| POST | `/api/delete_img` | Delete image                   | JSON, `file_name`: filename to delete                          | Yes      |
+| POST | `/api/set_theme`  | Save theme configuration               | JSON, Theme config fields (e.g., `backgroundEnabled`, `textColor`, etc.) | Yes      |
+| GET  | `/api/get_theme`  | Get current theme configuration           | None                                                         | No       |
 
 ------
 
-#### 其他说明：
+#### Additional Notes:
 
-- 上传的图片保存到 `filesDir/uploads/` 目录，URL 为 `/api/uploads/文件名` 可静态访问。
+- Uploaded images are saved to `filesDir/uploads/` directory, accessible via `/api/uploads/filename`.
 
 ------
 
 
 
-### 反向代理官方WEB模块 （ReverseProxy Module）
+### Official Web Reverse Proxy Module （ReverseProxy Module）
 
-| 方法 | 路径                | 描述             | 参数                                    | 是否认证       |
+| Method | Path                | Description             | Parameters                              | Auth Required       |
 | ---- | ------------------- | ---------------- | --------------------------------------- | -------------- |
-| 全部 | `/api/goform/{...}` | 反代 官方WEB API | 请求路径 + 查询参数 + 请求体 (POST/PUT) | 不需要单独认证 |
+| All | `/api/goform/{...}` | Proxy official Web API | Request path + query params + body (POST/PUT) | No separate auth needed |
 
 ------
 
-#### 详细说明
+#### Details
 
-- **路径规则**：所有以 `/api/goform/` 开头的请求都会被代理转发。
-- **目标服务器地址**：通过参数 `targetServerIP` 指定（形如 `192.168.0.1`），请求转发到 `http://targetServerIP`。
-- **请求头转发**：除 `Host` 和 `Referer` 以外，所有请求头都会转发给目标服务器，且会强制设置 `Referer` 为目标服务器地址。
-- **请求方法支持**：支持 GET、POST、PUT、OPTIONS 方法转发。
-- **请求体转发**：POST 和 PUT 请求体会被读取并写入代理请求。
-- **响应头处理**：
-  - **会将目标服务器返回的 `Set-Cookie` 头改名为 `kano-cookie` 并转发回客户端。**
-  - 自动添加 CORS 相关响应头，允许跨域。
-- **异常处理**：捕获所有异常，返回 500 错误及异常信息。
+- **Path Rules**：All requests starting with `/api/goform/` will be proxied and forwarded.
+- **Target Server Address**：Specified via `targetServerIP` parameter (e.g., `192.168.0.1`), requests forwarded to `http://targetServerIP`.
+- **Request Header Forwarding**：Except `Host` and `Referer`, all request headers are forwarded to the target server, and `Referer` is forced to the target server address.
+- **Supported Methods**：Supports GET, POST, PUT, OPTIONS method forwarding.
+- **Request Body Forwarding**：POST and PUT request bodies are read and written to the proxy request.
+- **Response Header Handling**：
+  - **Renames the `Set-Cookie` header returned by the target server to `kano-cookie` and forwards it back to the client.**
+  - Automatically adds CORS response headers to allow cross-origin requests.
+- **Error Handling**：Catches all exceptions, returns 500 error with exception info.
