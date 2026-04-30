@@ -1,4 +1,4 @@
-//适配状态显示模态框
+// Status display modal adapter
 const toggleDictionaryModal = (flag = false) => {
     const dictionaryModal = document.querySelector("#dictionaryModal")
     if (!flag) {
@@ -24,7 +24,7 @@ function DragList(listId, callback) {
     placeholder.innerHTML = "&nbsp;";
     placeholder.style.height = "30px";
 
-    // -------- PC 拖拽逻辑 --------
+    // -------- PC drag logic --------
     list.addEventListener("dragstart", (e) => {
         toggleDictionaryModal(false)
         currentLi = e.target;
@@ -33,7 +33,7 @@ function DragList(listId, callback) {
 
     list.addEventListener("dragover", (e) => e.preventDefault());
 
-    //元素拖拽到目标元素上时触发
+    // Triggered when element dragged over target
     list.addEventListener("dragenter", (e) => {
         if (e.target === currentLi || e.target === list) return;
 
@@ -43,7 +43,7 @@ function DragList(listId, callback) {
 
         try {
             if (currIdx < targetIdx) {
-                // 如果 newNode 已经在 DOM 中，它会被自动移除再插入到新位置。
+                // If newNode is already in DOM, it gets moved to new position.
                 list?.insertBefore(currentLi, e.target.nextSibling);
             } else {
                 list?.insertBefore(currentLi, e.target);
@@ -58,23 +58,23 @@ function DragList(listId, callback) {
         callback && callback(list)
     }, { passive: true });
 
-    // -------- 移动端 touch 拖拽逻辑 --------
+    // -------- Mobile touch drag logic --------
     list.addEventListener("touchstart", (e) => {
         toggleDictionaryModal(false)
         const target = e.target;
         if (target.tagName.toLowerCase() !== "li") return;
 
-        e.preventDefault(); // 阻止页面滚动
+        e.preventDefault(); // prevent page scroll
         currentLi = target;
 
         const rect = target.getBoundingClientRect();
         offsetY = e.touches[0].clientY - rect.top;
 
-        // 插入占位符
+        // Insert placeholder
         placeholder.style.height = `${target.offsetHeight}px`;
         list.insertBefore(placeholder, currentLi.nextSibling);
 
-        // 设为拖拽样式
+        // Set drag style
         currentLi.classList.add("dragging");
         currentLi.style.left = "0px";
         //   currentLi.style.width = "100%";

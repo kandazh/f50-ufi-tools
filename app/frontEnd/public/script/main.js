@@ -36,7 +36,7 @@ let QORS_MESSAGE = null
 let smsSender = null
 let psw_fail_num = 0;
 
-// 初始化全局数据代理对象
+// Initialize global data proxy
 window.UFI_DATA = new Proxy({}, {
     set(target, prop, value) {
         target[prop] = value;
@@ -87,10 +87,10 @@ if (!localStorage.getItem('ttyd_port')) {
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js')
         .then(reg => {
-            console.log('Service Worker 注册成功:', reg);
+            console.log('Service Worker registered:', reg);
         })
         .catch(err => {
-            console.error('Service Worker 注册失败:', err);
+            console.error('Service Worker registration failed:', err);
         });
 }
 
@@ -99,7 +99,7 @@ overlay.className = 'loading-overlay'
 overlay.innerHTML = "<p>Loading...</p>"
 document.body.appendChild(overlay)
 
-//判断一下是否需要token
+// Check if token needed
 const needToken = async (shouldThrowError = false, fetchMaxRetries = 3) => {
     let retries = 0
     let res = null
@@ -165,7 +165,7 @@ function main_func() {
 
     checkBroswer()
 
-    //读取展示列表
+    // Read display list
     const _stor = localStorage.getItem('showList')
     const showList = _stor != null ? JSON.parse(_stor) : {
         statusShowList: [
@@ -352,16 +352,16 @@ function main_func() {
 
     }
 
-    // #拖动管理 list为当前最新正确顺序
+    // Drag management - list is current correct order
     const saveDragListData = (list, callback) => {
-        //拖动状态更改
+        // Drag state change
         const children = Array.from(list.querySelectorAll('input'))
         let id = null
         if (list.id == 'draggable_status') id = 'statusShowList'
         if (list.id == 'draggable_signal') id = 'signalShowList'
         if (list.id == 'draggable_props') id = 'propsShowList'
         if (!id) return
-        //遍历
+        // Iterate
         showList[id] = children.map((item) => ({
             name: item.dataset.name,
             isShow: item.checked
@@ -371,7 +371,7 @@ function main_func() {
         callback && callback(list)
     }
 
-    //初始化drag触发器
+    // Init drag trigger
     DragList("#draggable_status", (list) => saveDragListData(list, (d_list) => {
         localStorage.setItem('statusShowListDOM', d_list.innerHTML)
     }))
@@ -382,7 +382,7 @@ function main_func() {
         localStorage.setItem('propsShowListDOM', d_list.innerHTML)
     }))
 
-    //渲染listDOM
+    // Render list DOM
     const listDOM_STATUS = document.querySelector("#draggable_status")
     const listDOM_SIGNAL = document.querySelector("#draggable_signal")
     const listDOM_PROPS = document.querySelector("#draggable_props")
@@ -393,7 +393,7 @@ function main_func() {
     signalDOMStor && (listDOM_SIGNAL.innerHTML = signalDOMStor)
     propsDOMStor && (listDOM_PROPS.innerHTML = propsDOMStor)
 
-    //按照showList初始化排序模态框
+    // Init sort modal by showList
     listDOM_STATUS.querySelectorAll('input').forEach((item) => {
         let name = item.dataset.name
         let foundItem = showList.statusShowList.find(i => i.name == name)
@@ -419,7 +419,7 @@ function main_func() {
     const isNullOrUndefiend = (obj) => {
         let isNumber = typeof obj === 'number'
         if (isNumber) {
-            //如果是数字类型，直接返回
+            // If number type, return directly
             return true
         }
         return obj != undefined || obj != null
@@ -437,11 +437,11 @@ function main_func() {
             return isIncludeInShowList(dicName) || flag
         }
         let isReadable = obj[dicName] != null && obj[dicName] != undefined && obj[dicName] != ''
-        //这里需要遍历一下是否显示的字段
+        // Check if field should be displayed
         return isReadable && isIncludeInShowList(dicName)
     }
 
-    //初始化所有按钮
+    // Init all buttons
     const initRenderMethod = async () => {
         initScheduledTask()
         initPluginSetting()
@@ -485,11 +485,11 @@ function main_func() {
         }, 2000)
         // psw_fail_num_str
         try {
-            // 检测登录方法
+            // Detect login method
             const login_method = document.querySelector('#login_method')
             if (login_method) {
                 loginMethod = login_method.value == '1' ? "1" : "0"
-                //持久化
+                // Persist
                 localStorage.setItem('login_method', loginMethod)
             }
             toastTimer && clearTimeout(toastTimer)
@@ -553,7 +553,7 @@ function main_func() {
                 toastTimer && clearTimeout(toastTimer)
                 return null
             }
-            //更新后端ADMIN_PWD字段
+            // Update backend ADMIN_PWD field
             const update_res = await updateAdminPsw(password.trim())
             if (!update_res || update_res.result != 'success') {
                 console.error('Update admin password failed:', update_res ? update_res.message : 'No response');
@@ -565,10 +565,10 @@ function main_func() {
             initRenderMethod()
             initMessage()
             updateLoginIcon()
-            //记住密码
+            // Remember password
             const loginRememberMe = document.querySelector('#loginRememberMe')
             if (loginRememberMe && loginRememberMe.checked) {
-                //AES加密存储密码
+                // AES encrypt stored password
                 if (CryptoJS) {
                     const payload = CryptoJS.AES.encrypt(`${password.trim()}<kano_CryptoJS_split>${token.trim()}`, 'kano_secret_key_1145141919810721')
                     localStorage.setItem('kano_remembered_loginfo', payload)
@@ -1068,12 +1068,12 @@ function main_func() {
             return
         }
         if (res) {
-            //需要一直保持登录
+            // Must keep logged in
             if (res.loginfo && res.loginfo != 'ok') {
                 try {
                     if (await initRequestData()) {
                         console.log('Login timeout keep login...');
-                        //清除diag imei的缓存
+                        // Clear diag IMEI cache
                         resetDiagImeiCache()
                         const res = await login()
                         if (res === null) {
@@ -1096,20 +1096,20 @@ function main_func() {
                             status_login_try_times = 0
                             return
                         }
-                        return //跳过本次渲染
+                        return // Skip this render
                     }
                 } catch (e) { }
             }
 
-            //如果打开了高级功能，且用户已经处于改串后不显串状态，则使用强力查串补充串号显示
+            // If advanced enabled and IMEI hidden after change, use force query to show IMEI
             if (!res.imei || res.imei.length === 0) {
                 res.imei = await queryImeiFromDIAG()
             }
-            //如果设备显串，且和缓存不一致，则清空缓存
+            // If device shows IMEI and differs from cache, clear cache
             if (res.imei && (res.imei != cachedDiagImeiQueryResult)) {
                 resetDiagImeiCache()
             }
-            //不管设备是否显串，只要iccid有变更，就清空imei缓存
+            // If ICCID changed, clear IMEI cache
             if (window.UFI_DATA["iccid"] !== res.iccid) {
                 resetDiagImeiCache()
             }
@@ -1426,7 +1426,7 @@ function main_func() {
     handlerStatusRender(true)
     StopStatusRenderTimer = requestInterval(() => handlerStatusRender(), REFRESH_TIME)
 
-    //检查usb调试状态
+    // Check USB debug status
     let handlerADBStatus = async () => {
         const btn = document.querySelector('#ADB')
         if (!btn) return null
@@ -1469,7 +1469,7 @@ function main_func() {
     }
     handlerADBStatus()
 
-    //检查usb网络调试状态
+    // Check USB network debug status
     let handlerADBNetworkStatus = async () => {
         const btn = document.querySelector('#ADB_NET')
         if (!btn) return null
@@ -1498,7 +1498,7 @@ function main_func() {
                     out()
                     return null
                 }
-                // usb调试需要同步On
+                // USB debug must be synced on
                 if (!(res.enabled == "true" || res.enabled == true)) {
                     await (await postData(cookie, {
                         goformId: 'USB_PORT_SETTING',
@@ -1532,7 +1532,7 @@ function main_func() {
     }
     handlerADBNetworkStatus()
 
-    //检查Performance Mode状态
+    // Check performance mode status
     let handlerPerformaceStatus = async () => {
         const btn = document.querySelector('#PERF')
         if (!btn) return null
@@ -1598,7 +1598,7 @@ function main_func() {
         KANO_TOKEN = null
         common_headers.authorization = null
         initRenderMethod()
-        //退出登录请求
+        // Logout request
         try {
             login().finally(cookie => {
                 logout(cookie)
@@ -1611,7 +1611,7 @@ function main_func() {
         const tokenInput = document.querySelector("#TOKEN")
         label.style.display = ""
         tokenEl.style.display = "flex"
-        //填充密码
+        // Fill password
         if (CryptoJS) {
             const str = localStorage.getItem('kano_remembered_loginfo')
             if (str) {
@@ -1756,7 +1756,7 @@ function main_func() {
         }
     }
 
-    //WiFi开关切换_INIT
+    // WiFi toggle init
     let initWIFISwitch = async () => {
         const selectEl = document.querySelector('#WIFI_SWITCH')
         if (!(await initRequestData()) || !selectEl) {
@@ -1793,7 +1793,7 @@ function main_func() {
     }
     initWIFISwitch()
 
-    //WiFi开关切换
+    // WiFi toggle
     let changeWIFISwitch = async (e) => {
         const selectEl = document.querySelector('#WIFI_SWITCH')
         const value = e.target.value.trim()
@@ -1883,7 +1883,7 @@ function main_func() {
     }
     initSMBStatus()
 
-    //检查网路漫游状态
+    // Check network roaming status
     let initROAMStatus = async () => {
         const el = document.querySelector('#ROAM')
         if (!el) return null
@@ -2006,7 +2006,7 @@ function main_func() {
     }
     initBandForm()
 
-    //网络协议栈开关
+    // Network stack toggle
     const networkStackSwitch = async (flag) => {
         await executeATCommand(flag ? "AT+SFUN=4" : "AT+SFUN=5")
     }
@@ -2021,7 +2021,7 @@ function main_func() {
         const bands = form.querySelectorAll('input[type="checkbox"]:checked')
         const lte_bands = []
         const nr_bands = []
-        //收集选中的数据
+        // Collect selected data
         if (bands && bands.length) {
             for (let band of bands) {
                 const type = band.getAttribute('data-type')
@@ -2051,7 +2051,7 @@ function main_func() {
             ]))
             if (res[0].result == 'success' || res[1].result == 'success') {
                 createToast(t('toast_set_band_success'), 'green')
-                //Reboot网络栈
+                // Reboot network stack
                 await networkStackSwitch(false)
                 await wait(300)
                 await networkStackSwitch(true)
@@ -2059,15 +2059,15 @@ function main_func() {
                 // if (netType) {
                 //     const options = document.querySelectorAll('#NET_TYPE option')
                 //     const curValue = netType.value
-                //     //切到不同网络
+                //     // Switch to different network
                 //     if (options.length) {
                 //         const net = Array.from(options).find(el => el.value != curValue)
                 //         if (net) {
-                //             //切网
+                //             // Switch network
                 //             createToast(t("toast_changing"))
                 //             await changeNetwork({ target: { value: net.value } }, true)
                 //             await new Promise(resolve => setTimeout(resolve, 800))
-                //             //切回来
+                //             // switch back
                 //             await changeNetwork({ target: { value: curValue } })
                 //         }
                 //     }
@@ -2083,9 +2083,9 @@ function main_func() {
         }
     }
 
-    //解除锁定所有频段
+    // Unlock all bands
     const unlockAllBand = () => {
-        //手动全选频段，点击锁定
+        // Manually select all bands, click lock
         toggleAllBandBox(true)
         selectAllBand.checked = true
         const lockBandBtn = document.querySelector('#lockBandBtn')
@@ -2097,8 +2097,8 @@ function main_func() {
     //Lock Cell
     let initCellInfo = async (onlyRefreshLockedInfoList = false) => {
         try {
-            //已Lock Cell信息
-            //基站信息
+            // Locked cell info
+            // Cell info
             const { neighbor_cell_info, locked_cell_info } = await getData(new URLSearchParams({
                 cmd: 'neighbor_cell_info,locked_cell_info'
             }))
@@ -2227,7 +2227,7 @@ function main_func() {
                 pciEl.value = ''
                 earfcnEl.value = ''
                 createToast(t('toast_set_cell_success'), 'green')
-                //Refresh基站列表
+                // Refresh cell list
                 initCellInfo(true)
             } else {
                 throw t('toast_set_cell_failed')
@@ -2256,7 +2256,7 @@ function main_func() {
 
             if (res.result == 'success') {
                 createToast(t('toast_unlock_cell_success'), 'green')
-                //Refresh基站列表
+                // Refresh cell list
                 initCellInfo(true)
             } else {
                 throw t('toast_unlock_cell_failed')
@@ -2323,7 +2323,7 @@ function main_func() {
     }
     rebootDeviceBtnInit()
 
-    //字段显示隐藏
+    // Field show/hide
     const _dictEl = document.querySelector("#DICTIONARY");
     if (_dictEl) _dictEl.onclick = (e) => {
         showModal('#dictionaryModal')
@@ -2343,7 +2343,7 @@ function main_func() {
             inputEl = target
         }
         let id = inputEl.getAttribute('data-name')
-        //寻找这个id属于哪个dragList
+        // Find which dragList this id belongs to
         const list_id = inputEl.closest("ul").id
         let list_name = null
         if (list_id == "draggable_status") list_name = 'statusShowList'
@@ -2390,7 +2390,7 @@ function main_func() {
         if (QORSTimer) { QORSTimer(); QORSTimer = null }
     }
 
-    //暂停开始Refresh
+    // Pause/start refresh
     const playIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><polygon points="6,4 20,12 6,20"/></svg>'
     const pauseIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="10" y2="18"/><line x1="14" y1="6" x2="14" y2="18"/></svg>'
     Array.from(document.querySelectorAll('.REFRESH_BTN'))?.forEach(el => {
@@ -2427,7 +2427,7 @@ function main_func() {
         }
     })
 
-    //流量管理逻辑
+    // Data management logic
     const _dataManagementEl = document.querySelector("#DataManagement");
     if (_dataManagementEl) _dataManagementEl.onclick = async () => {
         if (!(await initRequestData())) {
@@ -2435,7 +2435,7 @@ function main_func() {
             out()
             return null
         }
-        // 查流量使用情况
+        // Check data usage
         let res = await getDataUsage()
         if (!res) {
             createToast(t('toast_get_data_usage_failed'), 'red')
@@ -2452,7 +2452,7 @@ function main_func() {
             "data_volume_limit_switch": isNullOrUndefiend(res.data_volume_limit_switch) ? res.data_volume_limit_switch : res.flux_data_volume_limit_switch,
         }
 
-        // 预填充表单
+        // Pre-fill form
         const form = document.querySelector('#DataManagementForm')
         if (!form) return null
         let data_volume_limit_switch = form.querySelector('input[name="data_volume_limit_switch"]')
@@ -2500,7 +2500,7 @@ function main_func() {
         showModal('#DataManagementModal')
     }
 
-    //流量管理表单Submit
+    // Data management form submit
     let handleDataManagementFormSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -2524,11 +2524,11 @@ function main_func() {
                 "data_volume_limit_type": "1", //MB GB TB
                 "data_volume_used_size": "0",
                 "data_volume_used_type": "1", //MB GB TB
-                // 时间
+                // Time
                 "notify_deviceui_enable": "0",
             }
 
-            const form = e.target; // 获取表单
+            const form = e.target; // Get form
             const formData = new FormData(form);
 
             for (const [key, value] of formData.entries()) {
@@ -2615,7 +2615,7 @@ function main_func() {
                 flux_notify_deviceui_enable: '0'
             }
             delete form_data['data_volume_limit_type']
-            //发请求
+            // Send request
             try {
                 const tempData = form_data['data_volume_limit_switch'] == '0' ? clear_form_data : form_data
                 const res = await (await postData(cookie, {
@@ -2645,7 +2645,7 @@ function main_func() {
     };
 
 
-    //WIFI管理逻辑
+    // WiFi management logic
     let initWIFIManagementForm = async () => {
         try {
             let { WiFiModuleSwitch, ResponseList } = await getData(new URLSearchParams({
@@ -2675,7 +2675,7 @@ function main_func() {
                         PasswordEl && (PasswordEl.value = decodeBase64(item.Password))
                         ApBroadcastDisabledEl && (ApBroadcastDisabledEl.checked = item.ApBroadcastDisabled.toString() == '0')
                         SSIDEl && (SSIDEl.value = item.SSID)
-                        // 二维码
+                        // QR code
                         fetch(KANO_baseURL + item.QrImageUrl, {
                             headers: common_headers
                         }).then(async (res) => {
@@ -2735,7 +2735,7 @@ function main_func() {
                 return null
             }
 
-            const form = e.target; // 获取表单
+            const form = e.target; // Get form
             const formData = new FormData(form);
 
             let data = {
@@ -2763,7 +2763,7 @@ function main_func() {
                         data[key] = value == 'on' ? 0 : 1
                         break;
                     case 'Password':
-                        // if(!value.trim()) createToast('请输入密码！')
+                        // if(!value.trim()) createToast('Please enter password!')
                         value.trim() && (data[key] = encodeBase64(value.trim()))
                         break;
                     case 'ApIsolate':
@@ -2843,7 +2843,7 @@ function main_func() {
         }
     });
 
-    //无线设备管理
+    // Wireless device management
     const _clientMgmtEl = document.querySelector('#ClientManagement');
     if (_clientMgmtEl) _clientMgmtEl.onclick = async () => {
         if (!(await initRequestData())) {
@@ -3037,7 +3037,7 @@ function main_func() {
         closeModal('#ClientManagementModal')
     }
 
-    //开关蜂窝数据
+    // Toggle cellular data
     let handlerCecullarStatus = async () => {
         const btn = document.querySelector('#CECULLAR')
         if (!btn) return null
@@ -3106,11 +3106,11 @@ function main_func() {
                     `<span class="device-badge-ver">v${app_ver}</span>` +
                 `</span>`;
             document.querySelector('#TITLE').innerHTML = `[${displayName}] v${app_ver}`
-        } catch {/*没有，不处理*/ }
+        } catch {/* not found, ignore */ }
     }
     loadTitle()
 
-    //定时Reboot模态框
+    // Scheduled reboot modal
     let initScheduleRebootStatus = async () => {
         const btn = document.querySelector('#SCHEDULE_REBOOT')
         const SCHEDULE_TIME = document.querySelector('#SCHEDULE_TIME')
@@ -3147,7 +3147,7 @@ function main_func() {
             restart_schedule_switch: "0",
             restart_time: '00:00'
         }
-        const form = e.target; // 获取表单
+        const form = e.target; // Get form
         const formData = new FormData(form);
         let regx = /^(0?[0-9]|1[0-9]|2[0-3]):(0?[0-9]|[1-5][0-9])$/
         for ([key, value] of formData.entries()) {
@@ -3183,13 +3183,13 @@ function main_func() {
         }
     }
 
-    // EnableTTYD（如果有）
+    // Enable TTYD (if available)
     let initTTYD = async () => {
         const TTYD = document.querySelector('#TTYD')
         if (!TTYD) return
         const list = TTYD.querySelector('.deviceList')
         if (!list) return
-        //fetch TTYD地址，如有，则显示
+        // Fetch TTYD address, display if available
         try {
             const port = localStorage.getItem('ttyd_port')
             if (!port) return
@@ -3243,7 +3243,7 @@ function main_func() {
     let enableTTYD = () => {
         click_count_ttyd++
         if (click_count_ttyd >= 4) {
-            // Enablettyd弹窗
+            // Enable TTYD popup
             initResServer()
             showModal('#TTYDModal')
             ttyd_timer && clearTimeout(ttyd_timer)
@@ -3335,16 +3335,16 @@ function main_func() {
 
     async function QOSRDPCommand(cmd) {
         if (!cmd) return QORS_MESSAGE = null
-        // 获取当前卡槽
+        // Get current SIM slot
         let { sim_slot } = await getData(new URLSearchParams({
             cmd: 'sim_slot'
         }))
-        //获取是否支持双sim卡
+        // Check dual SIM support
         const { dual_sim_support } = await getData(new URLSearchParams({
             cmd: 'dual_sim_support'
         }))
         if (!sim_slot || dual_sim_support != '1') {
-            //单卡用户默认0槽位
+            // Single SIM users default to slot 0
             sim_slot = 0
         }
 
@@ -3353,10 +3353,10 @@ function main_func() {
             sim_slot = sim_slot == 1 ? 0 : 1
         }
 
-        // V50 内置卡1(移动)slot=0 内置卡2(电信)slot=1 内置卡3(联通)slot=2 外置卡slot=11 外置卡 slot需要Settings为0 联通内置卡slotSettings为1
+        // V50 built-in SIM1(CMCC)slot=0 SIM2(CTCC)slot=1 SIM3(CUCC)slot=2 external slot=11; external needs Settings=0, CUCC needs slotSettings=1
         // For V50
         if (sim_slot == "11") {
-            //可恶的F50Pro两个卡槽居然是反过来的
+            // F50Pro has reversed SIM slot order
             if (UFI_DATA && UFI_DATA.model == "MU3356") {
                 sim_slot = 1
             } else {
@@ -3372,7 +3372,7 @@ function main_func() {
         }
 
         let res = await executeATCommand(cmd, sim_slot)
-        //如果是单卡用户，0槽位又获取不到数据，那就尝试1槽位
+        // If single-SIM user can't get data from slot 0, try slot 1
         if (res.result && res.result.includes('ERROR')) {
             if (dual_sim_support != '1') {
                 sim_slot = 1
@@ -3444,7 +3444,7 @@ function main_func() {
                     createToast(t('toast_exe_failed'), 'red');
                     return;
                 }
-                //清空imei缓存
+                // Clear IMEI cache
                 resetDiagImeiCache()
                 AT_RESULT.innerHTML = `<p onclick="copyText(event)"  style="overflow: hidden;">${parseCGEQOSRDP(res.result)}</p>`;
                 createToast(t('toast_exe_success'), 'green');
@@ -3488,7 +3488,7 @@ function main_func() {
 
     const handleAT = async (params, silent = false) => {
         if (!params) return
-        // 执行AT
+        // Execute AT
         const AT_RESULT = document.querySelector('#AT_RESULT')
         AT_RESULT.innerHTML = t('toast_running_please_wait')
         try {
@@ -3502,7 +3502,7 @@ function main_func() {
 
                 AT_RESULT.innerHTML = `<p onclick="copyText(event)"  style="overflow: hidden;">${res.result}</p>`;
                 !silent && createToast(t('toast_exe_success'), 'green');
-                //只要执行AT了，就默认清空一次imei展示缓存
+                // After AT execution, clear IMEI display cache
                 resetDiagImeiCache()
                 return true
             } else {
@@ -3517,7 +3517,7 @@ function main_func() {
         }
     }
 
-    //执行时Disable按钮
+    // Disable button during execution
     const disableButtonWhenExecuteFunc = async (e, func) => {
         const target = e.currentTarget
         target.setAttribute("disabled", "true");
@@ -3549,7 +3549,7 @@ function main_func() {
 
     let socatTimerFn = null
 
-    //初始化高级功能按钮
+    // Initialize advanced feature buttons
     let initAdvanceTools = async () => {
         const el = document.querySelector('#ADVANCE')
         if (!el) return null
@@ -3561,7 +3561,7 @@ function main_func() {
         el.style.backgroundColor = ''
         el.onclick = () => {
             showModal('#advanceModal')
-            //循环检测是否Onsocat
+            // Loop check if socat is on
             socatAlive()
             socatTimerFn && socatTimerFn()
             socatTimerFn = requestInterval(() => socatAlive(), 1000)
@@ -3574,7 +3574,7 @@ function main_func() {
         closeModal('#advanceModal')
     }
 
-    //执行高级功能更改 1为Enable0为Disable
+    // Execute advanced feature change: 1=Enable, 0=Disable
     const handleSambaPath = async (flag = '1') => {
         const AT_RESULT = document.querySelector('#AD_RESULT')
         // let adb_status = await adbKeepAlive()
@@ -3617,7 +3617,7 @@ function main_func() {
         }
     }
 
-    //更改密码
+    // Change password
     initChangePassData = async () => {
         const el = document.querySelector("#CHANGEPWD")
         if (!el) return null
@@ -3656,7 +3656,7 @@ function main_func() {
                 if (res?.result == 'success') {
                     createToast(t('toast_change_success'), 'green')
                     form.reset()
-                    //更新后端ADMIN_PWD字段
+                    // Update backend ADMIN_PWD field
                     const update_res = await updateAdminPsw(newPassword.trim())
                     if (!update_res || update_res.result != 'success') {
                         console.error('Update admin password failed:', update_res ? update_res.message : 'No response');
@@ -3683,7 +3683,7 @@ function main_func() {
     }
 
 
-    //更改口令
+    // Change token
     initChangeTokenData = async () => {
         const el = document.querySelector("#CHANGETOKEN")
         if (!el) return null
@@ -3699,7 +3699,7 @@ function main_func() {
     }
     initChangeTokenData()
 
-    //更改口令
+    // Change token
     const handleChangeToken = async (e) => {
         e.preventDefault()
         const form = e.target
@@ -3763,7 +3763,7 @@ function main_func() {
         closeModal("#changeTokenModal")
     }
 
-    //sim卡切换
+    // SIM card switch
     let initSimCardType = async () => {
         let selectEl = document.querySelector('#SIM_CARD_TYPE')
         const { model } = await (await fetch(`${KANO_baseURL}/version_info`, { headers: common_headers })).json()
@@ -3773,7 +3773,7 @@ function main_func() {
             if (simField) simField.style.display = '';
         }
 
-        //查询是否支持双卡
+        // Query dual SIM support
         // const { dual_sim_support } = await getData(new URLSearchParams({
         //     cmd: 'dual_sim_support'
         // }))
@@ -3804,7 +3804,7 @@ function main_func() {
     }
     initSimCardType()
 
-    //NFC切换
+    // NFC toggle
     let initNFCSwitch = async () => {
         const btn = document.querySelector('#NFC')
         if (!btn) return null
@@ -3813,7 +3813,7 @@ function main_func() {
             btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             return null
         }
-        // 查询是否支持NFC
+        // Check NFC support
         try {
             const { is_support_nfc_functions } = await getData(new URLSearchParams({
                 cmd: 'is_support_nfc_functions'
@@ -3891,9 +3891,9 @@ function main_func() {
     }
 
 
-    // 控制测速请求的中断器
+    // Speed test request abort controller
     let speedFlag = false;
-    let speedController = null; // 可重置的变量
+    let speedController = null; // resettable variable
 
     async function startTest(e) {
         if (!(await initRequestData())) {
@@ -3974,7 +3974,7 @@ function main_func() {
         }
     }
 
-    //无限测速
+    // Infinite speed test
     let loopSpeedTestTimer = null;
     const handleLoopMode = async (e) => {
         if (!(await initRequestData())) {
@@ -4002,18 +4002,18 @@ function main_func() {
         }
     };
 
-    //文件Upload
+    // File upload
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
         const MAX_SIZE = 10
         if (file) {
-            // 检查文件大小
+            // Check file size
             if (file.size > MAX_SIZE * 1024 * 1024) {
                 // MAX_SIZE MB
                 createToast(`${t('toast_file_size_over_limit')}${MAX_SIZE}MB！`, 'red')
             } else {
 
-                //Upload图片
+                // Upload image
                 try {
                     const formData = new FormData();
                     formData.append("file", file);
@@ -4045,8 +4045,8 @@ function main_func() {
         }
     }
 
-    //展开收起
-    // 配置观察器_菜单
+    // Expand/collapse
+    // Config observer: menu
     (() => {
         const collapseMenuEl = document.querySelector(".collapse_menu")
         if (!collapseMenuEl) return
@@ -4067,19 +4067,19 @@ function main_func() {
         collapseBtn.appendChild(switchComponent);
     })();
 
-    //展开收起
-    // 配置观察器_基本状态
+    // Expand/collapse
+    // Config observer: basic status
     collapseGen("#collapse_status_btn", "#collapse_status", "collapse_status")
 
-    //展开收起
-    // 配置观察器_TTYD
+    // Expand/collapse
+    // Config observer: TTYD
     collapseGen("#collapse_ttyd_btn", "#collapse_ttyd", "collapse_ttyd")
 
-    //展开收起
-    // 配置观察器_锁频
+    // Expand/collapse
+    // Config observer: lock band
     collapseGen("#collapse_lkband_btn", "#collapse_lkband", "collapse_lkband")
 
-    // 配置观察器_Lock Cell
+    // Config observer: lock cell
     collapseGen("#collapse_lkcell_btn", "#collapse_lkcell", "collapse_lkcell", (isOpen) => {
         if (isOpen == 'open') {
             toggleLkcellOpen(true)
@@ -4088,11 +4088,11 @@ function main_func() {
         }
     })
 
-    //展开收起
+    // Expand/collapse
     const collapse_lkcell_stor = localStorage.getItem('collapse_lkcell') || 'open'
     collapse_lkcell_stor == 'open' ? toggleLkcellOpen(true) : toggleLkcellOpen(false)
 
-    //adb轮询
+    // ADB polling
     const adbQuery = async () => {
         try {
             const adb_status = await adbKeepAlive()
@@ -4111,7 +4111,7 @@ function main_func() {
     }
     adbQuery()
 
-    //执行shell脚本
+    // Execute shell script
     const handleShell = async () => {
         const AT_RESULT = document.querySelector('#AD_RESULT')
         let adb_status = await adbKeepAlive()
@@ -4145,7 +4145,7 @@ function main_func() {
 
     }
 
-    //初始化短信转发表单
+    // Init SMS forward form
     const initSmsForward = async (needSwitch = true, method = undefined) => {
         if (!method) {
             const { sms_forward_method } = await (await fetchWithTimeout(`${KANO_baseURL}/sms_forward_method`, {
@@ -4318,7 +4318,7 @@ function main_func() {
         if (!smtp_password || smtp_password.trim() == '') return createToast(t('toast_please_input_smtp_pwd'), 'red')
         if (!smtp_to || smtp_to.trim() == '') return createToast(t('toast_please_input_smtp_receive'), 'red')
 
-        //请求
+        // Request
         try {
             const res = await (await fetch(`${KANO_baseURL}/sms_forward_mail`, {
                 method: 'POST',
@@ -4361,7 +4361,7 @@ function main_func() {
 
         if (!curl_text || curl_text.trim() == '') return createToast(t('toast_please_input_curl'), 'red')
 
-        //请求
+        // Request
         try {
             const res = await (await fetch(`${KANO_baseURL}/sms_forward_curl`, {
                 method: 'POST',
@@ -4392,7 +4392,7 @@ function main_func() {
     }
 
     const handleSmsForwardDingTalkForm = async (e) => {
-        console.log('钉钉表单Submit事件触发')
+        console.log('DingTalk form submit triggered')
         e.preventDefault()
         const form = e.target
         const formData = new FormData(form);
@@ -4401,11 +4401,11 @@ function main_func() {
         const forward_dev_info = formData.get('forward_dev_info') != null
 
 
-        console.log('钉钉表单数据:', { webhook_url, secret, forward_dev_info })
+        console.log('DingTalk form data:', { webhook_url, secret, forward_dev_info })
 
         if (!webhook_url || webhook_url.trim() == '') return createToast(t('no_dingtalk_url'), 'red')
 
-        //请求
+        // Request
         try {
             const res = await (await fetch(`${KANO_baseURL}/sms_forward_dingtalk`, {
                 method: 'POST',
@@ -4437,7 +4437,7 @@ function main_func() {
         }
     }
 
-    //切换转发方式
+    // Switch forwarding method
     const switchSmsForwardMethodTab = (e) => {
         const target = e.target
         if (target.tagName != 'BUTTON') return
@@ -4453,13 +4453,13 @@ function main_func() {
         switchSmsForwardMethod(method)
     }
 
-    // 配置观察器_短信转发开关
+    // Config observer: SMS forward toggle
     collapseGen("#collapse_smsforward_btn", "#collapse_smsforward", "collapse_smsforward", async (status) => {
         let enabled = undefined
         status == 'open' ? enabled = '1' : enabled = '0'
         if (enabled != undefined) {
             try {
-                //On总开关
+                // Enable master switch
                 await (await fetch(`${KANO_baseURL}/sms_forward_enabled?enable=${enabled}`, {
                     method: 'post',
                     headers: {
@@ -4474,7 +4474,7 @@ function main_func() {
         }
     })
 
-    //别名Settings
+    // Alias settings
     let click_count_nickname = 1
     let nickname_timer = null
     const nicknameSettingClick = () => {
@@ -4492,7 +4492,7 @@ function main_func() {
 
     const openNicknameSetting = async () => {
         try {
-            //获取数据
+            // Get data
             const { nickname, model } = await (await fetch(`${KANO_baseURL}/version_info`, {
                 method: 'GET',
                 headers: common_headers
@@ -4561,12 +4561,12 @@ function main_func() {
         nicknameSettingBtn.onclick = openNicknameSetting
     }
 
-    //短信转发规则Settings
+    // SMS forwarding rule settings
     const forwardMethodSettingBtn = document.querySelector('#forward_method_setting_btn')
     if (forwardMethodSettingBtn) {
         forwardMethodSettingBtn.onclick = async () => {
             try {
-                //获取数据
+                // Get data
                 const { keywords, phone } = await (await fetch(`${KANO_baseURL}/sms_forward_blacklist`, {
                     method: 'GET',
                     headers: common_headers
@@ -4659,7 +4659,7 @@ function main_func() {
         </li > `
     }
 
-    //内网Settings
+    // LAN settings
     const initLANSettings = async () => {
         // LAN settings now handled inline by ctrl-tabs.js
     }
@@ -4674,7 +4674,7 @@ function main_func() {
                 return null
             }
 
-            const form = e.target; // 获取表单
+            const form = e.target; // Get form
             const formData = new FormData(form);
 
             let data = {
@@ -4688,7 +4688,7 @@ function main_func() {
                 mac_ip_reset: '0',
             }
 
-            // dhcp开关
+            // DHCP toggle
             const lanDhcpType = formData.get('lanDhcpType') === 'SERVER';
             if (lanDhcpType) {
                 data.lanDhcpType = 'SERVER';
@@ -4758,12 +4758,12 @@ function main_func() {
                 const networkAddr = getNetworkAddress(lanIp, netmask);
                 const broadcastAddr = getBroadcastAddress(lanIp, netmask);
 
-                // 网关 IP 不能是网络地址或广播地址
+                // Gateway IP cannot be network or broadcast address
                 if (lanIp === networkAddr || lanIp === broadcastAddr) {
                     return createToast(t('toast_gateway_is_network_or_broadcast'), 'red');
                 }
 
-                // DHCP 起始或结束地址不能是网络地址或广播地址
+                // DHCP start/end cannot be network or broadcast address
                 if (dhcpStart === networkAddr || dhcpStart === broadcastAddr) {
                     return createToast('DHCP ' + t('toast_start_ip_is_network_or_broadcast'), 'red');
                 }
@@ -4772,7 +4772,7 @@ function main_func() {
                     return createToast('DHCP ' + t('toast_end_ip_is_network_or_broadcast'), 'red');
                 }
 
-                // 网关地址不能落在 DHCP 分配范围内
+                // Gateway must not be within DHCP range
                 const lanInt = ipToInt(lanIp);
                 const startInt = ipToInt(dhcpStart);
                 const endInt = ipToInt(dhcpEnd);
@@ -4808,13 +4808,13 @@ function main_func() {
         enableDHCP.value = status == 'open' ? "SERVER" : "DISABLE"
     })
 
-    //设备监控
+    // Device monitoring
     if (document.querySelector('#collapse_device_mon_btn')) {
         collapseGen("#collapse_device_mon_btn", "#collapse_device_mon", 'collapse_device_mon', async (status) => {
         })
     }
 
-    //改变Refresh频率
+    // Change refresh rate
     const changeRefreshRate = (e) => {
         const value = e.target.value
         if (value) {
@@ -4839,7 +4839,7 @@ function main_func() {
     if (rrSel) rrSel.addEventListener('change', changeRefreshRate);
     window.changeRefreshRate = changeRefreshRate;
 
-    //开关小核心
+    // Toggle small cores
     const switchCpuCore = async (flag = true) => {
         const AD_RESULT = document.querySelector('#AD_RESULT')
         const shell = `
@@ -4855,14 +4855,14 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     }
 
-    //定时任务管理
+    // Scheduled task management
     const clearAddTaskForm = () => {
         const form = document.querySelector('#AddTaskForm')
-        form.id.value = '' // 清空ID
-        form.id.disabled = false // 允许修改 ID
-        form.date_time.value = '' // 清空时间
-        form.repeatDaily.checked = false // 清空复选框
-        form.action.value = '' // 清空动作参数
+        form.id.value = '' // Clear ID
+        form.id.disabled = false // Allow ID edit
+        form.date_time.value = '' // Clear time
+        form.repeatDaily.checked = false // Clear checkbox
+        form.action.value = '' // Clear action params
     }
     const setAddTaskForm = (task) => {
         const form = document.querySelector('#AddTaskForm')
@@ -4926,7 +4926,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
         let timer = null
         let counter = 0
-        // 删除功能
+        // Delete function
         li.querySelector('.deleteBtn').onclick = async () => {
             timer && clearTimeout(timer)
             timer = setTimeout(() => {
@@ -4977,7 +4977,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             })).json()
             if (res && res.tasks && res.tasks.length > 0) {
                 SCHEDULED_TASK_LIST.innerHTML = ''
-                //倒转
+                // Reverse
                 res.tasks.reverse().forEach((task) => {
                     appendTaskToList(task)
                 })
@@ -4993,7 +4993,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //添加定时任务
+    // Add scheduled task
     const handleSubmitTask = async (e) => {
         e.preventDefault()
         const form = e.target
@@ -5030,7 +5030,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 })
                 handleInitialScheduledTasks()
 
-                //清除字段
+                // Clear fields
                 form.id.value = ''
                 form.date_time.value = ''
                 form.repeatDaily.checked = false
@@ -5058,7 +5058,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             clearAddTaskForm()
             const form = document.querySelector('#AddTaskForm')
             form.id.value = id
-            //拿取最新数据
+            // Get latest data
             try {
                 const res = await fetchWithTimeout(`${KANO_baseURL}/get_task?id=${id}`, {
                     headers: {
@@ -5067,9 +5067,9 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     },
                 })
                 const json = await res.json()
-                //预填充表单
+                // Pre-fill form
                 setAddTaskForm(json)
-                form.id.disabled = true // 禁止修改 ID
+                form.id.disabled = true // Disable ID edit
                 setTimeout(() => {
                     showModal('#AddTaskModal')
                 }, 100);
@@ -5089,7 +5089,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const fillAction = async (e, actionName) => {
         e.preventDefault()
-        //动作列表
+        // Action list
         const actionList = {
             "forward_device_info": {
                 "kano_do_sms_forward_action": "1"
@@ -5237,7 +5237,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         phone.value = data.Number
                         text.value = gsmDecode(data.MessageBody.trim())
                     } catch (e) {
-                        console.log("taskAction内容解析失败", e)
+                        console.log('taskAction parse failed', e)
                     }
                 }
                 btn.onclick = () => {
@@ -5262,7 +5262,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         return createToast(t("action_forward_dev_info_notice") + "<br>" + t("action_forward_dev_info_notice_fail"), "pink", 5000)
                     }
                 } catch (e) {
-                    console.error("获取短信转发信息失败：", e)
+                    console.error('Failed to get SMS forward info:', e)
                     return createToast(t('client_mgmt_fetch_error', 'pink'))
                 }
             }
@@ -5272,7 +5272,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //拖拽Upload插件
+    // Drag-upload plugin
     (() => {
         const dropZone = document.getElementById('pluginDropZone');
 
@@ -5303,7 +5303,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     })()
 
 
-    //插件Upload
+    // Plugin upload
     const handlePluginFileUpload = (event) => {
         return new Promise((resolve, reject) => {
             const file = event.target.files[0];
@@ -5331,7 +5331,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 let match;
                 let msgs = ''
                 while ((match = pluginRegex.exec(str)) !== null) {
-                    console.log("匹配到一个插件集");
+                    console.log('Matched a plugin set');
 
                     matched = true;
 
@@ -5358,7 +5358,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     createToast(t('toast_add_success_save_to_submit'), 'green');
                     resolve({ msg: 'added as plugin set' });
                 } else {
-                    // 不含插件头尾，手动包裹整个为一个插件
+                    // No plugin header/footer, manually wrap as one plugin
                     const pluginName = file.name;
                     custom_head.value += `<!-- [KANO_PLUGIN_START] ${pluginName} -->\n${str}\n<!-- [KANO_PLUGIN_END] ${pluginName} -->\n\n\n\n`;
                     if (!plugins.some(el => el.name === pluginName)) {
@@ -5378,7 +5378,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         })
     }
 
-    //插件导出
+    // Plugin export
     const pluginExport = async () => {
         try {
             const { text } = await (await fetch(`${KANO_baseURL}/get_custom_head`, {
@@ -5399,7 +5399,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         document.querySelector('#pluginFileInput')?.click()
     }
 
-    //初始化Plugins
+    // Initialize plugins
     let sortable_plugin = null
     let plugins = []
 
@@ -5425,7 +5425,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             deleteBtn.onclick = () => {
                 plugins.splice(index, 1)
                 createToast(`${t('deleted_plugin')}：${item.name}，${t('save_to_apply')}！`)
-                renderPluginList() // 重新渲染
+                renderPluginList() // re-render
             }
 
             const sortBtn = document.createElement('div')
@@ -5497,11 +5497,11 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             }
         }
 
-        //挂载
+        // Mount
         window.disablePlugin = disablePlugin
         window.enablePlugin = enablePlugin
 
-        // 初始化或重新绑定拖拽
+        // Initialize or rebind drag
         if (sortable_plugin && sortable_plugin.destroy) {
             sortable_plugin.destroy()
             sortable_plugin = null
@@ -5513,16 +5513,16 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             onEnd: (evt) => {
                 const moved = plugins.splice(evt.oldIndex, 1)[0]
                 plugins.splice(evt.newIndex, 0, moved)
-                renderPluginList() // 拖动后重新渲染
+                renderPluginList() // re-render after drag
             }
         })
 
-        // 同步 textarea 内容
+        // Sync textarea content
         custom_head.value = plugins.map(item =>
             `<!-- [KANO_PLUGIN_START] ${item.name} -->\n${item.content}\n<!-- [KANO_PLUGIN_END] ${item.name} -->\n\n\n\n`
         ).join('')
 
-        // 同步Plugin count
+        // Sync plugin count
         const PLUGINS_NUM = document.querySelector('#PLUGINS_NUM')
         if (PLUGINS_NUM) PLUGINS_NUM.innerHTML = plugins.length
     }
@@ -5546,7 +5546,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 const custom_head = document.querySelector('#custom_head')
                 custom_head.value = text || ''
 
-                // 提取插件
+                // Extract plugins
                 const pluginRegex = /<!--\s*\[KANO_PLUGIN_START\]\s*(.*?)\s*-->([\s\S]*?)<!--\s*\[KANO_PLUGIN_END\]\s*\1\s*-->/g;
 
                 plugins = []
@@ -5558,7 +5558,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     plugins.push({ name, content, disabed })
                 }
 
-                renderPluginList() // 初始化渲染
+                renderPluginList() // initial render
             } catch (e) {
                 console.error(e)
                 createToast(t('toast_get_plugin_failed'), 'red')
@@ -5600,7 +5600,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     const handleDisableFOTA = async () => {
         const AD_RESULT = document.querySelector('#AD_RESULT')
         try {
-            //看看是不是On了高级功能
+            // Check if advanced features are on
             AD_RESULT.innerHTML = `<strong class="green" style="font-size: 12px;">${t('disable_update_ing')}...</strong>`
             if (await checkAdvancedFunc()) {
                 createToast(t('toast_advanced_checked'), '')
@@ -5665,7 +5665,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             if (result.success) {
                 AD_RESULT.innerHTML = `<strong style="font-size: 12px;">${t('your_boot_slot')}：${ab}，${t('downloading')}：boot_${ab}.img...</strong>`
             }
-            //开始Download
+            // Start download
             const outLink = `/api/uploads/${outFile}`
             const a = document.createElement('a')
             a.href = outLink
@@ -5715,7 +5715,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             }
 
             if (cellularSpeedFlag) {
-                // 停止测速
+                // Stop speed test
                 cellularSpeedController?.abort();
                 createToast(t('speedtest_aborted'), 'orange');
                 cellularSpeedFlag = false;
@@ -5723,7 +5723,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 return;
             }
 
-            // 启动测速
+            // Start speed test
             cellularSpeedFlag = true;
             cellularSpeedController = new AbortController();
 
@@ -5745,7 +5745,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
             const readTasks = [];
 
-            // 分批发起测速请求，并立即开始读取
+            // Batch speed test requests and start reading immediately
             for (let i = 0; i < threadNum; i++) {
                 const testUrl = `${KANO_baseURL}/proxy/--${url}?t=${Math.random()}`;
 
@@ -5771,19 +5771,19 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                             }
                         }
                     } catch (_) {
-                        // 忽略异常
+                        // Ignore exceptions
                     }
                 })();
 
                 readTasks.push(task);
 
-                // 批处理延迟，避免同时Connect过多
+                // Batch delay to avoid too many connections
                 if ((i + 1) % batchSize === 0) {
                     await new Promise(res => setTimeout(res, 100));
                 }
             }
 
-            // 每 100ms 更新一次速度
+            // Update speed every 100ms
             const interval = setInterval(() => {
                 const now = performance.now();
                 const deltaTime = (now - lastUpdateTime) / 1000;
@@ -5799,7 +5799,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 lastBytes = totalBytes;
             }, 100);
 
-            // 响应慢提示
+            // Slow response warning
             setTimeout(() => {
                 if (!firstResponseReceived && cellularSpeedFlag) {
                     resultEl.innerHTML += `<br/><span>${t('cellular_speed_test_slow')}</span>`;
@@ -5809,7 +5809,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             try {
                 await Promise.all(readTasks);
             } catch (_) {
-                // 忽略中断异常
+                // Ignore abort exceptions
             }
 
             clearInterval(interval);
@@ -5825,10 +5825,10 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 resultEl.innerHTML += `<br/>${t('speedtest_avg_speed')}: ${avgSpeed.toFixed(2)} Mbps`;
             }
 
-            // 循环测速
+            // Loop speed test
             if (!isCellularTestLooping) return;
             loopCellularTimer = setTimeout(() => {
-                if (isCellularTestLooping) startCellularTestRealtime(); // 不传 e
+                if (isCellularTestLooping) startCellularTestRealtime(); // no event param
             }, 500);
         } finally {
             if (isSingleRun) {
@@ -5904,7 +5904,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //从插件商店Download插件并安装
+    // Download and install plugin from store
     const installPluginFromStore = async (url, name) => {
         const { close, el } = createFixedToast('download_ing', t('download_ing'))
         try {
@@ -5918,7 +5918,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             }
             const text = await res.text()
             createToast(t('install_ing'), 'pink', 3000, () => {
-                close() // CloseDownload中提示
+                close() // close download toast
             })
             await handlePluginFileUpload({
                 target: {
@@ -5932,10 +5932,10 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //渲染插件
+    // Render plugins
     const renderPluginItems = (items, download_url) => {
         const items_el = document.querySelector('#plugin_store .plugin-items')
-        items_el.innerHTML = '' //清空之前的内容
+        items_el.innerHTML = '' // clear previous content
         items.forEach(plugin => {
             const li = document.createElement('li')
             li.className = 'plugin-item'
@@ -5957,19 +5957,19 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     }
 
     const scrollToElementWithScrollContainerAndElement = ({ scrollContainer, el, highLightKeyWord }) => {
-        // 计算 el 相对于 scrollContainer 的位置
+        // Calculate el position relative to scrollContainer
         const topOffset = -15
         const elTop = el.getBoundingClientRect().top;
         const containerTop = scrollContainer.getBoundingClientRect().top;
         const relativeTop = elTop - containerTop + scrollContainer.scrollTop + topOffset;
 
-        // 平滑滚动到该位置
+        // Smooth scroll to position
         scrollContainer.scrollTo({
             top: relativeTop,
             behavior: 'smooth'
         });
         if (highLightKeyWord) {
-            //高亮此插件
+            // Highlight this plugin
             let outerEl = el.parentElement
             outerEl.style.boxShadow = '0 0 4px 1px yellow'
             setTimeout(() => {
@@ -5978,7 +5978,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //Search插件，滚动到合适位置
+    // Search plugin, scroll to position
     const scrollToElement = (elementsName = '#plugin_store .plugin-title', keyword, highLightKeyWord = true) => {
         let found = false
         let foundList = []
@@ -5986,7 +5986,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         document.querySelectorAll(elementsName).forEach(el => {
             const find = el.textContent?.toLowerCase()?.includes(keyword?.toLowerCase())
             if (find) {
-                // 找到最近的可滚动容器
+                // Find nearest scrollable container
                 scrollContainer = el.parentElement;
                 while (scrollContainer && scrollContainer.scrollHeight <= scrollContainer.clientHeight) {
                     scrollContainer = scrollContainer.parentElement;
@@ -6019,7 +6019,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         return found
     }
 
-    //插件市场
+    // Plugin market
     const plugin_store_modal = document.querySelector('#plugin_store')
     plugin_store_modal.onclick = (e) => {
         e.stopPropagation()
@@ -6040,7 +6040,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     const pluginsResultRes = []
     let timer_input = null
     plugin_store.onclick = (e) => {
-        //隐藏Plugins模态框
+        // Hide plugins modal
         const pluginModal = document.querySelector('#PluginModal')
         pluginModal.style.display = 'none'
 
@@ -6104,7 +6104,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         </li>
         `
         const total = document.querySelector('#plugin_store .total')
-        //加载插件
+        // Load plugins
         pluginsResultRes.length = 0
         fetchWithTimeout(`${KANO_baseURL}/plugins_store`)
             .then(res => res.json())
@@ -6114,7 +6114,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 if (data && data.content && data.content.length > 0) {
                     pluginsResultRes.push(...data.content)
                     total.innerHTML = `${t('plugin_modal_num')}: ${data.content.length}`
-                    //分页
+                    // Pagination
                     const pageSize = 10
                     const totalPages = Math.ceil(data.content.length / pageSize)
                     let pageNum = 0
@@ -6124,7 +6124,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     total_page_el.innerHTML = totalPages
                     renderPluginItems(data.content.slice(pageNum * pageSize, pageNum * pageSize + pageSize), download_url)
 
-                    //下一页
+                    // Next page
                     const nextPageBtn = document.querySelector('#plugin_store_next_page')
                     nextPageBtn.style.backgroundColor = totalPages <= 1 ? 'var(--dark-btn-disabled-color)' : ''
                     nextPageBtn.onclick = () => {
@@ -6144,7 +6144,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         renderPluginItems(data.content.slice(pageNum * pageSize, pageNum * pageSize + pageSize), download_url)
                     }
 
-                    //上一页
+                    // Previous page
                     const prevageBtn = document.querySelector('#plugin_store_prev_page')
                     prevageBtn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
                     prevageBtn.onclick = () => {
@@ -6164,7 +6164,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         renderPluginItems(data.content.slice(pageNum * pageSize, pageNum * pageSize + pageSize), download_url)
                     }
 
-                    //Search插件
+                    // Search plugins
                     const pluginSearchBtn = document.querySelector('#pluginSearchBtn')
                     pluginSearchBtn.onclick = () => {
                         const pluginSearchInput = document.querySelector('#pluginSearchInput')
@@ -6183,7 +6183,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                             return scrollToFirstPage()
                         }
 
-                        //寻找存在的页面页码并跳转
+                        // Find existing page number and jump
 
                         const cur_index = data.content.findIndex(plugin => {
                             return plugin.name?.toLowerCase()?.includes(keyword?.toLowerCase())
@@ -6217,7 +6217,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     plugin_search_reset_btn.onclick = () => {
                         const pluginSearchInput = document.querySelector('#pluginSearchInput')
                         pluginSearchInput.value = '';
-                        pluginSearchBtn.click() //触发Search
+                        pluginSearchBtn.click() // trigger search
                     }
 
                 } else {
@@ -6247,7 +6247,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             AT_RESULT.innerHTML = t('toast_running_please_wait')
             try {
                 const res = await runShellWithRoot(`/data/data/com.minikano.f50_sms/files/imei_reader`)
-                //清空imei展示缓存
+                // Clear IMEI display cache
                 resetDiagImeiCache()
                 AT_RESULT.innerHTML = `<p style="font-weight:bolder;overflow:hidden" onclick="copyText(event)">${res.content.replaceAll('\n', "<br>")}</p>`
             } catch {
@@ -6288,7 +6288,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
             const delCmd = (useV6) => addCmd(useV6).replace('-A', '-D');
 
-            // 删除当前系统中的 DROP 规则
+            // Delete current system DROP rules
             const cleanupCmd = (useV6) => {
                 const bin = useV6 ? 'ip6tables' : 'iptables';
                 return `for table in filter nat mangle raw security; do ${bin}-save -t $table | grep -- '--dport ${port} .*DROP' | sed 's/-A/-D/' | while read line; do ${bin} $line; done; done`;
@@ -6468,7 +6468,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         createToast(t("toast_oprate_success"), 'green')
     }
 
-    //高铁模式
+    // High-speed rail mode
     handleHighRailMode = async (e) => {
         if (!(await initRequestData())) {
             return null
@@ -6478,13 +6478,13 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         const isEnabled = target.dataset.enabled === '1'
         try {
             if (isEnabled) {
-                //Close高铁模式
+                // Disable high-speed rail mode
                 const res = await handleAT(HighRailModeAT + "0", true)
                 if (!res) throw new Error('Failed to enable High Rail Mode')
                 target.dataset.enabled = '0'
                 target.style.backgroundColor = ''
             } else {
-                //On高铁模式
+                // Enable high-speed rail mode
                 const res = await handleAT(HighRailModeAT + "1", true)
                 if (!res) throw new Error('Failed to enable High Rail Mode')
                 target.dataset.enabled = '1'
@@ -6496,7 +6496,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //初始化休眠选项卡     
+    // Initialize sleep tab     
     let sleepToggle = null;
     let lastSleepValue = '30'; // remember last non-disabled value
     const initSleepTime = async () => {
@@ -6529,7 +6529,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 }
             })
         }
-        // 从设备获取数据
+        // Get data from device
         const { sleep_sysIdleTimeToSleep } = await getData(new URLSearchParams({
             cmd: "sleep_sysIdleTimeToSleep"
         }))
@@ -6582,9 +6582,9 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //初始化APN信息框内容
+    // Initialize APN info box content
     const renderAPNViewModalContet = (res = {}) => {
-        // 信息框初始化
+        // Info box initialization
         const APNViewModal = document.querySelector('#APNViewModal')
         if (APNViewModal) {
             const profileNameEl = APNViewModal.querySelector('input[name="profile_name"]')
@@ -6615,9 +6615,9 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //初始化APN修改框内容
+    // Initialize APN edit box content
     const renderAPNEditModalContet = (res = {}) => {
-        // 信息框初始化
+        // Info box initialization
         const APNEditModal = document.querySelector('#APNEditModal')
         if (APNEditModal) {
             const profileNameEl = APNEditModal.querySelector('input[name="profile_name"]')
@@ -6648,7 +6648,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //APN手动与自动切换的点击事件
+    // APN manual/auto switch click event
     const onChangeIsAutoFrofile = async (flag) => {
         const autoProfileEl = document.querySelector('#APNManagementForm #autoProfileEl')
         const profileEl = document.querySelector('#APNManagementForm #profileEl')
@@ -6663,7 +6663,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    // APN 编辑框数据提取
+    // APN edit box data extraction
     const getAPNEditFormData = ({ index = 0 }) => {
         const APNEditModal = document.querySelector('#APNEditModal')
 
@@ -6757,7 +6757,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         btn.style.background = ""
         const renderData = async () => {
             showModal('#APNManagementModal')
-            // 加载数据
+            // Load data
             const res = await getAPNData()
 
             const APNManagementFormEl = document.querySelector('#APNManagementForm')
@@ -6798,7 +6798,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 autoProfile.appendChild(option)
             }
 
-            //手动配置文件下拉列表渲染
+            // Render manual profile dropdown
             const profile = APNManagementForm.querySelector('select[name="profile"]')
 
             if (profile) {
@@ -6811,10 +6811,10 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     const configs_v6 = res["ipv6_APN_config" + i]
                     if (configs && configs.length) {
                         const option = document.createElement('option')
-                        option.value = configs[0] //第一个值为APN名称
+                        option.value = configs[0] // first value is APN name
                         option.textContent = configs[0]
                         profile.appendChild(option)
-                        // 选择当前使用的配置
+                        // Select current active profile
                         if (configs[0] == (res.m_profile_name || res.profile_name)) {
                             selectedIndex = i
                         }
@@ -6826,7 +6826,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 profile.selectedIndex = selectedIndex
             }
 
-            //渲染APN列表（预览）
+            // Render APN list (preview)
             renderAPNViewModalContet(res)
 
             //Saveprofile
@@ -6842,7 +6842,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
                     let index = manualProfileEl.selectedIndex
 
-                    // 如果是添加配置的话，index应该是列表总数(+1)
+                    // If adding profile, index should be list count+1
                     if (method == "add") {
                         const options = APNManagementForm.querySelectorAll('#manualProfile option')
                         if (options.length) {
@@ -6863,7 +6863,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                             createToast(t('toast_save_success'), 'green')
                             closeModal('#APNEditModal', 300, () => {
                                 showModal('#APNManagementModal')
-                                // 重新加载
+                                // Reload
                                 renderData()
                             })
                         } else {
@@ -6875,8 +6875,8 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 }
             }
 
-            // 手动模式
-            // 绑定添加的事件
+            // Manual mode
+            // Bind add event
             const addAPNBtn = APNManagementForm.querySelector('#addAPNProfile')
             if (addAPNBtn) addAPNBtn.onclick = async (e) => {
                 e.preventDefault()
@@ -6888,7 +6888,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 }
                 closeModal('#APNManagementModal', 300, () => {
                     showModal('#APNEditModal')
-                    //异步加载数据
+                    // Async load data
                     renderAPNEditModalContet({
                         profile_name: "",
                         apn_wan_apn: "",
@@ -6905,7 +6905,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 })
             }
 
-            // 绑定编辑的事件
+            // Bind edit event
             const editAPNBtn = APNManagementForm.querySelector('#editAPNProfile')
             if (editAPNBtn) editAPNBtn.onclick = async (e) => {
                 e.preventDefault()
@@ -6917,7 +6917,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 }
                 closeModal('#APNManagementModal', 300, () => {
                     showModal('#APNEditModal')
-                    // 获取当前选中的配置文件index
+                    // Get currently selected profile index
                     const profileEl = APNManagementForm.querySelector('#profileEl select[name="profile"]')
                     if (profileEl) {
                         const index = profileEl.selectedIndex
@@ -6942,7 +6942,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 })
             }
 
-            // 绑定删除的事件
+            // Bind delete event
             const delAPNBtn = APNManagementForm.querySelector('#delAPNProfile')
             if (delAPNBtn) delAPNBtn.onclick = async (e) => {
                 e.preventDefault()
@@ -6950,7 +6950,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     createToast(t("toast_need_login"), 'red');
                     return false;
                 }
-                // 获取当前选中的配置文件index
+                // Get currently selected profile index
                 const profileEl = APNManagementForm.querySelector('#profileEl select[name="profile"]')
                 if (profileEl) {
                     const index = profileEl.selectedIndex
@@ -6958,7 +6958,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         const res = await deleteAPNProfile(index)
                         if (res && res.result == "success") {
                             createToast(t('toast_delete_success'), 'green')
-                            // 重新加载
+                            // Reload
                             renderData()
                         } else {
                             createToast(t('toast_delete_failed'), 'red')
@@ -6969,7 +6969,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 }
             }
 
-            //绑定切换自动手动事件
+            // Bind auto/manual toggle event
             const submitBtn = APNManagementFormEl.querySelector('button[name="submit"]')
             if (submitBtn && APNManagementFormEl) {
                 submitBtn.onclick = async (e) => {
@@ -7016,7 +7016,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     }
     initAPNManagement()
 
-    //查看APN
+    // View APN
     const onViewAPNProfile = async (e) => {
         e.preventDefault()
         if (!(await initRequestData())) {
@@ -7025,7 +7025,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
         closeModal('#APNManagementModal', 300, () => {
             showModal('#APNViewModal')
-            //异步加载数据
+            // Async load data
 
         })
     }
@@ -7051,7 +7051,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //usb管理
+    // USB management
     let stopRefreshUSBStatusInterval = null
     const initUSBStatusManagementBtn = async () => {
         const btn = document.querySelector('#USBStatusManagement')
@@ -7062,7 +7062,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
         btn.onclick = async () => {
             showModal('#USBStatusModal')
-            //加载数据
+            // Load data
             const el = document.querySelector('#USBStatusModal .content')
             if (!el) return
             el.innerHTML = `<div style="text-align:center;padding:20px 0">Loading...</div>`
@@ -7100,7 +7100,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 </div>
                 `)
 
-            //文件列表
+            // File list
             let filesEl = document.querySelectorAll('#kano_edit_ufi_media_file_list_message .kano_uploads_file_item')
             filesEl.forEach(el => {
                 let data = el.dataset.item
@@ -7212,12 +7212,12 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         md.id && showModal(md.id)
     }
 
-    //免密码登录
+    // Passwordless login
     const noPassLogin = () => {
         const method = "0"
         const password = "Wa@9w+YWRtaW4="
 
-        //下面不用改
+        // No changes below
         const loginMethodEl = document.querySelector("#login_method")
         const label = document.querySelector("#token_div_label2")
         const tokenEl = document.querySelector("#PWD_BLK")
@@ -7229,7 +7229,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         createToast(t('toast_no_pass_login_fill_success'), 'green')
     }
 
-    //切换密码显示
+    // Toggle password visibility
     const switchPassInputShow = (e, id) => {
         e.preventDefault()
         const target = e.currentTarget
@@ -7256,7 +7256,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         sumEl.textContent = "N/A"
         avgEl.textContent = "N/A"
         tbody.innerHTML = '<tr style="cursor: pointer;"><td colspan="2" data-i18n="no_data">' + t('no_data') + '</td></tr>'
-        //默认日期间隔10天
+        // Default date interval 10 days
         const startTimeEl = document.querySelector('#start_time_data_usage_history')
         const endTimeEl = document.querySelector('#end_time_data_usage_history')
         const today = new Date()
@@ -7347,23 +7347,23 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         sumEl.textContent = sumBytes == 0 ? '0 B' : formatBytes(sumBytes)
         avgEl.textContent = avgBytes == 0 ? '0 B' : formatBytes(avgBytes)
 
-        //更新图表
+        // Update chart
         updateDataHistoryChart({
             items: res, sum: sumBytes, avg: avgBytes
         })
     }
 
-    //官方后台貌似对PIN超出次数的判定有问题，PIN次数用完后提示输入PUK，此时换卡也不会变更状态，用户只能恢复出厂Settings，所以此功能不会继续实现
+    // Official backend PIN lockout detection has issues, so this feature won't be implemented
     // let simCardPinDisabled = false
     // const initSimCardPin = async () => {
     //     if (!initRequestData()) {
     //         return null
     //     }
-    //     //检测是否有SIM卡锁定
+    //     // Check if SIM card is locked
     //     const res = await getSimPinStatus()
 
     //     if (res.pinnumber <= 0 || res.modem_main_state == "modem_waitpuk") {
-    //         createToast("您的PIN次数已用尽，请前往官方后台输入PUK码解锁", 'red', 10000)
+    //         createToast("PIN attempts exhausted, enter PUK in official backend", 'red', 10000)
     //         return null
     //     }
 
@@ -7371,44 +7371,44 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     //         return null
     //     }
 
-    //     //暂停数据Refresh
+    //     // Pause data refresh
     //     stopRefresh()
 
     //     const md = createModal({
     //         name: "kano_pin_modal",
     //         isMask: true,
-    //         title: "请输入SIM卡PIN码",
+    //         title: "Enter SIM PIN",
     //         maxWidth: "400px",
     //         contentStyle: "font-size:12px",
     //         onClose: () => {
     //             return true
     //         },
     //         onConfirm: async () => {
-    //             //再次获取数据
+    //             // Get data again
     //             const res1 = await getSimPinStatus()
     //             if (res1.pinnumber <= 0) {
-    //                 createToast("您的PIN次数已用尽，请前往官方后台输入PUK码解锁", 'red')
+    //                 createToast("PIN attempts exhausted, enter PUK in official backend", 'red')
     //                 return false
     //             }
     //             const el = document.querySelector('#simPinInput')
     //             if (!el) {
-    //                 console.error("没有找到#simPinInput元素")
+    //                 console.error("simPinInput element not found")
     //                 return false
     //             }
     //             const pinNumber = el.value.trim()
     //             if (pinNumber.length < 4) {
-    //                 createToast("PIN不得小于4位数", 'pink')
+    //                 createToast("PIN must be at least 4 digits", 'pink')
     //                 return false
     //             }
-    //             //解锁
+    //             // Unlock
     //             if (simCardPinDisabled) {
-    //                 createToast("正在解锁中，请勿重复点击", 'pink')
+    //                 createToast("Unlocking, please wait", 'pink')
     //                 return false
     //             }
 
     //             simCardPinDisabled = true
 
-    //             const { close: closeLoadingEl } = createFixedToast("unlocking_toast", '解锁中...')
+    //             const { close: closeLoadingEl } = createFixedToast("unlocking_toast", 'Unlocking...')
     //             try {
     //                 if (!(await initRequestData())) {
     //                     return false
@@ -7424,13 +7424,13 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     //                 })).json()
 
     //                 if (res1.result == 'success') {
-    //                     createToast("PIN解锁成功", 'green')
+    //                     createToast("PIN unlock successful", 'green')
     //                     startRefresh()
     //                     return true
     //                 } else {
-    //                     createToast("PIN解锁失败，请重试", 'red')
+    //                     createToast("PIN unlock failed, retry", 'red')
     //                 }
-    //                 //更新Pin次数
+    //                 // Update PIN attempts
     //                 const pinNumEl = document.querySelector('#pinNumber')
     //                 const res_refresh = await getSimPinStatus()
     //                 if (pinNumEl) {
@@ -7446,14 +7446,14 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     //             }
     //         },
     //         content: `<div class="content" style="font-size:12px;margin:10px 0;padding:0 4px;">
-    //    <p style="color:red;margin-top:0" >PIN 剩余次数：<strong id="pinNumber">${res.pinnumber}</strong></p>
-    //    <input type="password" id="simPinInput" placeholder="SIM卡PIN码" style="width:100%;padding:8px">
+    //    <p style="color:red;margin-top:0" >PIN attempts left: <strong id="pinNumber">${res.pinnumber}</strong></p>
+    //    <input type="password" id="simPinInput" placeholder="SIM PIN" style="width:100%;padding:8px">
     // </div>`
     //     })
     //     showModal(md.id)
     // }
     // initSimCardPin()
-    //挂载方法到window
+    // Mount methods to window
     const methods = {
         resetUsageModalData,
         openDataUsageHistory,
@@ -7567,7 +7567,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     }
     catch { }
 
-    // 初始化语言包
+    // Initialize language pack
     (() => {
         const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
         const langToLoad = savedLang || detectBrowserLang();

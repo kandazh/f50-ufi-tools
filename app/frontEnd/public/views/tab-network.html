@@ -11,10 +11,10 @@
                     </div>
                 </div>
             </div>
-            <!-- 锁频锁基站 -->
+            <!-- Lock band/cell -->
             <div class="kano_function_main band-lock-container">
                 <div class="title" style="margin: 6px 0 ;">
-                    <strong data-i18n="lock_band_title">🔒 锁定频段</strong>
+                    <strong data-i18n="lock_band_title">🔒 Lock Bands</strong>
                     <div style="display: inline-block" id="collapse_lkband_btn"></div>
                 </div>
                 <div class="collapse" id="collapse_lkband" style="overflow: visible;margin: 0">
@@ -25,9 +25,9 @@
                                     <tr>
                                         <th><input type="checkbox" id="selectAllBand"></th>
                                         <th>Band</th>
-                                        <th data-i18n="col_freq_range">频率范围 (MHz)</th>
-                                        <th data-i18n="col_mode">制式</th>
-                                        <th data-i18n="col_operator">运营商</th>
+                                        <th data-i18n="col_freq_range">Freq Range (MHz)</th>
+                                        <th data-i18n="col_mode">Mode</th>
+                                        <th data-i18n="col_operator">Carrier</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bandTable">
@@ -36,156 +36,156 @@
                                         <td>B1</td>
                                         <td>2100</td>
                                         <td>FDD-LTE</td>
-                                        <td data-i18n="carrier_unicom_telecom">联通/电信</td>
+                                        <td data-i18n="carrier_unicom_telecom">Unicom/Telecom</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="3"></td>
                                         <td>B3</td>
                                         <td>1800</td>
                                         <td>FDD-LTE</td>
-                                        <td data-i18n="carrier_all">三大运营商</td>
+                                        <td data-i18n="carrier_all">All Carriers</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="5"></td>
                                         <td>B5</td>
                                         <td>850</td>
                                         <td>FDD-LTE</td>
-                                        <td data-i18n="carrier_telecom">电信</td>
+                                        <td data-i18n="carrier_telecom">Telecom</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="8"></td>
                                         <td>B8</td>
                                         <td>900</td>
                                         <td>FDD-LTE</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="34"></td>
                                         <td>B34</td>
                                         <td>2000</td>
                                         <td>TD-LTE</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="38"></td>
                                         <td>B38</td>
                                         <td>2600</td>
                                         <td>TD-LTE</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="39"></td>
                                         <td>B39</td>
                                         <td>1900</td>
                                         <td>TD-LTE</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="40"></td>
                                         <td>B40</td>
                                         <td>2300</td>
                                         <td>TD-LTE</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="4G" data-band="41"></td>
                                         <td>B41</td>
                                         <td>2500–2690</td>
                                         <td>TD-LTE</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="5G" data-band="1"></td>
                                         <td>N1</td>
                                         <td>1920–1980 / 2110–2170</td>
                                         <td>FDD</td>
-                                        <td data-i18n="carrier_unicom_telecom">联通/电信</td>
+                                        <td data-i18n="carrier_unicom_telecom">Unicom/Telecom</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="5G" data-band="5"></td>
                                         <td>N5</td>
                                         <td>824–849 / 869–894</td>
                                         <td>FDD</td>
-                                        <td data-i18n="carrier_telecom">电信</td>
+                                        <td data-i18n="carrier_telecom">Telecom</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="5G" data-band="8"></td>
                                         <td>N8</td>
                                         <td>880–915 / 925–960</td>
                                         <td>FDD</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="5G" data-band="28"></td>
                                         <td>N28</td>
                                         <td>703–748 / 758–803</td>
                                         <td>FDD</td>
-                                        <td data-i18n="carrier_broadcast_mobile">广电/移动</td>
+                                        <td data-i18n="carrier_broadcast_mobile">CBN/Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="5G" data-band="41"></td>
                                         <td>N41</td>
                                         <td>2515–2675</td>
                                         <td>TDD</td>
-                                        <td data-i18n="carrier_mobile">移动</td>
+                                        <td data-i18n="carrier_mobile">Mobile</td>
                                     </tr>
                                     <tr>
                                         <td><input type="checkbox" data-type="5G" data-band="78"></td>
                                         <td>N78</td>
                                         <td>3300–3600</td>
                                         <td>TDD</td>
-                                        <td data-i18n="carrier_unicom_telecom">联通/电信</td>
+                                        <td data-i18n="carrier_unicom_telecom">Unicom/Telecom</td>
                                     </tr>
                                 </tbody>
                             </table>
                             <button id="lockBandBtn" type="submit" class="btn"
                                 style="width: 100%;margin-top: 6px;padding: 8px;font-size: 14px;"
-                                data-i18n="btn_lock_band">锁频段!</button>
+                                data-i18n="btn_lock_band">Lock Bands!</button>
                         </form>
                         <button onclick="unlockAllBand()" class="btn"
                             style="width: 100%;margin-top: 6px;padding: 8px;font-size: 14px;"
-                            data-i18n="btn_unlock_band">解除锁频段!</button>
+                            data-i18n="btn_unlock_band">Unlock Bands!</button>
                     </div>
                 </div>
             </div>
             <div class="kano_function_main freq-lock-container">
                 <div class="title" style="margin: 6px 0;">
-                    <strong data-i18n="lock_cell_title">🔒 锁定基站</strong>
+                    <strong data-i18n="lock_cell_title">🔒 Lock Cell</strong>
                     <div style="display: inline-block;" id="collapse_lkcell_btn"></div>
                 </div>
                 <div class="collapse" id="collapse_lkcell" style="overflow: visible;margin: 0;">
                     <div class="collapse_box">
                         <div class="title">
                             <div>
-                                <i style="font-size: 12px;" data-i18n="cell_tip">🚀 注意，选错基站可能会导致信号不稳定/无信号等问题
+                                <i style="font-size: 12px;" data-i18n="cell_tip">🚀 Warning: wrong cell may cause unstable/no signal
                                     🚀</i>
                                 <br>
-                                <i style="font-size: 12px;" data-i18n="cell_tip1">提示：暂停刷新后可以依次锁定多个基站</i>
+                                <i style="font-size: 12px;" data-i18n="cell_tip1">Tip: pause refresh to lock multiple cells</i>
                             </div>
                         </div>
                         <div class="title" style="margin: 10px 0 ;margin-top: 20px;"><strong
-                                data-i18n="locked_cell">已锁基站</strong></div>
+                                data-i18n="locked_cell">Locked Cells</strong></div>
                         <table class="nice-table" id="LOCKED_CELL_FORM">
                             <thead>
                                 <tr>
-                                    <th data-i18n="network_type">类型</th>
+                                    <th data-i18n="network_type">Type</th>
                                     <th>PCI</th>
-                                    <th data-i18n="network_freq">频率</th>
+                                    <th data-i18n="network_freq">Freq</th>
                                 </tr>
                             </thead>
                             <tbody>
                             </tbody>
                         </table>
                         <div class="title" style="display: block;margin: 10px 0;">
-                            <strong data-i18n="current_cell" style="margin-right: 10px;">当前基站信息：</strong>
+                            <strong data-i18n="current_cell" style="margin-right: 10px;">Current Cell Info:</strong>
                             <button id="SELECT_CURRENT_CELL_BTN" style="margin:0"
-                                data-i18n="select_current_cell">选择当前基站</button>
+                                data-i18n="select_current_cell">Select Current Cell</button>
                         </div>
                         <table class="nice-table">
                             <thead>
                                 <tr>
-                                    <th data-i18n="network_band">频段</th>
-                                    <th data-i18n="network_freq">频率</th>
+                                    <th data-i18n="network_band">Band</th>
+                                    <th data-i18n="network_freq">Freq</th>
                                     <th>PCI</th>
                                     <th>RSRP</th>
                                     <th>SINR</th>
@@ -196,17 +196,17 @@
                             </tbody>
                         </table>
                         <div class="title" style="margin: 10px 0 ;">
-                            <strong data-i18n="cell_list">基站列表</strong>
+                            <strong data-i18n="cell_list">Cell List</strong>
                             <button class="btn" data-toggle="1" id="lkCellRefreshBtn"
                                 onclick="toggleCellInfoRefresh(event)" style="padding: 4px;margin-left: 10px;"
-                                data-i18n="stop_refresh">停止刷新</button>
+                                data-i18n="stop_refresh">Stop Refresh</button>
                         </div>
                         <form id="cellForm" onsubmit="submitCellForm(event)" style="overflow-x: auto;">
                             <table class="nice-table">
                                 <thead>
                                     <tr>
-                                        <th data-i18n="network_band">频段</th>
-                                        <th data-i18n="network_freq">频率</th>
+                                        <th data-i18n="network_band">Band</th>
+                                        <th data-i18n="network_freq">Freq</th>
                                         <th>PCI</th>
                                         <th>RSRP</th>
                                         <th>SINR</th>
@@ -218,7 +218,7 @@
                                 </tbody>
                             </table>
                             <div style="display: flex;align-items: center; padding: 8px;margin-top: 10px;">
-                                <strong data-i18n="network_select">网络选择：</strong>
+                                <strong data-i18n="network_select">Network Select:</strong>
                                 <label style="display: flex;align-items: center;margin-right: 20px;"><span>4G
                                     </span>
                                     <input style="margin: 0 0 0 8px;" type="radio" name="RAT" value="12" />
@@ -231,21 +231,21 @@
                                 <input style="padding: 8px; width: 100%;flex: 1;" id="PCI" name="PCI" type="text"
                                     placeholder="PCI">
                                 <button type="none" onclick="event.preventDefault();resetInput('PCI')"
-                                    data-i18n="plugin_search_reset_btn">重置</button>
+                                    data-i18n="plugin_search_reset_btn">Reset</button>
                             </div>
                             <div style="margin: 10px;display: flex;gap: 10px;">
                                 <input style="padding: 8px; width: 100%;flex: 1;" id="EARFCN" name="EARFCN" type="text"
                                     placeholder="EARFCN">
                                 <button type="none" onclick="event.preventDefault();resetInput('EARFCN')"
-                                    data-i18n="plugin_search_reset_btn">重置</button>
+                                    data-i18n="plugin_search_reset_btn">Reset</button>
                             </div>
                             <button type="submit" class="btn"
                                 style="margin-top: 6px;;width: 100%;padding: 8px;font-size: 14px;"
-                                data-i18n="btn_lock_cell">锁基站!</button>
+                                data-i18n="btn_lock_cell">Lock Cell!</button>
                         </form>
                         <button onclick="unlockAllCell()" class="btn"
                             style="margin-top: 6px;;width: 100%;padding: 8px;font-size: 14px;"
-                            data-i18n="btn_unlock_cell">解除锁定基站</button>
+                            data-i18n="btn_unlock_cell">Unlock Cell</button>
                     </div>
                 </div>
             </div>

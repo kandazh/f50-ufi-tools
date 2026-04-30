@@ -5,7 +5,7 @@ const isArray = (raw) => {
     } catch (e) {
         parsed = null;
     }
-    // 判断是否为数组
+    // Check if array
     if (Array.isArray(parsed)) {
         return true
     } else {
@@ -14,7 +14,7 @@ const isArray = (raw) => {
 }
 
 function gsmDecode(hex) {
-    // 去掉空格/换行，并校验
+    // Remove spaces/newlines and validate
     const clean = hex.replace(/\s+/g, '').toLowerCase();
     if (clean.length % 2 !== 0) throw new Error("Invalid hex: odd length");
 
@@ -35,7 +35,7 @@ function gsmDecode(hex) {
         codeUnits.push(codeUnit);
     }
 
-    // 拼回字符串：代理对会自动合成
+    // Rejoin string: surrogate pairs auto-merge
     return String.fromCharCode(...codeUnits);
 }
 
@@ -47,7 +47,7 @@ function openLink(link) {
     a.click()
 }
 
-//检测是否Enable高级功能
+// Check if advanced features enabled
 const checkAdvancedFunc = async () => {
     const res = await runShellWithRoot('whoami')
     if (res.content) {
@@ -66,17 +66,17 @@ function requestInterval(callback, interval) {
 function copyText(e) {
     const text = e.target.innerText;
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        // 浏览器支持
+        // Browser support
         navigator.clipboard.writeText(text).then(() => {
             createToast(t('copy_success'), 'green')
         }).catch(err => {
             createToast(t('copy_failed'), 'red')
         });
     } else {
-        // 创建text area
+        // Create text area
         let textArea = document.createElement("textarea");
         textArea.value = text;
-        // 使text area不在viewport，同时Settings不可见
+        // Position text area off-viewport and invisible
         textArea.style.position = "absolute";
         textArea.style.opacity = 0;
         textArea.style.left = "-999999px";
@@ -85,7 +85,7 @@ function copyText(e) {
         textArea.focus();
         textArea.select();
         return new Promise((res, rej) => {
-            // 执行复制命令并移除文本框
+            // Execute copy command and remove textarea
             document.execCommand('copy') ? res() : rej();
             textArea.remove();
         }).then(() => {
@@ -96,7 +96,7 @@ function copyText(e) {
     }
 }
 
-//按照信号dbm强度绘制信号强度栏(-113到-51)
+// Draw signal strength bar by dBm (-113 to -51)
 function kano_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow_low = -100, config = { g: 'green', o: 'orange', r: 'red' }, suffix = '') {
     if (!config) {
         config = { g: 'green', o: 'orange', r: 'red' }
@@ -106,8 +106,8 @@ function kano_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow
     strength = strength < min ? min : strength
     const bar = document.createElement('span')
     const strengths = Array.from({ length: Math.abs((min - max)) + 1 }, (_, i) => min + i);
-    const index = strengths.findIndex(i => i >= strength) // 找到对应的索引
-    const percent = ((index + 1) / strengths.length) * 100 // 计算百分比
+    const index = strengths.findIndex(i => i >= strength) // Find matching index
+    const percent = ((index + 1) / strengths.length) * 100 // Calculate percentage
     const progress = document.createElement('span')
     const text = document.createElement('span')
 
@@ -134,7 +134,7 @@ function kano_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow
 
 function kano_getSignalEmoji(strength) {
     const signals = ["📶 ⬜⬜⬜⬜", "📶 🟨⬜⬜⬜", "📶 🟩🟨⬜⬜", "📶 🟩🟩🟨⬜", "📶 🟩🟩🟩🟨", "📶 🟩🟩🟩🟩"];
-    return `${strength} ${signals[Math.max(0, Math.min(strength, 5))]}`; // 确保输入在 0-5 之间
+    return `${strength} ${signals[Math.max(0, Math.min(strength, 5))]}`; // Ensure input is within 0-5
 }
 
 function kano_formatTime(seconds) {
@@ -166,32 +166,32 @@ function formatBytes(bytes, needTrim = false) {
 }
 
 function decodeBase64(base64String) {
-    // 将Base64字符串分成每64个字符一组
+    // Split Base64 string into 64-char chunks
     const padding = base64String.length % 4 === 0 ? 0 : 4 - (base64String.length % 4)
     base64String += '='.repeat(padding)
 
-    // 使用atob()函数解码Base64字符串
+    // Decode Base64 using atob()
     const binaryString = window.atob(base64String)
 
-    // 将二进制字符串转换为TypedArray
+    // Convert binary string to TypedArray
     const bytes = new Uint8Array(binaryString.length)
     for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i)
 
-    // 将TypedArray转换为字符串
+    // Convert TypedArray to string
     return new TextDecoder('utf-8').decode(bytes)
 }
 
 function encodeBase64(plainText) {
-    // 将字符串转为 Uint8Array（二进制形式）
+    // Convert string to Uint8Array (binary)
     const bytes = new TextEncoder().encode(plainText)
 
-    // 把二进制转换为字符串（每个字节对应一个字符）
+    // Convert binary to string (one char per byte)
     let binaryString = ''
     for (let i = 0; i < bytes.length; i++) {
         binaryString += String.fromCharCode(bytes[i])
     }
 
-    // 使用 btoa() 编码为 Base64
+    // Encode to Base64 using btoa()
     return window.btoa(binaryString)
 }
 
@@ -237,7 +237,7 @@ function createToast(text, color, delay = 3000, fn = null) {
             }, 300);
         }, delay);
     } catch (e) {
-        console.error('创建toast失败:', e);
+        console.error('Failed to create toast:', e);
     }
 }
 
@@ -294,7 +294,7 @@ function createFixedToast(_id, text, style = {}) {
             }
         }
     } catch (e) {
-        console.error('创建toast失败:', e);
+        console.error('Failed to create toast:', e);
     }
 }
 
@@ -364,7 +364,7 @@ function hsvToHsl(h, s, v) {
     };
 }
 
-// 创建一个开关
+// Create a toggle switch
 function createSwitch({ text, value, className = '', onChange, fontSize = 14 }) {
     const container = document.createElement('div');
     container.className = 'Switch';
@@ -411,7 +411,7 @@ function createSwitch({ text, value, className = '', onChange, fontSize = 14 }) 
     label.appendChild(switchDiv);
     container.appendChild(label);
 
-    // 添加 update 方法到容器上，供外部使用
+    // Add update method to container for external use
     container.update = updateSwitchVisual;
 
     return container;
@@ -538,8 +538,8 @@ const createCollapseObserver = (boxEl = null) => {
             }
         })
         observer.observe(boxEl, {
-            attributes: true, // 监听属性变化
-            attributeFilter: ['data-name'], // 只监听 data-name 属性
+            attributes: true, // Watch attribute changes
+            attributeFilter: ['data-name'], // Only watch data-name attribute
         });
         return {
             el: boxEl
@@ -564,7 +564,7 @@ const collapseGen = (btn_id, collapse_id, storName, callback = undefined) => {
                 localStorage.setItem(storName, 'open')
             }
         } else {
-            collapseMenuEl.dataset.name = 'open'; // 默认打开
+            collapseMenuEl.dataset.name = 'open'; // Default open
         }
         // Restore transition after layout
         void collapseMenuEl.offsetHeight;
@@ -584,7 +584,7 @@ const collapseGen = (btn_id, collapse_id, storName, callback = undefined) => {
             }
         });
 
-        // 用 container.update 来同步状态
+        // Use container.update to sync state
         const observer = new MutationObserver(() => {
             const newVal = collapseMenuEl.dataset.name === 'open';
             switchComponent.update?.(newVal);
@@ -605,7 +605,7 @@ const inputIMEIAT = () => {
     document.querySelector('#AT_INPUT').value = `AT+SPIMEI=0,"${t('your_new_imei')}"`
 }
 
-//提取apk中日期与时间
+// Extract date and time from APK
 const getApkDate = (filename = null) => {
     if (!filename) return {
         date_str: null,
@@ -683,12 +683,12 @@ const intToIp = (int) => {
     ].join('.');
 }
 
-//获取字体颜色
+// Get font color
 const getTextColor = () => getComputedStyle(document.documentElement)
     .getPropertyValue('--dark-text-color')
     .trim();
 
-// chart.js插件合集
+// chart.js plugin collection
 const centerTextPlugin = {
     id: 'centerText',
     afterDatasetsDraw: (chart) => {
@@ -736,13 +736,13 @@ const getRefteshRate = (cb) => {
     return rate_num
 }
 
-// 特定模态框模糊区域点击Close
+// Click blur area to close specific modals
 Array.from(document.querySelectorAll('.mask'))?.forEach(el => {
     el.onclick = (e) => {
         e.stopPropagation()
         const classList = Array.from(e?.target?.classList || [])
         const id = e.target.id
-        //维护一个黑名单，黑名单内的模态框不受影响
+        // Maintain a blocklist of modals not affected
         const blackList = ["AddTaskModal", "plugin_store", "APNViewModal", "APNEditModal", "advanceModal"]
         const isCloseable = !blackList.includes(id)
         if (classList && classList.includes('mask') && isCloseable) {
@@ -754,7 +754,7 @@ Array.from(document.querySelectorAll('.mask'))?.forEach(el => {
 })
 
 
-//传入css变量返回颜色
+// Pass CSS variable, return color
 const getCssVariableColor = (variableName) => {
     const color = getComputedStyle(document.documentElement)
         ?.getPropertyValue(variableName)
@@ -781,7 +781,7 @@ const downloadUrl = (url, filename) => {
     createToast(t('download_ing'), 'pink')
 }
 
-//获取浏览器版本号
+// Get browser version
 function getBrowserVersion() {
     const ua = navigator.userAgent;
 
@@ -845,10 +845,10 @@ const checkBandSelect = () => {
             }
         })
         if (flagCount == bandTableTrList.length) {
-            //全选开关为真
+            // Select all toggle ON
             selectAllBandChkBox.checked = true
         } else {
-            //全选开关为假
+            // Select all toggle OFF
             selectAllBandChkBox.checked = false
         }
     }
@@ -981,12 +981,12 @@ const createModal = ({ name, noBlur, isMask, title, titleI18nKey = "", maxWidth,
     }
 }
 
-// 安全DOM
+// Safe DOM
 const parseDOM = (text) => {
     try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, 'text/html');
-        // 获取除了 script 的其他内容
+        // Get content except scripts
         let clone = doc.body.cloneNode(true);
         clone.querySelectorAll('script').forEach(el => el.remove());
         const remainingHTML = clone.innerHTML.trim();
@@ -1003,19 +1003,19 @@ const fillCurl = (kind) => {
     switch (kind) {
         case 'tg':
             message = message = t('tg_sms_help')
-            curl_text.value = `curl -s -X POST https://api.telegram.org/bot<YOUR_TOKEN>/sendMessage -H "Content-Type: application/json" -d '{"chat_id":<你的聊天会话id>,"text":"{{sms-body}} {{sms-time}} {{sms-from}}","parse_mode":"HTML"}'`
+            curl_text.value = `curl -s -X POST https://api.telegram.org/bot<YOUR_TOKEN>/sendMessage -H "Content-Type: application/json" -d '{"chat_id":<YOUR_CHAT_ID>,"text":"{{sms-body}} {{sms-time}} {{sms-from}}","parse_mode":"HTML"}'`
             break;
         case 'wechat':
             message = t('wechat_sms_help')
-            curl_text.value = `curl -X POST "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=<YOUR_KEY>" -H "Content-Type: application/json" -d '{"msgtype": "text", "text": {"content": "【号码】{{sms-from}}\\n【短信内容】{{sms-body}}\\n【时间】{{sms-time}}"}}'`
+            curl_text.value = `curl -X POST "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=<YOUR_KEY>" -H "Content-Type: application/json" -d '{"msgtype": "text", "text": {"content": "[From]{{sms-from}}\\n[SMS Content]{{sms-body}}\\n[Time]{{sms-time}}"}}'`
             break;
         case 'pushplus':
             message = t('pushplus_sms_help')
-            curl_text.value = `curl -s -X POST https://www.pushplus.plus/send/  -H "Content-Type: application/x-www-form-urlencoded" -d "token=<YOUR_TOKEN>&title=有新消息！！&content=**【短信内容】**%0A{{sms-body}}%0A%0A**【时间】**%0A{{sms-time}}%0A%0A**【号码】**%0A{{sms-from}}&template=markdown"`
+            curl_text.value = `curl -s -X POST https://www.pushplus.plus/send/  -H "Content-Type: application/x-www-form-urlencoded" -d "token=<YOUR_TOKEN>&title=New Message!!&content=**[SMS Content]**%0A{{sms-body}}%0A%0A**[Time]**%0A{{sms-time}}%0A%0A**[From]**%0A{{sms-from}}&template=markdown"`
             break;
         case 'bark':
             message = t('bark_sms_help')
-            curl_text.value = `curl -X "POST" "https://api.day.app/<YOUR_TOKEN>/" -H 'Content-Type: application/json; charset=utf-8' -d '{"body": "【短信内容】{{sms-body}}\\n【时间】{{sms-time}}", "title":"{{sms-from}}", "group": "UFI-TOOLS_SMS", "isArchive":1}'`
+            curl_text.value = `curl -X "POST" "https://api.day.app/<YOUR_TOKEN>/" -H 'Content-Type: application/json; charset=utf-8' -d '{"body": "[SMS Content]{{sms-body}}\\n[Time]{{sms-time}}", "title":"{{sms-from}}", "group": "UFI-TOOLS_SMS", "isArchive":1}'`
             break;
 
     }
@@ -1072,7 +1072,7 @@ const checkBroswer = () => {
                 alert(`${t('your')}${result.browser}${t('browser_version_very_low')}`);
             }
         } else if (result.browser === "Safari") {
-            //需要大于17.5
+            // Must be > 17.5
             const versionParts = result.version.split('.');
             const majorVersion = parseInt(versionParts[0], 10);
             if (majorVersion <= 15.4) {
@@ -1231,11 +1231,11 @@ function validateAlphaAndNumber(input) {
     return regex.test(input);
 }
 
-//文件Upload(100MB)
+// File upload (100MB)
 async function uploadFileKano(file, needRename = false) {
     if (file) {
         console.log(file.name);
-        // 检查文件大小
+        // Check file size
         if (file.size > 100 * 1024 * 1024) {
             // MAX_SIZE MB
             createToast(`${t('file_size_over_limit')} 100MB！`, 'red')
@@ -1259,8 +1259,8 @@ async function uploadFileKano(file, needRename = false) {
                     const resFileName = res.url.replace("/uploads/", "")
                     if (!resFileName) throw t('upload_success_but_cannot_detect_file_name')
                     const regResult = validateAlphaAndNumber(file.name)
-                    console.log("文件名合法性测试结果：", regResult)
-                    //重命名
+                    console.log("Filename validity test:", regResult)
+                    // Rename
                     if (needRename && regResult) {
                         const res = await runShellWithUser(`mv /data/data/com.minikano.f50_sms/files/uploads/${resFileName} /data/data/com.minikano.f50_sms/files/uploads/${file.name}`)
                         if (!res.success) {
@@ -1301,7 +1301,7 @@ const renderConnectStatusContent = (res) => {
         gap:10px;
         line-height:1.4;
     ">
-        <!-- 总览 -->
+        <!-- Overview -->
         <div class="nc-card">
         <div class="nc-title">
             <span>${t('total_conn_count')}</span>
@@ -1341,7 +1341,7 @@ const renderConnectStatusContent = (res) => {
         </div>
         </div>
 
-        <!-- 其他协议 -->
+        <!-- Other protocols -->
         <div class="nc-card">
         <div class="nc-title">
             <span>${t('other_protocols') || 'Other'}</span>

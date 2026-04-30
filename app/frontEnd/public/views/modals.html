@@ -38,7 +38,7 @@
                     </div>
                 </div>
             </div>
-            <!-- 短信模态框 -->
+            <!-- SMS modal -->
             <div class="modal" id="smsList" style="display: none;">
                 <div class="title" style="margin-bottom: 6px;">SMS</div>
                 <div class="action" style="margin-top: 10px;background-color: var(--dark-tag-color);">
@@ -71,9 +71,9 @@
                     <button onclick="closeModal('#cpuTempInfoModal')">Close</button>
                 </div>
             </div>
-            <!-- 内存信息模态框 -->
+            <!-- Memory info modal -->
             <div class="modal" id="memInfoModal" style="width: 77%;max-width: 300px;display: none">
-                <div class="title" data-i18n="ram_info">内存信息</div>
+                <div class="title" data-i18n="ram_info">Memory Info</div>
                 <div class="content" style="padding: 15px 4px 0 4px;">
                     <div id="memInfo" style="font-size:14px;display: flex;flex-direction: column;gap: 6px;">
                     </div>
@@ -82,58 +82,58 @@
                     <button onclick="closeModal('#memInfoModal')">Close</button>
                 </div>
             </div>
-            <!-- 状态管理模态框 -->
+            <!-- Status management modal -->
             <div id="dictionaryModal" class="modal" style="display: none;width: 90%;max-width: 400px;">
-                <div class="title" data-i18n="status_modal_title">状态显示/隐藏</div>
+                <div class="title" data-i18n="status_modal_title">Status Show/Hide</div>
                 <p style="font-size: 12px;">
-                    <i data-i18n="status_modal_tip">注：设备不支持/为空的状态无论是否勾选也不会显示;如果碰到有字段不显示等问题，可以点击重置字段或者清除浏览器数据</i>
+                    <i data-i18n="status_modal_tip">Note: fields not supported or empty will not show regardless of selection. If fields are missing, click reset or clear browser data.</i>
                 </p>
                 <div class="content" id="DIC_LIST"
                     style="overflow-y: scroll; max-height:400px; padding-top: 15px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: start; font-size: 14px;">
-                    <div class="title" style="margin: 10px 0;" data-i18n="status_section_basic">基本状态</div>
+                    <div class="title" style="margin: 10px 0;" data-i18n="status_section_basic">Basic Status</div>
                     <ul class="drag" id="draggable_status">
                         <li draggable="true"><label><input type="checkbox" data-name="QORS_MESSAGE"><span
-                                    data-i18n="QORS_MESSAGE">QCI等级</span></label></li>
+                                    data-i18n="QORS_MESSAGE">QCI Level</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="network_type"><span
-                                    data-i18n="cellular_type">蜂窝状态</span></label></li>
+                                    data-i18n="cellular_type">Cellular Status</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="wifi_access_sta_num"><span
-                                    data-i18n="wifi_access_sta_num">WIFI设备数</span></label></li>
+                                    data-i18n="wifi_access_sta_num">WiFi Devices</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="battery"><span
-                                    data-i18n="battery">剩余电量</span></label></li>
+                                    data-i18n="battery">Battery</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="rssi"><span
-                                    data-i18n="rssi">蜂窝信号强度</span></label></li>
+                                    data-i18n="rssi">Cellular Signal</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="cpu_temp"><span
-                                    data-i18n="cpu_temp">CPU温度</span></label></li>
+                                    data-i18n="cpu_temp">CPU Temp</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="cpu_usage"><span
-                                    data-i18n="cpu_usage">CPU使用率</span></label></li>
+                                    data-i18n="cpu_usage">CPU Usage</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="mem_usage"><span
-                                    data-i18n="mem_usage">内存使用率</span></label></li>
+                                    data-i18n="mem_usage">Memory Usage</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="realtime_time"><span
-                                    data-i18n="realtime_time">连接时长</span></label></li>
+                                    data-i18n="realtime_time">Connection Time</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="monthly_tx_bytes"><span
-                                    data-i18n="monthly_tx_bytes">流量使用情况</span></label></li>
+                                    data-i18n="monthly_tx_bytes">Data Usage</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="daily_data"><span
-                                    data-i18n="daily_data">当日流量/当月流量</span></label></li>
+                                    data-i18n="daily_data">Daily/Monthly Data</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="current_now"><span
-                                    data-i18n="current_now">电池电流</span></label></li>
+                                    data-i18n="current_now">Battery Current</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="voltage_now"><span
-                                    data-i18n="voltage_now">电池电压</span></label></li>
+                                    data-i18n="voltage_now">Battery Voltage</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="realtime_rx_thrpt"><span
-                                    data-i18n="realtime_rx_thrpt">实时网速</span></label></li>
+                                    data-i18n="realtime_rx_thrpt">Real-time Speed</span></label></li>
                     </ul>
 
-                    <div class="title" style="margin: 10px 0;" data-i18n="status_section_signal">信号参数</div>
+                    <div class="title" style="margin: 10px 0;" data-i18n="status_section_signal">Signal Parameters</div>
                     <ul class="drag" id="draggable_signal">
                         <li draggable="true"><label><input type="checkbox" data-name="Z5g_rsrp"><span
-                                    data-i18n="Z5g_rsrp">5G接收功率</span></label></li>
+                                    data-i18n="Z5g_rsrp">5G RSRP</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Nr_snr"><span
                                     data-i18n="Nr_snr">5G SINR</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Nr_bands"><span
-                                    data-i18n="Nr_bands">5G 注册频段</span></label></li>
+                                    data-i18n="Nr_bands">5G Bands</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Nr_fcn"><span
-                                    data-i18n="Nr_fcn">5G 频点</span></label></li>
+                                    data-i18n="Nr_fcn">5G EARFCN</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Nr_bands_widths"><span
-                                    data-i18n="Nr_bands_widths">5G 频宽</span></label></li>
+                                    data-i18n="Nr_bands_widths">5G Bandwidth</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Nr_pci"><span
                                     data-i18n="Nr_pci">5G PCI</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="nr_rsrq"><span
@@ -141,17 +141,17 @@
                         <li draggable="true"><label><input type="checkbox" data-name="nr_rssi"><span
                                     data-i18n="nr_rssi">5G RSSI</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Nr_cell_id"><span
-                                    data-i18n="Nr_cell_id">5G 基站ID</span></label></li>
+                                    data-i18n="Nr_cell_id">5G Cell ID</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="lte_rsrp"><span
-                                    data-i18n="lte_rsrp">4G接收功率</span></label></li>
+                                    data-i18n="lte_rsrp">4G RSRP</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Lte_snr"><span
                                     data-i18n="Lte_snr">4G SINR</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Lte_bands"><span
-                                    data-i18n="Lte_bands">4G 注册频段</span></label></li>
+                                    data-i18n="Lte_bands">4G Bands</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Lte_fcn"><span
-                                    data-i18n="Lte_fcn">4G 频点</span></label></li>
+                                    data-i18n="Lte_fcn">4G EARFCN</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Lte_bands_widths"><span
-                                    data-i18n="Lte_bands_widths">4G 频宽</span></label></li>
+                                    data-i18n="Lte_bands_widths">4G Bandwidth</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Lte_pci"><span
                                     data-i18n="Lte_pci">4G PCI</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="lte_rsrq"><span
@@ -159,17 +159,17 @@
                         <li draggable="true"><label><input type="checkbox" data-name="lte_rssi"><span
                                     data-i18n="lte_rssi">4G RSSI</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="Lte_cell_id"><span
-                                    data-i18n="Lte_cell_id">4G 基站ID</span></label></li>
+                                    data-i18n="Lte_cell_id">4G Cell ID</span></label></li>
                     </ul>
 
-                    <div class="title" style="margin: 10px 0;" data-i18n="status_section_device">设备属性</div>
+                    <div class="title" style="margin: 10px 0;" data-i18n="status_section_device">Device Info</div>
                     <ul class="drag" id="draggable_props">
                         <li draggable="true"><label><input type="checkbox" data-name="client_ip"><span
-                                    data-i18n="client_ip">客户端IP</span></label></li>
+                                    data-i18n="client_ip">Client IP</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="model"><span
-                                    data-i18n="model">设备型号</span></label></li>
+                                    data-i18n="model">Model</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="cr_version"><span
-                                    data-i18n="cr_version">版本号</span></label></li>
+                                    data-i18n="cr_version">Version</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="iccid"><span
                                     data-i18n="iccid">ICCID</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="imei"><span
@@ -177,17 +177,17 @@
                         <li draggable="true"><label><input type="checkbox" data-name="imsi"><span
                                     data-i18n="imsi">IMSI</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="ipv6_wan_ipaddr"><span
-                                    data-i18n="ipv6_wan_ipaddr">IPV6地址</span></label></li>
+                                    data-i18n="ipv6_wan_ipaddr">IPv6 Address</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="lan_ipaddr"><span
-                                    data-i18n="lan_ipaddr">本地网关</span></label></li>
+                                    data-i18n="lan_ipaddr">LAN Gateway</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="mac_address"><span
-                                    data-i18n="mac_address">MAC地址</span></label></li>
+                                    data-i18n="mac_address">MAC Address</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="msisdn"><span
-                                    data-i18n="msisdn">手机号</span></label></li>
+                                    data-i18n="msisdn">Phone Number</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="internal_available_storage"><span
-                                    data-i18n="internal_available_storage">内置存储</span></label></li>
+                                    data-i18n="internal_available_storage">Internal Storage</span></label></li>
                         <li draggable="true"><label><input type="checkbox" data-name="external_available_storage"><span
-                                    data-i18n="external_available_storage">SD卡</span></label></li>
+                                    data-i18n="external_available_storage">SD Card</span></label></li>
                     </ul>
                 </div>
                 <div class="btn" style="text-align: right;">
@@ -195,41 +195,41 @@
                     <button onclick="closeModal('#dictionaryModal')" data-i18n="close_btn">Close</button>
                 </div>
             </div>
-            <!-- 流量管理模态框 -->
+            <!-- Data management modal -->
             <div class="mask" id="DataManagementModal" style="display: none">
                 <div class="modal">
                     <div class="title" data-i18n="data_manage_modal_title">Data Management</div>
                     <form onsubmit="handleDataManagementFormSubmit(event)" id="DataManagementForm">
                         <div class="title"
                             style="margin-top:10px;font-size:.7rem;flex-direction: column;align-items: start;gap: 0;">
-                            <span data-i18n="data_manage_tips">提示：请正确设置提醒阈值</span>
-                            <span data-i18n="data_manage_tips1">当流量到达设置的阈值百分比时机器会红灯闪烁提示您流量不足</span>
+                            <span data-i18n="data_manage_tips">Tip: Please set alert threshold correctly</span>
+                            <span data-i18n="data_manage_tips1">When data reaches the threshold percentage, the device LED will flash red</span>
                         </div>
                         <div class="content" id="DATA_MANAGE_LIST"
                             style="overflow-y: scroll;padding: 15px;padding-top:0;width: 66vw;max-width: 400px;">
                             <div class="item">
                                 <label style="display: flex;align-items: center;">
-                                    <span data-i18n="data_manage_enable">启用流量管理？</span>
+                                    <span data-i18n="data_manage_enable">Enable data management?</span>
                                     <input checked type="checkbox" name="data_volume_limit_switch">
                                 </label>
                             </div>
                             <div class="item">
                                 <label style="display: flex;align-items: center;">
-                                    <span data-i18n="data_manage_clear_enable">流量清零？</span>
+                                    <span data-i18n="data_manage_clear_enable">Reset data usage?</span>
                                     <input checked type="checkbox" name="wan_auto_clear_flow_data_switch">
                                 </label>
                             </div>
                             <div class="item" style="display: flex;">
-                                <span style="font-size: 14px;" data-i18n="data_manage_plan_type">套餐形式：</span>
+                                <span style="font-size: 14px;" data-i18n="data_manage_plan_type">Plan type:</span>
                                 <label for="for_data" style="display: flex;align-items: center;">
-                                    <span style="margin-right: 6px;" data-i18n="data_manage_plan_flow">流量</span>
+                                    <span style="margin-right: 6px;" data-i18n="data_manage_plan_flow">Data</span>
                                     <input id="for_data" style="margin: 0;" type="radio" checked
                                         name="data_volume_limit_unit">
                                 </label>
                             </div>
                             <div class="item">
                                 <label style="display: flex;align-items: center;">
-                                    <span data-i18n="data_manage_reset_day">清零日期：</span>
+                                    <span data-i18n="data_manage_reset_day">Reset day:</span>
                                     <input style="flex: 1;width: 100%;" name="traffic_clear_date" value="1"
                                         type="number" max="31" min="1" maxlength="2" placeholder="Reset day (1-31)"
                                         data-i18n-placeholder="data_manage_reset_day_placeholder">
@@ -237,7 +237,7 @@
                             </div>
                             <div class="item">
                                 <label style="display: flex;align-items: center;">
-                                    <span data-i18n="data_manage_alert_threshold">提醒阈值：</span>
+                                    <span data-i18n="data_manage_alert_threshold">Alert threshold:</span>
                                     <input style="flex: 1;width: 100%;" name="data_volume_alert_percent" value="80"
                                         type="number" maxlength="3" min="0" max="100" placeholder="Alert threshold (0-100%)"
                                         data-i18n-placeholder="data_manage_alert_threshold_placeholder">
@@ -246,7 +246,7 @@
                             </div>
                             <div class="item">
                                 <div style="display: flex;align-items: center">
-                                    <span data-i18n="data_manage_plan_total">流量套餐：</span>
+                                    <span data-i18n="data_manage_plan_total">Data plan:</span>
                                     <input style="flex:1;height: 100%;width: 100%;" type="text"
                                         name="data_volume_limit_size" value="100" placeholder="Data plan"
                                         data-i18n-placeholder="data_manage_plan_total_placeholder">
@@ -260,7 +260,7 @@
                             </div>
                             <div class="item">
                                 <div style="display: flex;align-items: center;">
-                                    <span data-i18n="data_manage_plan_used">已用流量：</span>
+                                    <span data-i18n="data_manage_plan_used">Used data:</span>
                                     <input style="flex:1;height: 100%;width: 100%;" type="text"
                                         name="data_volume_used_size" value="114" placeholder="Data used"
                                         data-i18n-placeholder="data_manage_plan_used_placeholder">
@@ -281,34 +281,34 @@
                     </form>
                 </div>
             </div>
-            <!-- 流量历史模态框 -->
+            <!-- Data history modal -->
             <div class="modal" id="DataUsageHistoryModal" style="display: none">
-                <div class="title" data-i18n="data_usage_status">流量使用情况</div>
+                <div class="title" data-i18n="data_usage_status">Data Usage History</div>
 
                 <div class="content"
                     style="max-height: unset;font-size: .7rem;overflow-y: scroll;padding: 15px 0px; width: 80vw; max-width: 600px;">
                     <div style="display: flex;flex-direction: column;justify-content: center;gap: 10px;">
                         <div style="display: flex;gap: 6px;align-items: center;">
-                            <span style="flex-shrink: 0;" data-i18n="start_date">起始日期</span>:
+                            <span style="flex-shrink: 0;" data-i18n="start_date">Start Date</span>:
                             <input id="start_time_data_usage_history" class="date-time-picker" type="date"
                                 style="width: 100%;box-sizing: border-box;" />
                         </div>
                         <div style="display: flex;gap: 6px;align-items: center">
-                            <span style="flex-shrink: 0;" data-i18n="end_date">结束日期</span>:
+                            <span style="flex-shrink: 0;" data-i18n="end_date">End Date</span>:
                             <input id="end_time_data_usage_history" class="date-time-picker" type="date"
                                 style="width: 100%;box-sizing: border-box;" />
                         </div>
                         <div style="display: flex;gap: 10px;">
                             <button style="width: 100%;" onclick="doDataUsageHistorySearch()"
-                                data-i18n="query">查询</button>
+                                data-i18n="query">Query</button>
                             <button style="width: 100%;" onclick="resetUsageModalData()"
-                                data-i18n="plugin_search_reset_btn">重置</button>
+                                data-i18n="plugin_search_reset_btn">Reset</button>
                         </div>
                     </div>
                     <div style="display: flex;gap: 10px;margin-top: 10px;justify-content: center;font-size: .8rem;">
-                        <span style="font-weight: normal;"><span data-i18n="total_usage">总用量</span>：<span
+                        <span style="font-weight: normal;"><span data-i18n="total_usage">Total Usage</span>：<span
                                 style="font-weight: bold;" id="data_usage_history_sum">N/A</span></span>
-                        <span style="font-weight: normal;"><span data-i18n="avg_usage">日均使用</span>：<span
+                        <span style="font-weight: normal;"><span data-i18n="avg_usage">Daily Average</span>：<span
                                 style="font-weight: bold;" id="data_usage_history_avg">N/A</span></span>
                     </div>
                     <div class="chart" style="padding: 0;margin: 0;box-sizing: border-box;width: 100%;height: 100px;">
@@ -318,13 +318,13 @@
                         <table class="nice-table" style="background: none;">
                             <thead class="no-blur">
                                 <tr>
-                                    <th data-i18n="date_data">日期</th>
-                                    <th data-i18n="usage_data">用量</th>
+                                    <th data-i18n="date_data">Date</th>
+                                    <th data-i18n="usage_data">Usage</th>
                                 </tr>
                             </thead>
                             <tbody class="no-blur" id="DataUsageHistoryBody">
                                 <tr style="cursor: pointer;">
-                                    <td colspan="2" data-i18n="no_data">暂无数据</td>
+                                    <td colspan="2" data-i18n="no_data">No data</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -336,10 +336,10 @@
                         data-i18n="close_btn">Close</button>
                 </div>
             </div>
-            <!-- WIFI设置模态框 -->
+            <!-- WiFi settings modal -->
             <div class="mask" id="WIFIManagementModal" style="display: none">
                 <div class="modal">
-                    <div class="title" style="margin-bottom: 4px;" data-i18n="wifi_title">WIFI设置</div>
+                    <div class="title" style="margin-bottom: 4px;" data-i18n="wifi_title">WiFi Settings</div>
                     <form onsubmit="handleWIFIManagementFormSubmit(event)" id="WIFIManagementForm">
                         <div class="content" style="
                         overflow-y: scroll;
@@ -354,12 +354,12 @@
                             <div class="dash-border-round"
                                 style="padding-top: 6px;padding-bottom: 6px;display: flex;justify-content: space-between;align-items: center;">
                                 <select class="select" id="WIFI_SWITCH" onchange="changeWIFISwitch(event)">
-                                    <option value="0" data-i18n="wifi_option_off">WIFI:关闭</option>
+                                    <option value="0" data-i18n="wifi_option_off">WiFi: Off</option>
                                     <option value="chip1" data-i18n="wifi_option_24g">WIFI:2.4G</option>
                                     <option value="chip2" data-i18n="wifi_option_5g">WIFI:5G</option>
                                 </select>
                                 <span style="display: inline; font-size: 10px; text-align: right;"
-                                    data-i18n="wifi_hint_no_submit">此选项即时更改无需确认。</span>
+                                    data-i18n="wifi_hint_no_submit">This option takes effect immediately without confirmation.</span>
                             </div>
                             <div id="wifiInfo">
                                 <div class="dash-border-round">
@@ -374,7 +374,7 @@
                                     </div>
                                     <div class="item">
                                         <label style="display: flex;align-items: center;"><span class="label-name"
-                                                data-i18n="wifi_broadcast_label">广播SSID：</span><input checked
+                                                data-i18n="wifi_broadcast_label">Broadcast SSID:</span><input checked
                                                 type="checkbox" name="ApBroadcastDisabled"></label>
                                     </div>
                                 </div>
@@ -384,7 +384,7 @@
                                 display: flex;
                                 align-items: center;
                             ">
-                                            <span class="label-name" data-i18n="wifi_security_label">安全模式：</span>
+                                            <span class="label-name" data-i18n="wifi_security_label">Security:</span>
                                             <select class="select" id="WIFI_ENC_MODE"
                                                 onchange="handleWifiEncodeChange(event)"
                                                 style="width: 100%;flex: 1;padding: 4px; margin-left: 6px;text-align: left;"
@@ -417,14 +417,14 @@
                                         <div class="item">
                                             <label onclick="handleShowPassword(event)"
                                                 style="display: flex;align-items: center;"><span class="label-name"
-                                                    data-i18n="wifi_show_pwd_label">显示密码：</span><input
+                                                    data-i18n="wifi_show_pwd_label">Show Password:</span><input
                                                     type="checkbox"></label>
                                         </div>
                                     </div>
                                     <div class="dash-border-round">
                                         <div class="item">
                                             <label style="display: flex;align-items: center;"><span class="label-name"
-                                                    data-i18n="wifi_max_client_label">最大接入：</span><input
+                                                    data-i18n="wifi_max_client_label">Max Clients:</span><input
                                                     style="flex: 1;width: 100%;" name="ApMaxStationNumber" value="10"
                                                     type="number" min="1" maxlength="8" placeholder="Max clients"
                                                     data-i18n-placeholder="wifi_max_client_placeholder"></label>
@@ -432,7 +432,7 @@
                                     </div>
                                 </div>
                                 <div class="dash-border-round" style="text-align: center;">
-                                    <div data-i18n="wifi_qrcode_label">二维码</div>
+                                    <div data-i18n="wifi_qrcode_label">QR Code</div>
                                     <div style="text-align: center">
                                         <img id="QRCodeImg" style="border-radius: 20px;" src="" alt="">
                                     </div>
@@ -447,10 +447,10 @@
                     </form>
                 </div>
             </div>
-            <!-- 内网设置模态框 -->
+            <!-- LAN settings modal -->
             <div class="mask" id="LANManagementModal" style="display: none">
                 <div class="modal">
-                    <div class="title" style="margin-bottom: 4px;" data-i18n="lan_title">内网设置</div>
+                    <div class="title" style="margin-bottom: 4px;" data-i18n="lan_title">LAN Settings</div>
                     <form onsubmit="onLANModalSubmit(event)" id="LANManagementForm">
                         <div class="content" style="
                         overflow-y: scroll;
@@ -464,7 +464,7 @@
                                     <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span class="label-name" data-i18n="lan_ip_label">网关地址：</span><input
+                            "><span class="label-name" data-i18n="lan_ip_label">Gateway:</span><input
                                             data-i18n-placeholder="lan_ip_placeholder"
                                             style="flex: 1;width: 100%;padding: 6px 4px; margin: 4px 2px" name="lanIp"
                                             type="text" placeholder="Router gateway address"></label>
@@ -475,7 +475,7 @@
                                     <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span class="label-name" data-i18n="lan_netmask_label">子网掩码：</span><input
+                            "><span class="label-name" data-i18n="lan_netmask_label">Subnet Mask:</span><input
                                             data-i18n-placeholder="lan_netmask_placeholder"
                                             style="flex: 1;width: 100%;padding: 6px 4px; margin: 4px 2px"
                                             name="lanNetmask" type="text" placeholder="Subnet mask"></label>
@@ -485,7 +485,7 @@
                                 <div class="item">
                                     <label style="display: flex;align-items: center;"><span class="label-name"
                                             style="padding: 6px 4px; margin: 4px 2px"
-                                            data-i18n="lan_dhcp_label">DHCP开关：</span>
+                                            data-i18n="lan_dhcp_label">DHCP Switch:</span>
                                         <div style="display: inline-block;" id="collapse_dhcp_switch"></div>
                                         <input style="display: none;" id="enableDHCP" value="SERVER" type="text"
                                             name="lanDhcpType">
@@ -497,7 +497,7 @@
                                     <div class="dash-border-round">
                                         <div class="item"
                                             style="display: flex;align-items: center;flex-direction: column;padding-top: 4px;">
-                                            <span class="label-name" data-i18n="lan_dhcp_range_label">DHCP IP池</span>
+                                            <span class="label-name" data-i18n="lan_dhcp_range_label">DHCP IP Pool</span>
                                             <input style="flex: 1;width: 100%;padding: 6px 4px; margin: 4px 2px"
                                                 name="dhcpStart" type="text" placeholder="Start address"
                                                 data-i18n-placeholder="lan_dhcp_start_placeholder">
@@ -512,7 +512,7 @@
                                             <label style="
                                 display: flex;
                                 align-items: center;
-                            "><span class="label-name" data-i18n="lan_dhcp_lease_label">DHCP租期：</span><input
+                            "><span class="label-name" data-i18n="lan_dhcp_lease_label">DHCP Lease:</span><input
                                                     style="flex: 1;width: 100%;padding: 6px 4px; margin: 4px 2px;"
                                                     name="dhcpLease" type="number" min="1" placeholder="Lease (24)h"
                                                     data-i18n-placeholder="lan_dhcp_lease_placeholder"></label>
@@ -529,20 +529,20 @@
                     </form>
                 </div>
             </div>
-            <!-- 连接设备管理模态框 -->
+            <!-- Client management modal -->
             <div class="mask" id="ClientManagementModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 600px; display: flex;flex-direction: column;">
-                    <div class="title" style="margin-bottom: 4px;" data-i18n="client_mgmt_title">连接设备管理</div>
+                    <div class="title" style="margin-bottom: 4px;" data-i18n="client_mgmt_title">Connected Device Manager</div>
                     <ul class="deviceList" style="flex: 1; overflow-y: auto;">
                         <p style="display: flex;justify-content: space-between;">
-                            <span data-i18n="client_mgmt_connected">接入设备</span>
+                            <span data-i18n="client_mgmt_connected">Connected Devices</span>
                             <button style="margin-right: 10px;" class="btn" onclick="initClientManagementModal()"
                                 data-i18n="common_refresh_btn">Refresh</button>
                         </p>
                         <li id="CONN_CLIENT_LIST"
                             style="padding:0 10px;box-sizing: border-box;width: 100%;overflow: hidden;">
                         </li>
-                        <p data-i18n="client_mgmt_blacklist">黑名单</p>
+                        <p data-i18n="client_mgmt_blacklist">Blacklist</p>
                         <li id="BLACK_CLIENT_LIST"
                             style="padding:0 10px;box-sizing: border-box;width: 100%;overflow: hidden;">
                         </li>
@@ -552,7 +552,7 @@
                     </div>
                 </div>
             </div>
-            <!-- 定时任务模态框 -->
+            <!-- Scheduled task modal -->
             <div class="mask" id="ScheduledTasksModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 600px; display: flex;flex-direction: column;">
                     <div class="title" style="margin-bottom: 4px;" data-i18n="scheduled_tasks_title">Scheduled Tasks</div>
@@ -560,10 +560,10 @@
                         data-i18n="scheduled_tasks_info"></span>
                     <div
                         style="display: flex;justify-content: space-between;align-items: center;font-size: 14px;margin: 10px 0;">
-                        <span data-i18n="task_list_title">任务列表</span>
+                        <span data-i18n="task_list_title">Task List</span>
                         <div>
                             <button class="btn" onclick="refreshTask()" data-i18n="refresh_btn">Refresh</button>
-                            <button class="btn" onclick="addTask()" data-i18n="add_task_btn">添加任务</button>
+                            <button class="btn" onclick="addTask()" data-i18n="add_task_btn">Add Task</button>
                         </div>
                     </div>
                     <ul id="SCHEDULED_TASK_LIST" class="deviceList" style="flex: 1; overflow-y: auto;">
@@ -576,13 +576,13 @@
                     </div>
                 </div>
             </div>
-            <!-- 添加/修改任务模态框 -->
+            <!-- Add/edit task modal -->
             <div class="mask" id="AddTaskModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 600px;">
-                    <div class="title" data-i18n="add_task_title">任务项</div>
+                    <div class="title" data-i18n="add_task_title">Add Scheduled Task</div>
                     <form id="AddTaskForm" onsubmit="handleSubmitTask(event)"
                         style="margin-top: 10px;;display: flex; flex-direction: column; gap: 10px;font-size: 14px;">
-                        <label><span data-i18n="task_name_label">任务名称：</span><input
+                        <label><span data-i18n="task_name_label">Task Name:</span><input
                                 style="min-width: 100px;padding: 6px 8px;" name="id" required /></label>
                         <label>
                             <span data-i18n="trigger_time_label">Trigger Time:</span><input
@@ -649,7 +649,7 @@
                     </form>
                 </div>
             </div>
-            <!-- 插件模态框 -->
+            <!-- Plugin modal -->
             <div class="mask" id="PluginModal" style="display: none;">
                 <div class="modal" id="pluginDropZone"
                     style="backdrop-filter: none;-webkit-backdrop-filter: none;padding: 18px;border: 2px solid transparent;overflow: auto;width: 90%;max-width: 400px; display: flex;flex-direction: column;">
@@ -669,7 +669,7 @@
                                         style="width: 100%;margin-top: 6px;"
                                         onclick="onPluginBtn()">Add Plugin (.txt file)</button>
                                     <button id="plugin_store_btn" class="btn" style="width: 100%;margin-top: 6px;"
-                                        data-i18n="plugin_store">插件商店</button>
+                                        data-i18n="plugin_store">Plugin Store</button>
                                 </div>
                                 <div style="display: flex;gap: 10px;">
                                     <button class="btn" data-i18n="plugin_modal_export_btn"
@@ -696,17 +696,17 @@
                     </div>
                 </div>
             </div>
-            <!-- 插件市场模态框 -->
+            <!-- Plugin store modal -->
             <div id="plugin_store" class="mask" style="display: none">
                 <div class="modal"
                     style="backdrop-filter: none;-webkit-backdrop-filter: none;overflow: visible;width: 90%;max-width: 500px; display: flex;flex-direction: column;">
-                    <div class="title" style="margin-bottom: 10px;"><span data-i18n="plugin_store">插件商店</span> - <span
+                    <div class="title" style="margin-bottom: 10px;"><span data-i18n="plugin_store">Plugin Store</span> - <span
                             class="total"></span></div>
                     <div class="title" style="display: block;font-size: .7rem;font-style: italic;margin-bottom: 10px;">
-                        <span data-i18n="plugin_store_tip">插件商店提供了更多的插件功能，您可以在这里下载和安装。</span><br>
+                        <span data-i18n="plugin_store_tip">The plugin store provides more features. You can download and install plugins here.</span><br>
                         <span data-i18n="plugin_store_tip1"
                             style="color: rgb(255, 162, 0);">Warning: Installing plugins may affect device performance and stability. Choose carefully.</span><br>
-                        <span data-i18n="plugin_store_tip2">有些插件需要开启高级功能才可以使用。</span>
+                        <span data-i18n="plugin_store_tip2">Some plugins require advanced features to be enabled.</span>
                     </div>
                     <div class="searchBox">
                         <div class="searchInput">
@@ -715,7 +715,7 @@
                             <div class="searchList"></div>
                         </div>
                         <button id="pluginSearchResetBtn" style="width: fit-content;min-width: 50px;" class="btn"
-                            data-i18n="plugin_search_reset_btn">重置</button>
+                            data-i18n="plugin_search_reset_btn">Reset</button>
                         <button id="pluginSearchBtn" style="width: fit-content;min-width: 50px;" class="btn"
                             data-i18n="plugin_search_btn">Search</button>
                     </div>
@@ -725,30 +725,30 @@
                     </div>
                     <div style="font-size: .8rem;margin-top: 10px;display: flex;align-items: center;">
                         <div class="left" style="flex:1">
-                            <span data-i18n="cur_page">当前</span>&nbsp;
+                            <span data-i18n="cur_page">Current</span>&nbsp;
                             <span id="plugin_store_cur_page">1</span>
                             /
                             <span id="plugin_store_total_page">8</span>
-                            &nbsp;<span data-i18n="total">总共</span>
+                            &nbsp;<span data-i18n="total">Total</span>
                             <button style="margin-left: 10px;" data-i18n="prev_page"
                                 id="plugin_store_prev_page">Prev</button>
-                            <button id="plugin_store_next_page" data-i18n="next_page">下一页</button>
+                            <button id="plugin_store_next_page" data-i18n="next_page">Next</button>
                         </div>
                         <button id="plugin_store_close_btn" data-i18n="close_btn">Close</button>
                     </div>
                 </div>
             </div>
-            <!-- 编辑插件模态框 -->
+            <!-- Edit plugin modal -->
             <div class="mask" id="editSinglePluginModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 400px; display: flex;flex-direction: column;">
                     <div class="title" style="display: flex;justify-content: space-between;margin-bottom: 4px;">
-                        <span data-i18n="edit_plugin">编辑插件</span>
+                        <span data-i18n="edit_plugin">Edit Plugin</span>
                         <div>
                             <button data-i18n="off" onclick="disablePlugin()">Disable</button>
                             <button data-i18n="on" onclick="enablePlugin()">Enable</button>
                         </div>
                     </div>
-                    <p style="font-size: 14px;"><span data-i18n="plugin_current">当前插件</span>：<span
+                    <p style="font-size: 14px;"><span data-i18n="plugin_current">Current Plugin</span>：<span
                             id="currentPluginName"></span></p>
                     <div class="content" style="min-height: 400px;">
                         <textarea id="editSinglePlugin" style="width: 100%;box-sizing: border-box;min-height: 390px;"
@@ -761,7 +761,7 @@
                 </div>
             </div>
 
-            <!-- 定时重启模态框 -->
+            <!-- Scheduled reboot modal -->
             <div class="mask" id="scheduleRebootModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 400px; display: flex;flex-direction: column;">
                     <form id="scheduleRebootForm" onsubmit="handleScheduleRebootFormSubmit(event)">
@@ -769,12 +769,12 @@
                         <div style="text-align: left;font-size: 14px;">
                             <p>
                                 <label>
-                                    <span data-i18n="schedule_reboot_enable">启用每日定时重启？</span>
+                                    <span data-i18n="schedule_reboot_enable">Enable daily scheduled reboot?</span>
                                     <input id="SCHEDULE_ENABLED" type="checkbox" name="restart_schedule_switch">
                                 </label>
                             </p>
                             <p>
-                                <label data-i18n="schedule_reboot_time">每日重启时间：</label>
+                                <label data-i18n="schedule_reboot_time">Daily reboot time:</label>
                                 <input id="SCHEDULE_TIME" name="restart_time" placeholder="00:00"
                                     data-i18n-placeholder="schedule_reboot_time_placeholder" type="text"
                                     style="width: 100%;max-width: 60px;padding: 6px 10px;margin: 4px 0;">
@@ -788,22 +788,22 @@
                     </form>
                 </div>
             </div>
-            <!-- TTYD模态框 -->
+            <!-- TTYD modal -->
             <div class="mask" id="TTYDModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 400px; display: flex;flex-direction: column;">
                     <form id="TTYDForm" onsubmit="handleTTYDFormSubmit(event)">
-                        <div class="title" style="margin-bottom: 4px;" data-i18n="dev_menu">开发者菜单</div>
+                        <div class="title" style="margin-bottom: 4px;" data-i18n="dev_menu">Developer Menu</div>
                         <div style="text-align: left;margin-top: 10px;font-size: .8rem;">
                             <div style="font-size: .75rem;margin-bottom: 10px;" class="title"><i
-                                    data-i18n="need_advanced_func_use_dev_menu">有些特性需要开启高级功能才能使用</i>
+                                    data-i18n="need_advanced_func_use_dev_menu">Some features require advanced mode to be enabled</i>
                             </div>
                             <div style="display: flex;gap: 10px;;">
                                 <label style="display: flex;align-items: center;"><span
-                                        data-i18n="auto_apply_boot">开机自动应用</span><input type="checkbox" name=""
+                                        data-i18n="auto_apply_boot">Auto-apply on boot</span><input type="checkbox" name=""
                                         id="dev_bootup">
                                 </label>
                                 <label style="display: flex;align-items: center;"><span
-                                        data-i18n="also_apply_to_ipv6">也应用到ipv6</span><input type="checkbox" name=""
+                                        data-i18n="also_apply_to_ipv6">Also apply to IPv6</span><input type="checkbox" name=""
                                         id="dev_ipv6">
                                 </label>
                             </div>
@@ -812,55 +812,54 @@
                                 <input placeholder="1234" id="port_iptables" style="padding: 6px;flex: 1;width: 100%;"
                                     type="number">
                                 <button onclick="event.preventDefault();setPort(true)"
-                                    data-i18n="accept_firewall">放行</button>
+                                    data-i18n="accept_firewall">Accept</button>
                                 <button onclick="event.preventDefault();setPort(false)"
-                                    data-i18n="deny_firewall">阻止</button>
+                                    data-i18n="deny_firewall">Block</button>
                             </div>
                             <div style="display: flex;gap: 10px;margin: 10px 0;">
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleTTYD(true)"
-                                    data-i18n="enable_ttyd_port">启用TTYD端口</button>
+                                    data-i18n="enable_ttyd_port">Enable TTYD Port</button>
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleTTYD(false)"
-                                    data-i18n="disable_ttyd_port">禁用TTYD端口</button>
+                                    data-i18n="disable_ttyd_port">Disable TTYD Port</button>
                             </div>
                             <div style="display: flex;gap: 10px;margin: 10px 0;">
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleADBIP(true)"
-                                    data-i18n="enable_adb_tcpip_port">启用无线ADB端口</button>
+                                    data-i18n="enable_adb_tcpip_port">Enable Wireless ADB Port</button>
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleADBIP(false)"
-                                    data-i18n="disable_adb_tcpip_port">禁用无线ADB端口</button>
+                                    data-i18n="disable_adb_tcpip_port">Disable Wireless ADB Port</button>
                             </div>
                             <hr style="background-color: pink;" />
                             <div style="display: flex;gap: 10px;margin: 10px 0;">
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleLogCat(true)"
-                                    data-i18n="enable_log">启用Log</button>
+                                    data-i18n="enable_log">Enable Log</button>
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleLogCat(false)"
-                                    data-i18n="disable_log">禁用Log</button>
+                                    data-i18n="disable_log">Disable Log</button>
                             </div>
                             <div style="display: flex;gap: 10px;margin: 10px 0;">
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleWakeLock(true)"
-                                    data-i18n="wake_lock_enabled">启用唤醒锁</button>
+                                    data-i18n="wake_lock_enabled">Enable Wake Lock</button>
                                 <button style="width: 100%;" onclick="event.preventDefault();toggleWakeLock(false)"
-                                    data-i18n="wake_lock_disabled">禁用唤醒锁</button>
+                                    data-i18n="wake_lock_disabled">Disable Wake Lock</button>
                             </div>
                             <p style="display: flex;flex-wrap: nowrap;align-items: center;gap: 4px;">
-                                <span data-i18n="ttyd_port">TTYD 端口
-                                    (default: 1146):</span><input name="ttyd_port" placeholder="1145" type="number"
+                                <span data-i18n="ttyd_port">TTYD Port</span><input name="ttyd_port" placeholder="1145" type="number"
                                     id="TTYD_INPUT"
                                     style="text-align: center;width: 100%;;flex:1;padding: 6px 10px;margin: 4px 0;">
                                 <button type="submit" data-i18n="submit_btn">Submit</button>
                             </p>
                             <p style="display: flex;flex-wrap: nowrap;align-items: center;gap: 4px;"><span
-                                    data-i18n="resources_server">资源服务器：</span><input name="resources_server"
+                                    data-i18n="resources_server">Resource Server:</span><input name="resources_server"
                                     placeholder="https://pan.kanokano.cn" type="text" id="RES_SERVER_INPUT"
                                     style="text-align: center;width: 100%;flex:1;padding: 6px 10px;margin: 4px 0;">
                                 <button data-i18n="submit_btn" onclick="changeResServer(event)">Submit</button>
                             </p>
                             <div style="display: flex;flex-wrap: wrap;gap: 10px;">
                                 <button onclick="event.preventDefault();resetTTYDPort()"
-                                    data-i18n="reset_ttyd_port">重置TTYD端口</button>
+                                    data-i18n="reset_ttyd_port">Reset TTYD Port</button>
                                 <button onclick="event.preventDefault();clearAPPUploadData()"
-                                    data-i18n="clear_uploads_file">清除所有上传的文件</button>
+                                    data-i18n="clear_uploads_file">Clear All Uploaded Files</button>
                                 <button class="btn" onclick="event.preventDefault();handleOpenUploadFilesList()"
-                                    data-i18n="upload_file_manager">上传文件管理</button>
+                                    data-i18n="upload_file_manager">Upload File Manager</button>
                                 <button class="btn" onclick="event.preventDefault();OP(event)">?</button>
                             </div>
                         </div>
@@ -870,7 +869,7 @@
                     </form>
                 </div>
             </div>
-            <!-- AT指令模态框 -->
+            <!-- AT command modal -->
             <div class="mask" id="ATModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 800px; display: flex;flex-direction: column;">
                     <div class="title" style="margin-bottom: 4px;" data-i18n="at_title">AT Commands</div>
@@ -887,10 +886,10 @@
                         </div>
                     </div>
 
-                    <p style="font-size: 12px;margin-bottom: 0;margin-top:10px;" data-i18n="at_custom_title">自定义AT指令</p>
+                    <p style="font-size: 12px;margin-bottom: 0;margin-top:10px;" data-i18n="at_custom_title">Custom AT Command</p>
 
                     <div style="margin: 6px 0;">
-                        <span style="font-size: 12px;" data-i18n="at_slot_label">AT执行槽位：</span>
+                        <span style="font-size: 12px;" data-i18n="at_slot_label">AT Execution Slot:</span>
                         <select class="select" id="AT_SLOT" style="width: 100%;max-width: 100px;padding: 6px 10px;"
                             value="0">
                             <option data-value="0" value="0">0</option>
@@ -913,33 +912,33 @@
                                     <p style="font-size: 12px;margin-bottom: 4px;margin-top: 4px;"
                                         data-i18n="at_quick_label">Quick Shell</p>
                                     <button class="btn" onclick="disableButtonWhenExecuteFunc(event,handleQosAT)"
-                                        data-i18n="at_qos">签约速率</button>
+                                        data-i18n="at_qos">Subscribed Rate</button>
                                     <button class="btn"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>handleAT('AT+CGSN'))"
                                         data-i18n="at_imei">IMEI</button>
                                     <button class="btn"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>handleForceIMEI())"
-                                        data-i18n="at_force_imei">强力查串</button>
+                                        data-i18n="at_force_imei">Force Query IMEI</button>
                                     <button class="btn" style="margin-top: 6px;"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>inputIMEIAT())"
-                                        data-i18n="at_fill_imei">填入改串指令</button>
+                                        data-i18n="at_fill_imei">Fill IMEI Change Command</button>
                                     <button class="btn"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>handleAT('AT+CGMR'))"
-                                        data-i18n="at_modem">基带信息</button>
+                                        data-i18n="at_modem">Modem Info</button>
                                     <button class="btn"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>handleAT('AT+CFUN=1,1'))"
-                                        data-i18n="at_modem_reboot">重启基带</button>
+                                        data-i18n="at_modem_reboot">Reboot Modem</button>
                                     <button class="btn" style="margin-top: 6px;"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>handleAT('AT+CIMI'))"
                                         data-i18n="at_imsi">IMSI</button>
                                     <button class="btn" style="margin-top: 6px;" id="highRailModeBtn"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>handleHighRailMode(event))"
-                                        data-i18n="at_high_rail_mode">高铁模式</button>
+                                        data-i18n="at_high_rail_mode">High-Speed Rail Mode</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="title" style="margin-top: 14px;" data-i18n="at_result_title">执行结果</div>
+                        <div class="title" style="margin-top: 14px;" data-i18n="at_result_title">Execution Result</div>
                         <p id="AT_RESULT" style="margin:20px 0;margin-top: 14px;; font-size: 14px;width: 100%;">
                             <!-- +CGEQOSRDP: 1,6,0,0,0,0,1000000,300000 -->
                         </p>
@@ -950,16 +949,16 @@
                     </div>
                 </div>
             </div>
-            <!-- 高级功能模态框 -->
+            <!-- Advanced features modal -->
             <div class="mask" id="advanceModal" style="display: none">
                 <div class="modal" style="width: 90%;max-width: 800px; display: flex;flex-direction: column;">
-                    <div class="title" style="margin-bottom: 4px;" data-i18n="advance_title">高级功能</div>
+                    <div class="title" style="margin-bottom: 4px;" data-i18n="advance_title">Advanced Features</div>
 
                     <div class="content" style="text-align: left;max-height: 500px;">
                         <div class="title" style="margin-bottom: 4px;font-size: 12px;">
                             <b style="color: red;">
                                 <i data-i18n="advance_warning">
-                                    ⚠️ 警告：此功能适合有一定动手能力或对设备了解较多的玩机用户使用。普通用户请勿轻易尝试，否则可能会导致设备异常、数据丢失或无法恢复的问题。
+                                    ⚠️ Warning: This feature is for advanced users. Regular users should not attempt — may cause device malfunction, data loss, or unrecoverable issues.
                                 </i>
                             </b>
                         </div>
@@ -990,31 +989,31 @@
                                     <div class="advanced-btns">
                                         <button class="btn"
                                             onclick="disableButtonWhenExecuteFunc(event,()=>handleSambaPath())"
-                                            data-i18n="advance_add">添加高级功能</button>
+                                            data-i18n="advance_add">Add Advanced Features</button>
                                         <button class="btn"
                                             onclick="disableButtonWhenExecuteFunc(event,()=>handleSambaPath('0'))"
-                                            data-i18n="advance_remove">移除高级功能(重启生效)</button>
+                                            data-i18n="advance_remove">Remove Advanced Features (Reboot to take effect)</button>
                                         <button class="btn"
                                             onclick="disableButtonWhenExecuteFunc(event,handleDisableFOTA)"
-                                            data-i18n="advance_disable_update">禁用更新</button>
+                                            data-i18n="advance_disable_update">Disable Updates</button>
                                         <button onclick="handleEditBootScriptModal()"
                                             data-i18n="edit_boot_script">Edit Boot Script</button>
                                         <button class="btn" onclick="disableButtonWhenExecuteFunc(event,handleShell)"
-                                            data-i18n="advance_run_shell">一键执行shell脚本(非root)<br>(脚本需在/sdcard/quick_shell.sh)</button>
+                                            data-i18n="advance_run_shell">Run Shell Script (non-root)<br>(Script at /sdcard/quick_shell.sh)</button>
                                         <button class="btn"
                                             onclick="disableButtonWhenExecuteFunc(event,()=>switchCpuCore(false))"
-                                            data-i18n="advance_disable_little_core">关闭小核</button>
+                                            data-i18n="advance_disable_little_core">Disable Small Cores</button>
                                         <button class="btn"
                                             onclick="disableButtonWhenExecuteFunc(event,()=>switchCpuCore(true))"
-                                            data-i18n="advance_enable_little_core">开启小核</button>
+                                            data-i18n="advance_enable_little_core">Enable Small Cores</button>
                                         <button class="btn" onclick="disableButtonWhenExecuteFunc(event,()=>getBoot())"
-                                            data-i18n="advance_dump_boot">提取Boot</button>
+                                            data-i18n="advance_dump_boot">Dump Boot</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="title" style="margin-top: 14px;" data-i18n="advance_result">执行结果</div>
+                        <div class="title" style="margin-top: 14px;" data-i18n="advance_result">Execution Result</div>
                         <p id="AD_RESULT" style="margin:20px 0;margin-top: 14px; font-size: 14px;width: 100%;"></p>
                     </div>
 
@@ -1023,16 +1022,16 @@
                     </div>
                 </div>
             </div>
-            <!-- 更改密码模态框 -->
+            <!-- Change password modal -->
             <div class="mask" id="changePassModal" style="display: none">
                 <div class="modal">
-                    <div class="title" data-i18n="change_password_title">更改密码(某兴WEB密码)</div>
+                    <div class="title" data-i18n="change_password_title">Change Password</div>
                     <form onsubmit="handleChangePassword(event)" id="changePassForm">
                         <input type="text" autocomplete="username" name="username" value="admin" style="display: none;">
                         <div class="content" style="overflow-y: scroll; padding: 15px; width: 66vw; max-width: 400px;">
                             <div class="item" style="margin: 10px auto;">
                                 <label style="display: flex; align-items: center;">
-                                    <span style="flex: 1;" data-i18n="old_password">旧的密码：</span>
+                                    <span style="flex: 1;" data-i18n="old_password">Old Password:</span>
                                     <input style="flex: 1;padding: 4px 6px;width: 100%;" name="oldPassword"
                                         type="password" placeholder="Current password" autocomplete="current-password"
                                         data-i18n-placeholder="old_password_placeholder">
@@ -1040,7 +1039,7 @@
                             </div>
                             <div class="item" style="margin: 10px auto;">
                                 <label style="display: flex; align-items: center;">
-                                    <span style="flex: 1;" data-i18n="new_password">新的密码：</span>
+                                    <span style="flex: 1;" data-i18n="new_password">New Password:</span>
                                     <input style="flex: 1;padding: 4px 6px;width: 100%;" name="newPassword"
                                         type="password" placeholder="New password" autocomplete="new-password"
                                         data-i18n-placeholder="new_password_placeholder">
@@ -1062,10 +1061,10 @@
                     </form>
                 </div>
             </div>
-            <!-- 更改token模态框 -->
+            <!-- Change token modal -->
             <div class="mask" id="changeTokenModal" style="display: none">
                 <div class="modal">
-                    <div class="title" data-i18n="change_token_title">更改登录口令</div>
+                    <div class="title" data-i18n="change_token_title">Change Login Token</div>
 
                     <div class="title" style="margin-top: 10px;font-size: .7rem;" data-i18n="token_change_notice">
                         Min 8 chars, must contain letters and numbers</div>
@@ -1073,7 +1072,7 @@
                         <div class="content" style="overflow-y: scroll; padding: 15px; width: 66vw; max-width: 400px;">
                             <div class="item" style="margin: 10px auto;">
                                 <label style="display: flex; align-items: center;">
-                                    <span style="flex: 1;" data-i18n="new_token">新的口令：</span>
+                                    <span style="flex: 1;" data-i18n="new_token">New Token:</span>
                                     <input style="flex: 1;padding: 4px 6px;width: 100%;" name="newToken" type="password"
                                         placeholder="New token" autocomplete="new-token"
                                         data-i18n-placeholder="new_token_placeholder">
@@ -1081,7 +1080,7 @@
                             </div>
                             <div class="item" style="margin: 10px auto;">
                                 <label style="display: flex; align-items: center;">
-                                    <span style="flex: 1;" data-i18n="confirm_token">确认口令：</span>
+                                    <span style="flex: 1;" data-i18n="confirm_token">Confirm Token:</span>
                                     <input style="flex: 1;padding: 4px 6px;width: 100%;" name="confirmToken"
                                         type="password" placeholder="Confirm token" autocomplete="new-token"
                                         data-i18n-placeholder="confirm_token_placeholder">
@@ -1095,63 +1094,63 @@
                     </form>
                 </div>
             </div>
-            <!-- 内网测速模态框 -->
+            <!-- LAN speed test modal -->
             <div class="modal" id="speedTestModal" style="display: none">
-                <div class="title" data-i18n="modal_speedtest_title">内网测速(不准)</div>
+                <div class="title" data-i18n="modal_speedtest_title">LAN Speed Test (approximate)</div>
 
                 <div class="content" style="overflow-y: scroll; padding: 15px; width: 66vw; max-width: 400px;">
                     <div class="item" style="margin: 10px auto;">
                         <label style="display: flex; font-size: 14px; align-items: center;">
-                            <span data-i18n="speedtest_block_size_label">块大小(1MB 最大 1024)：</span>
+                            <span data-i18n="speedtest_block_size_label">Block Size (1MB max 1024):</span>
                             <input style="flex: 1;padding: 4px 6px;width: 100%;" value="500" id="ckSize" type="number"
                                 max="1024">
                         </label>
                     </div>
-                    <div class="speedtest" id="speedtestResult" data-i18n="speedtest_ready">准备就绪</div>
+                    <div class="speedtest" id="speedtestResult" data-i18n="speedtest_ready">Ready</div>
                 </div>
 
                 <div class="btn" style="text-align: right;">
                     <button id="startSpeedBtn" onclick="startTest(event)" data-i18n="speedtest_start_btn">Start Test</button>
-                    <button id="loopMode" onclick="handleLoopMode(event)" data-i18n="speedtest_loop_btn">循环测速</button>
+                    <button id="loopMode" onclick="handleLoopMode(event)" data-i18n="speedtest_loop_btn">Loop Test</button>
                     <button type="button" onclick="closeModal('#speedTestModal')" data-i18n="close_btn">Close</button>
                 </div>
             </div>
-            <!-- 自定义测速 -->
+            <!-- Custom speed test -->
             <div class="modal" id="CellularTestModal" style="display: none">
-                <div class="title" data-i18n="cellular_speed_test">流量测速</div>
+                <div class="title" data-i18n="cellular_speed_test">Cellular Speed Test</div>
                 <div class="title" style="font-size: 12px;margin-top: 10px;"><i
-                        data-i18n="cellular_speed_test_notice">测速经过内网代理转发，数据仅供参考</i></div>
+                        data-i18n="cellular_speed_test_notice">Speed test proxied through LAN, results are for reference only</i></div>
                 <div class="content" style="overflow-y: scroll; padding: 10px; width: 66vw; max-width: 400px;">
                     <div class="item" style="margin: 10px auto;">
                         <label style="display: flex; font-size: 14px; align-items: center;">
-                            <span data-i18n="cellular_speed_test_url">测速地址：</span>
+                            <span data-i18n="cellular_speed_test_url">Test URL:</span>
                             <input onchange="saveCellularTestUrl(event)" style="flex: 1;padding: 4px 6px;width: 100%;"
                                 id="CellularTestUrl" type="text">
                         </label>
                         <div style="margin-top: 10px;;display: flex; font-size: 14px; align-items: center;">
-                            <span data-i18n="cellular_speed_test_thread">线程数量：</span>
+                            <span data-i18n="cellular_speed_test_thread">Thread Count:</span>
                             <span id="thread_num" style="padding-right: 6px;">1</span>
                             <input value="1" oninput="onThreadNumChange(event)" style="flex:1" type="range" min="1"
                                 max="5" name="" id="">
                         </div>
                     </div>
-                    <div class="speedtest" id="CellularTestResult" data-i18n="cellular_speed_test_prepared">准备就绪</div>
+                    <div class="speedtest" id="CellularTestResult" data-i18n="cellular_speed_test_prepared">Ready</div>
                 </div>
 
                 <div class="btn" style="text-align: right;">
                     <button id="startSpeedBtn" onclick="runSingleTest(event)"
                         data-i18n="speedtest_start_btn">Start Test</button>
                     <button id="loopMode" onclick="handleCellularLoopMode(event)"
-                        data-i18n="speedtest_loop_btn">循环测速</button>
+                        data-i18n="speedtest_loop_btn">Loop Test</button>
                     <button type="button" onclick="closeCellularTest('#CellularTestModal')"
                         data-i18n="close_btn">Close</button>
                 </div>
             </div>
-            <!-- usb状态 -->
+            <!-- USB status -->
             <div class="modal" id="USBStatusModal" style="display: none;">
-                <div class="title" data-i18n="usb_status">USB状态</div>
+                <div class="title" data-i18n="usb_status">USB Status</div>
                 <div class="title" style="font-size: 12px;margin: 10px 0"><i
-                        data-i18n="usb_status_notice">仅展示机器Type-C口连接的设备列表，数据仅供参考</i></div>
+                        data-i18n="usb_status_notice">Shows devices connected to the Type-C port, data for reference only</i></div>
                 <div class="content"
                     style="font-size: .7rem;overflow-y: auto; padding: 10px 0;margin-bottom: 10px;; width: 66vw; max-width: 500px;">
                 </div>
@@ -1161,7 +1160,7 @@
                         data-i18n="close_btn">Close</button>
                 </div>
             </div>
-            <!-- 短信转发模态框 -->
+            <!-- SMS forwarding modal -->
             <div class="mask" id="smsForwardModal" style="display: none">
                 <div class="modal">
                     <div class="title" style="justify-content: space-between;"><span>SMS Forwarding (Beta)</span> <button type="button"
@@ -1345,7 +1344,7 @@
                 </div>
             </div>
 
-            <!-- APN设置模态框 -->
+            <!-- APN settings modal -->
             <div class="mask user_select_none" id="APNManagementModal" style="display: none">
                 <form id="APNManagementForm" class="modal"
                     style="max-width: 440px;display: block;box-sizing: border-box;">
@@ -1357,18 +1356,18 @@
                     <div class="content flex"
                         style="flex-direction: column;gap: 10px;overflow-y: scroll; padding: 10px 0;font-size: 14px; width: 66vw; max-width: 400px;">
                         <div class="flex" style="gap: 15px;">
-                            <span data-i18n="current_apn">当前APN</span><span name="apn_wan_apn"></span>
+                            <span data-i18n="current_apn">Current APN</span><span name="apn_wan_apn"></span>
                         </div>
                         <div class="flex" style="gap: 10px;">
-                            <span data-i18n="auto_apn">自动APN</span>
+                            <span data-i18n="auto_apn">Auto APN</span>
                             <label class="flex items-center"><input id="autoAPNMode"
                                     onclick="onChangeIsAutoFrofile(true)" name="apn_mode" type="radio" checked><span
-                                    data-i18n="auto">自动</span></label>
+                                    data-i18n="auto">Auto</span></label>
                             <label class="flex items-center"><input id="apnMode" onclick="onChangeIsAutoFrofile(false)"
-                                    name="apn_mode" type="radio"><span data-i18n="manual">手动</span></label>
+                                    name="apn_mode" type="radio"><span data-i18n="manual">Manual</span></label>
                         </div>
                         <div id="autoProfileEl" class="flex items-center" style="gap: 10px;">
-                            <span data-i18n="profile">配置文件</span>
+                            <span data-i18n="profile">Profile</span>
                             <div class="profileItems flex items-center" style="flex-wrap: wrap;flex: 1;gap: 10px;">
                                 <div style="flex: 1">
                                     <select class="select" style="min-width: 100px;width: 100%;" name="autoProfile"
@@ -1376,12 +1375,12 @@
                                     </select>
                                 </div>
                                 <div class="options" style="justify-self: start;">
-                                    <button class="btn" onclick="onViewAPNProfile(event)" data-i18n="view">查看</button>
+                                    <button class="btn" onclick="onViewAPNProfile(event)" data-i18n="view">View</button>
                                 </div>
                             </div>
                         </div>
                         <div id="profileEl" class="flex items-center" style="display: none;gap: 10px;">
-                            <span data-i18n="profile">配置文件</span>
+                            <span data-i18n="profile">Profile</span>
                             <div class="profileItems flex items-center" style="flex-wrap: wrap;flex: 1;gap: 10px;">
                                 <div style="flex: 1">
                                     <select class="select" name="profile" style="min-width: 100px;width: 100%;"
@@ -1390,7 +1389,7 @@
                                 </div>
                                 <div class="options">
                                     <button class="btn" id="addAPNProfile" data-i18n="add">Add</button>
-                                    <button class="btn" id="editAPNProfile" data-i18n="edit">编辑</button>
+                                    <button class="btn" id="editAPNProfile" data-i18n="edit">Edit</button>
                                     <button class="btn" id="delAPNProfile" data-i18n="del">Delete</button>
                                 </div>
                             </div>
@@ -1404,14 +1403,14 @@
                 </form>
             </div>
 
-            <!-- APN查看模态框 -->
+            <!-- APN view modal -->
             <div class="mask user_select_none" id="APNViewModal" style="display: none">
                 <div class="modal" style="max-width: 300px;display: block;box-sizing: border-box;">
-                    <div class="title" data-i18n="apn_info">APN信息</div>
+                    <div class="title" data-i18n="apn_info">APN Info</div>
                     <div class="content flex"
                         style="flex-direction: column;gap: 10px;overflow-y: scroll; padding: 10px 0;font-size: 14px; width: 66vw; max-width: 400px;">
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="apn_name">配置名称</span>
+                            <span style="min-width: 80px;" data-i18n="apn_name">APN Name</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" disabled
                                 name="profile_name">
                         </div>
@@ -1420,20 +1419,20 @@
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" disabled name="apn">
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="username">用户名</span>
+                            <span style="min-width: 80px;" data-i18n="username">Username</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" disabled name="username">
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="password">密码</span>
+                            <span style="min-width: 80px;" data-i18n="password">Password</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" disabled name="password">
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="auth_type">鉴权方式</span>
+                            <span style="min-width: 80px;" data-i18n="auth_type">Auth Type</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" disabled
                                 name="auth_method">
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="pdp_type">PDP类型</span>
+                            <span style="min-width: 80px;" data-i18n="pdp_type">PDP Type</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" disabled name="pdp_method">
                         </div>
                     </div>
@@ -1445,14 +1444,14 @@
                 </div>
             </div>
 
-            <!-- 添加、修改APN -->
+            <!-- Add/edit APN -->
             <div class="mask user_select_none" id="APNEditModal" style="display: none">
                 <div class="modal" style="max-width: 300px;display: block;box-sizing: border-box;">
                     <div class="title" id="APN_MOD_TITLE">APN</div>
                     <div class="content flex"
                         style="flex-direction: column;gap: 10px;overflow-y: scroll; padding: 10px 0;font-size: 14px; width: 66vw; max-width: 400px;">
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="profile_name">配置名称</span>
+                            <span style="min-width: 80px;" data-i18n="profile_name">Profile Name</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" name="profile_name"
                                 value="">
                         </div>
@@ -1461,15 +1460,15 @@
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" name="apn" value="">
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="username">用户名</span>
+                            <span style="min-width: 80px;" data-i18n="username">Username</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" name="username" value="">
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="password">密码</span>
+                            <span style="min-width: 80px;" data-i18n="password">Password</span>
                             <input class="fw max-150" style="padding: 6px 10px;" type="text" name="password" value="">
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="auth_type">鉴权方式</span>
+                            <span style="min-width: 80px;" data-i18n="auth_type">Auth Type</span>
                             <select class="select fw max-150" name="auth_method" value="none">
                                 <option value="none">NONE</option>
                                 <option value="chap">CHAP</option>
@@ -1477,7 +1476,7 @@
                             </select>
                         </div>
                         <div class="flex items-center" style="gap: 10px;">
-                            <span style="min-width: 80px;" data-i18n="pdp_type">PDP类型</span>
+                            <span style="min-width: 80px;" data-i18n="pdp_type">PDP Type</span>
                             <select class="select fw max-150" name="pdp_method" value="IP">
                                 <option value="IP">IPv4</option>
                                 <option value="IPv6">IPv6</option>

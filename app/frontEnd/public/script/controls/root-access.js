@@ -165,12 +165,12 @@
   function translateResponse(text) {
     if (!text) return text;
     var map = {
-      '执行成功，等待1-2分钟即可生效！': 'Success — please wait 1-2 minutes to take effect',
-      '执行成功': 'Execution successful',
-      '已启用': 'Enabled',
-      '已禁用': 'Disabled',
-      '操作成功': 'Operation successful',
-      '操作失败': 'Operation failed'
+      'Success — please wait 1-2 minutes to take effect': 'Success — please wait 1-2 minutes to take effect',
+      'Execution successful': 'Execution successful',
+      'Enabled': 'Enabled',
+      'Disabled': 'Disabled',
+      'Operation successful': 'Operation successful',
+      'Operation failed': 'Operation failed'
     };
     var result = text;
     Object.keys(map).forEach(function (k) { result = result.replace(k, map[k]); });

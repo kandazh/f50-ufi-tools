@@ -14,7 +14,7 @@
             try {
                 new Function('var obj = {}; return obj?.a;');
             } catch (e) {
-                alert("您的浏览器版本过低，无法使用本页面，请升级浏览器版本后再试\nYour browser version is too old to use this page. Please update your browser and try again.")
+                alert("Your browser version is too old to use this page. Please update your browser and try again.")
             }
         })()
     </script>
@@ -39,7 +39,7 @@
         function setRem() {
             const width = document.documentElement.clientWidth;
             let scale = width / 375;
-            // 限制缩放范围
+            // Limit zoom range
             if (scale < minScale) scale = minScale;
             if (scale > maxScale) scale = maxScale;
             document.documentElement.style.fontSize = (baseSize * scale) + 'px';

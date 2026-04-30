@@ -67,7 +67,7 @@ function t(key, fallback = "") {
     return translations[key] || fallback || key;
 }
 
-// 初始化
+// Initialize
 (function initI18n() {
     createLanguageSelector();
     const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
