@@ -93,46 +93,32 @@
     return new Promise(function (resolve) {
       setStatus('Testing download...');
       var startTime = performance.now();
-      var loaded = 0;
+      var url = KANO_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now();
 
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', KANO_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now(), true);
-      xhr.responseType = 'arraybuffer';
+      fetch(url, { headers: common_headers, cache: 'no-store' }).then(function (res) {
+        if (!res.ok) { resolve(-1); return; }
+        var reader = res.body.getReader();
+        var loaded = 0;
 
-      // Set auth headers (skip unsafe ones)
-      var unsafeHeaders = ['referer', 'host', 'origin', 'connection', 'content-length'];
-      if (common_headers) {
-        Object.keys(common_headers).forEach(function (k) {
-          if (unsafeHeaders.indexOf(k.toLowerCase()) === -1) {
-            xhr.setRequestHeader(k, common_headers[k]);
-          }
-        });
-      }
-
-      xhr.onprogress = function (e) {
-        if (e.lengthComputable || e.loaded) {
-          loaded = e.loaded;
-          var elapsed = (performance.now() - startTime) / 1000;
-          if (elapsed > 0) {
-            var MBps = loaded / (elapsed * 1048576);
-            setSpeed(MBps);
-          }
+        function pump() {
+          return reader.read().then(function (result) {
+            if (result.done) {
+              var elapsed = (performance.now() - startTime) / 1000;
+              var MBps = loaded / (elapsed * 1048576);
+              setSpeed(MBps);
+              resolve(MBps);
+              return;
+            }
+            loaded += result.value.length;
+            var elapsed = (performance.now() - startTime) / 1000;
+            if (elapsed > 0) {
+              setSpeed(loaded / (elapsed * 1048576));
+            }
+            return pump();
+          });
         }
-      };
-
-      xhr.onload = function () {
-        var elapsed = (performance.now() - startTime) / 1000;
-        var totalBytes = xhr.response ? xhr.response.byteLength : loaded;
-        var MBps = totalBytes / (elapsed * 1048576);
-        setSpeed(MBps);
-        resolve(MBps);
-      };
-
-      xhr.onerror = function () {
-        resolve(-1);
-      };
-
-      xhr.send();
+        return pump();
+      }).catch(function () { resolve(-1); });
     });
   }
 
@@ -144,40 +130,18 @@
       var blob = new Blob([data]);
       var startTime = performance.now();
 
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', KANO_baseURL + '/speedtest_upload?_t=' + Date.now(), true);
-
-      var unsafeHeaders2 = ['referer', 'host', 'origin', 'connection', 'content-length'];
-      if (common_headers) {
-        Object.keys(common_headers).forEach(function (k) {
-          if (unsafeHeaders2.indexOf(k.toLowerCase()) === -1) {
-            xhr.setRequestHeader(k, common_headers[k]);
-          }
-        });
-      }
-
-      xhr.upload.onprogress = function (e) {
-        if (e.loaded) {
-          var elapsed = (performance.now() - startTime) / 1000;
-          if (elapsed > 0) {
-            var MBps = e.loaded / (elapsed * 1048576);
-            setSpeed(MBps);
-          }
-        }
-      };
-
-      xhr.onload = function () {
+      fetch(KANO_baseURL + '/speedtest_upload?_t=' + Date.now(), {
+        method: 'POST',
+        headers: common_headers,
+        body: blob
+      }).then(function (res) {
         var elapsed = (performance.now() - startTime) / 1000;
         var totalBytes = sizeMB * 1024 * 1024;
         var MBps = totalBytes / (elapsed * 1048576);
-        resolve(MBps);
-      };
-
-      xhr.onerror = function () {
+        resolve(res.ok ? MBps : -1);
+      }).catch(function () {
         resolve(-1);
-      };
-
-      xhr.send(blob);
+      });
     });
   }
 
