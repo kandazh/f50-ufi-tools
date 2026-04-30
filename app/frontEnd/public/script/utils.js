@@ -47,7 +47,7 @@ function openLink(link) {
     a.click()
 }
 
-//检测是否启用高级功能
+//检测是否Enable高级功能
 const checkAdvancedFunc = async () => {
     const res = await runShellWithRoot('whoami')
     if (res.content) {
@@ -76,7 +76,7 @@ function copyText(e) {
         // 创建text area
         let textArea = document.createElement("textarea");
         textArea.value = text;
-        // 使text area不在viewport，同时设置不可见
+        // 使text area不在viewport，同时Settings不可见
         textArea.style.position = "absolute";
         textArea.style.opacity = 0;
         textArea.style.left = "-999999px";
@@ -736,7 +736,7 @@ const getRefteshRate = (cb) => {
     return rate_num
 }
 
-// 特定模态框模糊区域点击关闭
+// 特定模态框模糊区域点击Close
 Array.from(document.querySelectorAll('.mask'))?.forEach(el => {
     el.onclick = (e) => {
         e.stopPropagation()
@@ -769,7 +769,7 @@ const scroolToTop = () => {
     })
 }
 
-//下载url
+//Downloadurl
 const downloadUrl = (url, filename) => {
     const a = document.createElement('a')
     a.href = url
@@ -1003,19 +1003,19 @@ const fillCurl = (kind) => {
     switch (kind) {
         case 'tg':
             message = message = t('tg_sms_help')
-            curl_text.value = `curl -s -X POST https://api.telegram.org/bot<你的token>/sendMessage -H "Content-Type: application/json" -d '{"chat_id":<你的聊天会话id>,"text":"{{sms-body}} {{sms-time}} {{sms-from}}","parse_mode":"HTML"}'`
+            curl_text.value = `curl -s -X POST https://api.telegram.org/bot<YOUR_TOKEN>/sendMessage -H "Content-Type: application/json" -d '{"chat_id":<你的聊天会话id>,"text":"{{sms-body}} {{sms-time}} {{sms-from}}","parse_mode":"HTML"}'`
             break;
         case 'wechat':
             message = t('wechat_sms_help')
-            curl_text.value = `curl -X POST "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=<输入你的key>" -H "Content-Type: application/json" -d '{"msgtype": "text", "text": {"content": "【号码】{{sms-from}}\\n【短信内容】{{sms-body}}\\n【时间】{{sms-time}}"}}'`
+            curl_text.value = `curl -X POST "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=<YOUR_KEY>" -H "Content-Type: application/json" -d '{"msgtype": "text", "text": {"content": "【号码】{{sms-from}}\\n【短信内容】{{sms-body}}\\n【时间】{{sms-time}}"}}'`
             break;
         case 'pushplus':
             message = t('pushplus_sms_help')
-            curl_text.value = `curl -s -X POST https://www.pushplus.plus/send/  -H "Content-Type: application/x-www-form-urlencoded" -d "token=<你的token>&title=有新消息！！&content=**【短信内容】**%0A{{sms-body}}%0A%0A**【时间】**%0A{{sms-time}}%0A%0A**【号码】**%0A{{sms-from}}&template=markdown"`
+            curl_text.value = `curl -s -X POST https://www.pushplus.plus/send/  -H "Content-Type: application/x-www-form-urlencoded" -d "token=<YOUR_TOKEN>&title=有新消息！！&content=**【短信内容】**%0A{{sms-body}}%0A%0A**【时间】**%0A{{sms-time}}%0A%0A**【号码】**%0A{{sms-from}}&template=markdown"`
             break;
         case 'bark':
             message = t('bark_sms_help')
-            curl_text.value = `curl -X "POST" "https://api.day.app/<你的token>/" -H 'Content-Type: application/json; charset=utf-8' -d '{"body": "【短信内容】{{sms-body}}\\n【时间】{{sms-time}}", "title":"{{sms-from}}", "group": "UFI-TOOLS_SMS", "isArchive":1}'`
+            curl_text.value = `curl -X "POST" "https://api.day.app/<YOUR_TOKEN>/" -H 'Content-Type: application/json; charset=utf-8' -d '{"body": "【短信内容】{{sms-body}}\\n【时间】{{sms-time}}", "title":"{{sms-from}}", "group": "UFI-TOOLS_SMS", "isArchive":1}'`
             break;
 
     }
@@ -1092,7 +1092,7 @@ const showLoginHelp = () => {
     const message = t("login_help_text").replaceAll('\n', "<br>")
     const { el, close } = createFixedToast('kano_login_help_message', `
                     <div style="pointer-events:all;width:80vw;max-width:600px">
-                        <div class="title" style="margin:0">🔑 登录帮助说明</div>
+                        <div class="title" style="margin:0">🔑 Login Help</div>
                         <div style="margin:10px 0;max-height:400px;overflow:auto">${message}</div>
                         <div style="text-align:right">
                             <button style="font-size:.64rem" id="close_login_help_btn" data-i18n="pay_btn_dismiss">${t('pay_btn_dismiss')}</button>
@@ -1231,7 +1231,7 @@ function validateAlphaAndNumber(input) {
     return regex.test(input);
 }
 
-//文件上传(100MB)
+//文件Upload(100MB)
 async function uploadFileKano(file, needRename = false) {
     if (file) {
         console.log(file.name);
@@ -1241,7 +1241,7 @@ async function uploadFileKano(file, needRename = false) {
             createToast(`${t('file_size_over_limit')} 100MB！`, 'red')
         } else {
             let closeFn = null
-            //上传
+            //Upload
             try {
                 const { el, close } = createFixedToast("uploading_file_kano", t('uploading'))
                 closeFn = close

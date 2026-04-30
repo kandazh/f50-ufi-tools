@@ -1,4 +1,4 @@
-﻿// toolbar
+// toolbar
 const tb = document.querySelector('#top_btn')
 if (tb) {
     let ctTimer = null
@@ -367,7 +367,7 @@ function main_func() {
             isShow: item.checked
         }))
         localStorage.setItem('showList', JSON.stringify(showList))
-        //保存
+        //Save
         callback && callback(list)
     }
 
@@ -1498,7 +1498,7 @@ function main_func() {
                     out()
                     return null
                 }
-                // usb调试需要同步开启
+                // usb调试需要同步On
                 if (!(res.enabled == "true" || res.enabled == true)) {
                     await (await postData(cookie, {
                         goformId: 'USB_PORT_SETTING',
@@ -1532,7 +1532,7 @@ function main_func() {
     }
     handlerADBNetworkStatus()
 
-    //检查性能模式状态
+    //检查Performance Mode状态
     let handlerPerformaceStatus = async () => {
         const btn = document.querySelector('#PERF')
         if (!btn) return null
@@ -2051,7 +2051,7 @@ function main_func() {
             ]))
             if (res[0].result == 'success' || res[1].result == 'success') {
                 createToast(t('toast_set_band_success'), 'green')
-                //重启网络栈
+                //Reboot网络栈
                 await networkStackSwitch(false)
                 await wait(300)
                 await networkStackSwitch(true)
@@ -2094,10 +2094,10 @@ function main_func() {
         }
     }
 
-    //锁基站
+    //Lock Cell
     let initCellInfo = async (onlyRefreshLockedInfoList = false) => {
         try {
-            //已锁基站信息
+            //已Lock Cell信息
             //基站信息
             const { neighbor_cell_info, locked_cell_info } = await getData(new URLSearchParams({
                 cmd: 'neighbor_cell_info,locked_cell_info'
@@ -2186,7 +2186,7 @@ function main_func() {
         }
     }
 
-    //锁基站
+    //Lock Cell
     const submitCellForm = async (e) => {
         e.preventDefault()
         if (!(await initRequestData())) {
@@ -2227,7 +2227,7 @@ function main_func() {
                 pciEl.value = ''
                 earfcnEl.value = ''
                 createToast(t('toast_set_cell_success'), 'green')
-                //刷新基站列表
+                //Refresh基站列表
                 initCellInfo(true)
             } else {
                 throw t('toast_set_cell_failed')
@@ -2256,7 +2256,7 @@ function main_func() {
 
             if (res.result == 'success') {
                 createToast(t('toast_unlock_cell_success'), 'green')
-                //刷新基站列表
+                //Refresh基站列表
                 initCellInfo(true)
             } else {
                 throw t('toast_unlock_cell_failed')
@@ -2376,7 +2376,7 @@ function main_func() {
         resetShowListBtnCount++
         resetShowListTimer = setTimeout(() => {
             resetShowListBtnCount = 1
-            target.innerHTML = '重置(全选)'
+            target.innerHTML = 'Reset (Select All)'
         }, 3000);
     }
 
@@ -2390,7 +2390,7 @@ function main_func() {
         if (QORSTimer) { QORSTimer(); QORSTimer = null }
     }
 
-    //暂停开始刷新
+    //暂停开始Refresh
     const playIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><polygon points="6,4 20,12 6,20"/></svg>'
     const pauseIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="10" y2="18"/><line x1="14" y1="6" x2="14" y2="18"/></svg>'
     Array.from(document.querySelectorAll('.REFRESH_BTN'))?.forEach(el => {
@@ -2500,7 +2500,7 @@ function main_func() {
         showModal('#DataManagementModal')
     }
 
-    //流量管理表单提交
+    //流量管理表单Submit
     let handleDataManagementFormSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -3110,7 +3110,7 @@ function main_func() {
     }
     loadTitle()
 
-    //定时重启模态框
+    //定时Reboot模态框
     let initScheduleRebootStatus = async () => {
         const btn = document.querySelector('#SCHEDULE_REBOOT')
         const SCHEDULE_TIME = document.querySelector('#SCHEDULE_TIME')
@@ -3183,7 +3183,7 @@ function main_func() {
         }
     }
 
-    // 启用TTYD（如果有）
+    // EnableTTYD（如果有）
     let initTTYD = async () => {
         const TTYD = document.querySelector('#TTYD')
         if (!TTYD) return
@@ -3243,7 +3243,7 @@ function main_func() {
     let enableTTYD = () => {
         click_count_ttyd++
         if (click_count_ttyd >= 4) {
-            // 启用ttyd弹窗
+            // Enablettyd弹窗
             initResServer()
             showModal('#TTYDModal')
             ttyd_timer && clearTimeout(ttyd_timer)
@@ -3263,7 +3263,7 @@ function main_func() {
         if (!ttyd_port || ttyd_port.trim() == '') return createToast(t('toast_please_input_port'), 'red')
         let ttydNumber = Number(ttyd_port.trim())
         if (isNaN(ttydNumber) || ttydNumber <= 0 || ttydNumber > 65535) return createToast(t('toast_please_input_port_correct'), 'red')
-        // 保存ttyd port
+        // Savettyd port
         localStorage.setItem('ttyd_port', ttyd_port)
         createToast(t('toast_save_success'), 'green')
         initTTYD()
@@ -3353,7 +3353,7 @@ function main_func() {
             sim_slot = sim_slot == 1 ? 0 : 1
         }
 
-        // V50 内置卡1(移动)slot=0 内置卡2(电信)slot=1 内置卡3(联通)slot=2 外置卡slot=11 外置卡 slot需要设置为0 联通内置卡slot设置为1
+        // V50 内置卡1(移动)slot=0 内置卡2(电信)slot=1 内置卡3(联通)slot=2 外置卡slot=11 外置卡 slot需要Settings为0 联通内置卡slotSettings为1
         // For V50
         if (sim_slot == "11") {
             //可恶的F50Pro两个卡槽居然是反过来的
@@ -3517,7 +3517,7 @@ function main_func() {
         }
     }
 
-    //执行时禁用按钮
+    //执行时Disable按钮
     const disableButtonWhenExecuteFunc = async (e, func) => {
         const target = e.currentTarget
         target.setAttribute("disabled", "true");
@@ -3561,7 +3561,7 @@ function main_func() {
         el.style.backgroundColor = ''
         el.onclick = () => {
             showModal('#advanceModal')
-            //循环检测是否开启socat
+            //循环检测是否Onsocat
             socatAlive()
             socatTimerFn && socatTimerFn()
             socatTimerFn = requestInterval(() => socatAlive(), 1000)
@@ -3574,7 +3574,7 @@ function main_func() {
         closeModal('#advanceModal')
     }
 
-    //执行高级功能更改 1为启用0为禁用
+    //执行高级功能更改 1为Enable0为Disable
     const handleSambaPath = async (flag = '1') => {
         const AT_RESULT = document.querySelector('#AD_RESULT')
         // let adb_status = await adbKeepAlive()
@@ -4002,7 +4002,7 @@ function main_func() {
         }
     };
 
-    //文件上传
+    //文件Upload
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
         const MAX_SIZE = 10
@@ -4013,7 +4013,7 @@ function main_func() {
                 createToast(`${t('toast_file_size_over_limit')}${MAX_SIZE}MB！`, 'red')
             } else {
 
-                //上传图片
+                //Upload图片
                 try {
                     const formData = new FormData();
                     formData.append("file", file);
@@ -4079,7 +4079,7 @@ function main_func() {
     // 配置观察器_锁频
     collapseGen("#collapse_lkband_btn", "#collapse_lkband", "collapse_lkband")
 
-    // 配置观察器_锁基站
+    // 配置观察器_Lock Cell
     collapseGen("#collapse_lkcell_btn", "#collapse_lkcell", "collapse_lkcell", (isOpen) => {
         if (isOpen == 'open') {
             toggleLkcellOpen(true)
@@ -4392,7 +4392,7 @@ function main_func() {
     }
 
     const handleSmsForwardDingTalkForm = async (e) => {
-        console.log('钉钉表单提交事件触发')
+        console.log('钉钉表单Submit事件触发')
         e.preventDefault()
         const form = e.target
         const formData = new FormData(form);
@@ -4459,7 +4459,7 @@ function main_func() {
         status == 'open' ? enabled = '1' : enabled = '0'
         if (enabled != undefined) {
             try {
-                //开启总开关
+                //On总开关
                 await (await fetch(`${KANO_baseURL}/sms_forward_enabled?enable=${enabled}`, {
                     method: 'post',
                     headers: {
@@ -4474,7 +4474,7 @@ function main_func() {
         }
     })
 
-    //别名设置
+    //别名Settings
     let click_count_nickname = 1
     let nickname_timer = null
     const nicknameSettingClick = () => {
@@ -4519,7 +4519,7 @@ function main_func() {
 
             if (confirmBtn) {
                 confirmBtn.onclick = async () => {
-                    //提交
+                    //Submit
                     try {
                         const nickName = nickNameEl.value.trim()
                         const res = await (await fetch(`${KANO_baseURL}/set_nickname`, {
@@ -4561,7 +4561,7 @@ function main_func() {
         nicknameSettingBtn.onclick = openNicknameSetting
     }
 
-    //短信转发规则设置
+    //短信转发规则Settings
     const forwardMethodSettingBtn = document.querySelector('#forward_method_setting_btn')
     if (forwardMethodSettingBtn) {
         forwardMethodSettingBtn.onclick = async () => {
@@ -4600,7 +4600,7 @@ function main_func() {
 
                 if (confirmBtn) {
                     confirmBtn.onclick = async () => {
-                        //提交
+                        //Submit
                         try {
                             if (!/^[0-9\n]*$/.test(phoneListEl.value.trim())) {
                                 return createToast(t('phone_param_is_invalid'), 'pink');
@@ -4659,7 +4659,7 @@ function main_func() {
         </li > `
     }
 
-    //内网设置
+    //内网Settings
     const initLANSettings = async () => {
         // LAN settings now handled inline by ctrl-tabs.js
     }
@@ -4814,7 +4814,7 @@ function main_func() {
         })
     }
 
-    //改变刷新频率
+    //改变Refresh频率
     const changeRefreshRate = (e) => {
         const value = e.target.value
         if (value) {
@@ -4830,7 +4830,7 @@ function main_func() {
                 headerBtn.title = 'Stop refresh'
             }
             createToast(t('toast_current_refresh_rate') + "：" + (value / 1000).toFixed(2) + "S", 'green')
-            //保存
+            //Save
             localStorage.setItem("refreshRate", value)
         }
     }
@@ -5091,15 +5091,15 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         e.preventDefault()
         //动作列表
         const actionList = {
-            "转发设备信息": {
+            "forward_device_info": {
                 "kano_do_sms_forward_action": "1"
             },
-            "发送短信": {
+            "send_sms": {
                 "goformId": "SEND_SMS",
                 "Number": t("phone_number"),
                 "MessageBody": `"${t("sms_content")}"`
             },
-            "指示灯": {
+            "indicator_light": {
                 "goformId": "INDICATOR_LIGHT_SETTING",
                 "indicator_light_switch": `${t('one_or_zero_prompt')}`
             },
@@ -5107,40 +5107,40 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 goformId: 'WIFI_NFC_SET',
                 web_wifi_nfc_switch: `${t('one_or_zero_prompt')}`
             },
-            "文件共享": {
+            "file_sharing": {
                 goformId: 'SAMBA_SETTING',
                 samba_switch: `${t('one_or_zero_prompt')}`
             },
-            "网络漫游": {
+            "network_roaming": {
                 goformId: 'SET_CONNECTION_MODE',
                 ConnectionMode: "auto_dial",
                 roam_setting_option: `${t('on_or_off_prompt')}`,
                 dial_roam_setting_option: `${t('on_or_off_prompt')}`
             },
-            "性能模式": {
+            "performance_mode": {
                 goformId: 'PERFORMANCE_MODE',
                 performance_mode: `${t('one_or_zero_prompt')}`
             },
-            "USB调试": {
+            "usb_debug": {
                 goformId: 'USB_PORT_SETTING',
                 usb_port_switch: `${t('one_or_zero_prompt')}`
             },
-            "打开数据": {
+            "data_on": {
                 goformId: 'CONNECT_NETWORK',
             },
-            "关闭数据": {
+            "data_off": {
                 goformId: 'DISCONNECT_NETWORK',
             },
-            "关闭WIFI": {
+            "wifi_off": {
                 goformId: 'switchWiFiModule',
                 SwitchOption: 0
             },
-            "开启WIFI(5G)": {
+            "wifi_5g_on": {
                 goformId: 'switchWiFiChip',
                 ChipEnum: 'chip2',
                 GuestEnable: 0
             },
-            "开启WIFI(2.4G)": {
+            "wifi_24g_on": {
                 goformId: 'switchWiFiChip',
                 ChipEnum: 'chip1',
                 GuestEnable: 0
@@ -5157,46 +5157,46 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 goformId: 'SET_BEARER_PREFERENCE',
                 BearerPreference: 'Only_5G'
             },
-            "仅4G": {
+            "only_4g": {
                 goformId: 'SET_BEARER_PREFERENCE',
                 BearerPreference: 'Only_LTE'
             },
-            "关机": {
+            "shutdown": {
                 goformId: 'SHUTDOWN_DEVICE'
             },
-            "重启": {
+            "reboot": {
                 goformId: 'REBOOT_DEVICE'
             },
-            "解锁基站": {
+            "unlock_cell": {
                 goformId: 'UNLOCK_ALL_CELL'
             },
-            "锁基站": {
+            "lock_cell": {
                 goformId: 'CELL_LOCK',
                 pci: "912",
                 earfcn: "504990",
                 rat: `${t('cell_lock_prompt')}`
             },
-            "切SIM卡1": {
+            "switch_sim1": {
                 goformId: 'SET_SIM_SLOT',
                 sim_slot: 0
             },
-            "切SIM卡2": {
+            "switch_sim2": {
                 goformId: 'SET_SIM_SLOT',
                 sim_slot: 1
             },
-            "切移动": {
+            "switch_cmcc": {
                 goformId: 'SET_SIM_SLOT',
                 sim_slot: 0
             },
-            "切联通": {
+            "switch_cucc": {
                 goformId: 'SET_SIM_SLOT',
                 sim_slot: 2
             },
-            "切电信": {
+            "switch_ctcc": {
                 goformId: 'SET_SIM_SLOT',
                 sim_slot: 1
             },
-            "切外置": {
+            "switch_external": {
                 goformId: 'SET_SIM_SLOT',
                 sim_slot: 11
             }
@@ -5205,7 +5205,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         if (!taskAction) return
         const action = actionList[actionName]
         if (action) {
-            if (actionName == "发送短信") {
+            if (actionName == "send_sms") {
                 if (!action.MessageBody) return
                 const { el, close } = createFixedToast('kano_sms_body', `
                 <div style="pointer-events:all;width:80vw;max-width:300px;">
@@ -5252,7 +5252,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     close()
                 }
             }
-            if (actionName == "转发设备信息") {
+            if (actionName == "forward_device_info") {
                 try {
                     const { enabled } = await (await fetch(`${KANO_baseURL}/sms_forward_enabled`, {
                         method: 'GET',
@@ -5266,13 +5266,13 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     return createToast(t('client_mgmt_fetch_error', 'pink'))
                 }
             }
-            if (actionName != "发送短信") {
+            if (actionName != "send_sms") {
                 taskAction.value = JSON.stringify(action, null, 2)
             }
         }
     }
 
-    //拖拽上传插件
+    //拖拽Upload插件
     (() => {
         const dropZone = document.getElementById('pluginDropZone');
 
@@ -5303,7 +5303,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     })()
 
 
-    //插件上传
+    //插件Upload
     const handlePluginFileUpload = (event) => {
         return new Promise((resolve, reject) => {
             const file = event.target.files[0];
@@ -5399,7 +5399,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         document.querySelector('#pluginFileInput')?.click()
     }
 
-    //初始化插件功能
+    //初始化Plugins
     let sortable_plugin = null
     let plugins = []
 
@@ -5522,7 +5522,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             `<!-- [KANO_PLUGIN_START] ${item.name} -->\n${item.content}\n<!-- [KANO_PLUGIN_END] ${item.name} -->\n\n\n\n`
         ).join('')
 
-        // 同步插件数量
+        // 同步Plugin count
         const PLUGINS_NUM = document.querySelector('#PLUGINS_NUM')
         if (PLUGINS_NUM) PLUGINS_NUM.innerHTML = plugins.length
     }
@@ -5600,7 +5600,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     const handleDisableFOTA = async () => {
         const AD_RESULT = document.querySelector('#AD_RESULT')
         try {
-            //看看是不是开启了高级功能
+            //看看是不是On了高级功能
             AD_RESULT.innerHTML = `<strong class="green" style="font-size: 12px;">${t('disable_update_ing')}...</strong>`
             if (await checkAdvancedFunc()) {
                 createToast(t('toast_advanced_checked'), '')
@@ -5665,7 +5665,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             if (result.success) {
                 AD_RESULT.innerHTML = `<strong style="font-size: 12px;">${t('your_boot_slot')}：${ab}，${t('downloading')}：boot_${ab}.img...</strong>`
             }
-            //开始下载
+            //开始Download
             const outLink = `/api/uploads/${outFile}`
             const a = document.createElement('a')
             a.href = outLink
@@ -5777,7 +5777,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
                 readTasks.push(task);
 
-                // 批处理延迟，避免同时连接过多
+                // 批处理延迟，避免同时Connect过多
                 if ((i + 1) % batchSize === 0) {
                     await new Promise(res => setTimeout(res, 100));
                 }
@@ -5904,7 +5904,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //从插件商店下载插件并安装
+    //从插件商店Download插件并安装
     const installPluginFromStore = async (url, name) => {
         const { close, el } = createFixedToast('download_ing', t('download_ing'))
         try {
@@ -5918,7 +5918,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             }
             const text = await res.text()
             createToast(t('install_ing'), 'pink', 3000, () => {
-                close() // 关闭下载中提示
+                close() // CloseDownload中提示
             })
             await handlePluginFileUpload({
                 target: {
@@ -5978,7 +5978,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
     }
 
-    //搜索插件，滚动到合适位置
+    //Search插件，滚动到合适位置
     const scrollToElement = (elementsName = '#plugin_store .plugin-title', keyword, highLightKeyWord = true) => {
         let found = false
         let foundList = []
@@ -6040,7 +6040,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     const pluginsResultRes = []
     let timer_input = null
     plugin_store.onclick = (e) => {
-        //隐藏插件功能模态框
+        //隐藏Plugins模态框
         const pluginModal = document.querySelector('#PluginModal')
         pluginModal.style.display = 'none'
 
@@ -6164,7 +6164,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         renderPluginItems(data.content.slice(pageNum * pageSize, pageNum * pageSize + pageSize), download_url)
                     }
 
-                    //搜索插件
+                    //Search插件
                     const pluginSearchBtn = document.querySelector('#pluginSearchBtn')
                     pluginSearchBtn.onclick = () => {
                         const pluginSearchInput = document.querySelector('#pluginSearchInput')
@@ -6217,7 +6217,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     plugin_search_reset_btn.onclick = () => {
                         const pluginSearchInput = document.querySelector('#pluginSearchInput')
                         pluginSearchInput.value = '';
-                        pluginSearchBtn.click() //触发搜索
+                        pluginSearchBtn.click() //触发Search
                     }
 
                 } else {
@@ -6478,13 +6478,13 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         const isEnabled = target.dataset.enabled === '1'
         try {
             if (isEnabled) {
-                //关闭高铁模式
+                //Close高铁模式
                 const res = await handleAT(HighRailModeAT + "0", true)
                 if (!res) throw new Error('Failed to enable High Rail Mode')
                 target.dataset.enabled = '0'
                 target.style.backgroundColor = ''
             } else {
-                //开启高铁模式
+                //On高铁模式
                 const res = await handleAT(HighRailModeAT + "1", true)
                 if (!res) throw new Error('Failed to enable High Rail Mode')
                 target.dataset.enabled = '1'
@@ -6745,7 +6745,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         return null
     }
 
-    // APN设置
+    // APNSettings
     const initAPNManagement = async () => {
         const btn = document.querySelector('#APNManagement')
         if (!btn) return null
@@ -6829,7 +6829,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             //渲染APN列表（预览）
             renderAPNViewModalContet(res)
 
-            //保存profile
+            //Saveprofile
             const onSaveProfile = (method = "add") => {
                 return async (e) => {
                     e.preventDefault()
@@ -6897,7 +6897,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         apn_ppp_auth_mode: "none",
                         apn_pdp_type: "IP",
                     })
-                    // 保存
+                    // Save
                     const submitBtn = document.querySelector('#APNEditModal button[name="submit"]')
                     if (submitBtn && APNManagementFormEl) {
                         submitBtn.onclick = onSaveProfile("add")
@@ -6933,7 +6933,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                             apn_pdp_type: config[7] || "",
                         })
                     }
-                    // 保存
+                    // Save
                     const submitBtn = document.querySelector('#APNEditModal button[name="submit"]')
                     if (submitBtn && APNManagementFormEl) {
                         submitBtn.onclick = onSaveProfile("mod")
@@ -7353,7 +7353,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         })
     }
 
-    //官方后台貌似对PIN超出次数的判定有问题，PIN次数用完后提示输入PUK，此时换卡也不会变更状态，用户只能恢复出厂设置，所以此功能不会继续实现
+    //官方后台貌似对PIN超出次数的判定有问题，PIN次数用完后提示输入PUK，此时换卡也不会变更状态，用户只能恢复出厂Settings，所以此功能不会继续实现
     // let simCardPinDisabled = false
     // const initSimCardPin = async () => {
     //     if (!initRequestData()) {
@@ -7371,7 +7371,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     //         return null
     //     }
 
-    //     //暂停数据刷新
+    //     //暂停数据Refresh
     //     stopRefresh()
 
     //     const md = createModal({

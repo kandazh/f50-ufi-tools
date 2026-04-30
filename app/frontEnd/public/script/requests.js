@@ -80,7 +80,7 @@ const common_headers = {
 const login1 = async () => {
     try {
         const { LD } = await getLD()
-        if (!LD) throw new Error('无法获取LD')
+        if (!LD) throw new Error('Failed to get LD')
 
         const pwd = SHA256(SHA256(KANO_PASSWORD) + LD)
         const body = new URLSearchParams({
@@ -113,7 +113,7 @@ const login1 = async () => {
 let login2 = async () => {
     try {
         const { LD } = await getLD()
-        if (!LD) throw new Error('无法获取LD')
+        if (!LD) throw new Error('Failed to get LD')
 
         const pwd = SHA256(SHA256(KANO_PASSWORD) + LD)
         const body = new URLSearchParams({
@@ -135,7 +135,7 @@ let login2 = async () => {
         if (res_data == undefined || res_data == null || res_data.result == '3' || res_data.result == 3) {
             return null
         }
-        //设置全局cookie
+        //Settings全局cookie
         const ck = res.headers.get('kano-cookie').split(';')[0]
         KANO_COOKIE = ck
         return ck
@@ -182,7 +182,7 @@ const getLD = async () => {
 }
 
 const getRD = async (cookie) => {
-    if (!cookie) throw new Error('请提供cookie')
+    if (!cookie) throw new Error('Cookie required')
     const res = await fetch(KANO_baseURL + "/goform/goform_get_cmd_process?isTest=false&cmd=RD&_=" + Date.now(), {
         method: "GET",
         headers: {
@@ -205,7 +205,7 @@ const getUFIInfo = async () => {
 
 const processAD = async (cookie) => {
     const { wa_inner_version, cr_version } = await getUFIInfo()
-    if (!wa_inner_version || !cr_version) throw new Error('无法获取版本信息')
+    if (!wa_inner_version || !cr_version) throw new Error('Failed to get version info')
     const parsedInfo = SHA256(wa_inner_version + cr_version)
     const { RD } = await getRD(cookie)
     const AD = SHA256(parsedInfo + RD)
@@ -252,7 +252,7 @@ const reboot = async (cookie) => {
     return res
 }
 
-// 发送短信
+// Send SMS
 const sendSms_UFI = async ({ content, number }) => {
     if (!content) throw new Error('SMS content required')
     if (!number) throw new Error('Phone number required')
@@ -531,7 +531,7 @@ const getAPNData = async () => {
 
 //deleteAPNProfile
 const deleteAPNProfile = async (index) => {
-    if (index == undefined || index == null) throw new Error('请提供index')
+    if (index == undefined || index == null) throw new Error('Index required')
     const res = await postData(await login(), {
         goformId: "APN_PROC_EX",
         index,

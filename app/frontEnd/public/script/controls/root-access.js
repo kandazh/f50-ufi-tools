@@ -106,7 +106,7 @@
       var steps = [
         { label: 'Enabling Samba service...', fn: enableSamba },
         { label: 'Installing advanced tools...', fn: installAdvanced },
-        { label: 'Verifying configuration...', fn: verifyAdvanced }
+        { label: 'Verifying configuration (may take up to 15s)...', fn: verifyAdvanced }
       ];
       var allOk = true;
       for (var i = 0; i < steps.length; i++) {
@@ -161,17 +161,41 @@
     return 'Samba enabled';
   }
 
+  // Translate known Chinese server responses
+  function translateResponse(text) {
+    if (!text) return text;
+    var map = {
+      '执行成功，等待1-2分钟即可生效！': 'Success — please wait 1-2 minutes to take effect',
+      '执行成功': 'Execution successful',
+      '已启用': 'Enabled',
+      '已禁用': 'Disabled',
+      '操作成功': 'Operation successful',
+      '操作失败': 'Operation failed'
+    };
+    var result = text;
+    Object.keys(map).forEach(function (k) { result = result.replace(k, map[k]); });
+    // Strip any remaining Chinese with HTML tags
+    result = result.replace(/<br>/gi, ' | ');
+    return result;
+  }
+
   async function installAdvanced() {
     var resp = await fetch(KANO_baseURL + '/smbPath?enable=1', { headers: common_headers || {} });
     var data = await resp.json();
-    if (data.error) throw new Error(data.error);
-    return data.result || 'Installed';
+    if (data.error) throw new Error(translateResponse(data.error));
+    return translateResponse(data.result) || 'Installed';
   }
 
   async function verifyAdvanced() {
-    var res = await checkAdvancedFunc();
-    if (!res) throw new Error('Verification failed — advanced not detected');
-    return 'Verified: root shell active';
+    // Samba hook needs time to take effect — retry up to 5 times with 3s delays
+    for (var attempt = 1; attempt <= 5; attempt++) {
+      var res = await checkAdvancedFunc();
+      if (res) return 'Verified: root shell active';
+      if (attempt < 5) {
+        await new Promise(function (r) { setTimeout(r, 3000); });
+      }
+    }
+    throw new Error('Verification failed — advanced not detected after retries. Try again in 1-2 minutes.');
   }
 
   async function uninstallAdvanced() {
