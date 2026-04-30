@@ -23,8 +23,8 @@ const TEXT_EXTS = [
 // Skip these directories/files entirely
 const SKIP_NAMES = ['node_modules', '.git', 'pnpm-lock.yaml', 'User_Doc.md', 'User_Doc.assets', 'scripts'];
 
-// Skip these path patterns (locale files that should remain in Chinese/Japanese)
-const SKIP_PATHS = ['lang/zh.json', 'lang/ja.json'];
+// Skip these path patterns (if any files should be excluded)
+const SKIP_PATHS = [];
 
 // Chinese Unicode range
 const CHINESE_REGEX = /[\u4e00-\u9fff]/;
