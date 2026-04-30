@@ -65,11 +65,11 @@
     }
   }
 
-  function shellExec(command) {
+  function shellExec(command, timeout) {
     return fetch(KANO_baseURL + '/root_shell', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, common_headers),
-      body: JSON.stringify({ command: command })
+      body: JSON.stringify({ command: command, timeout: timeout || 60000 })
     }).then(function (r) { return r.json(); });
   }
 
@@ -94,18 +94,19 @@
   function measureDownload(url) {
     setStatus('Testing download speed...');
     addLog('curl download: ' + url.split('/').pop());
-    // curl with write-out to get speed
-    var cmd = 'curl -s -o /dev/null -w "%{speed_download} %{size_download} %{time_total}" "' + url + '"';
-    return shellExec(cmd).then(function (res) {
+    // Use time-based measurement since curl -w format breaks in root shell
+    var cmd = 'T1=$(date +%s%N); curl -sL -o /data/local/tmp/speedtest_dl "' + url + '"; T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); SZ=$(wc -c < /data/local/tmp/speedtest_dl); echo "$SZ $MS"; rm -f /data/local/tmp/speedtest_dl';
+    return shellExec(cmd, 90000).then(function (res) {
       var output = (res.output || res.result || '').trim();
       addLog('Result: ' + output);
       var parts = output.split(/\s+/);
-      if (parts.length >= 3) {
-        var speedBytes = parseFloat(parts[0]); // bytes/sec
-        var totalBytes = parseFloat(parts[1]);
-        var timeSec = parseFloat(parts[2]);
-        var MBps = speedBytes / 1048576;
-        return { MBps: MBps, bytes: totalBytes, time: timeSec };
+      if (parts.length >= 2) {
+        var bytes = parseFloat(parts[0]);
+        var ms = parseFloat(parts[1]);
+        if (ms > 0 && bytes > 0) {
+          var MBps = bytes / (ms / 1000) / 1048576;
+          return { MBps: MBps, bytes: bytes, time: ms / 1000 };
+        }
       }
       return { MBps: -1, bytes: 0, time: 0 };
     }).catch(function () { return { MBps: -1, bytes: 0, time: 0 }; });
@@ -115,16 +116,18 @@
   function measureUpload() {
     setStatus('Testing upload speed...');
     addLog('curl upload test (1MB)...');
-    // Generate 1MB of data and upload to a speed test endpoint
-    var cmd = 'dd if=/dev/zero bs=1024 count=1024 2>/dev/null | curl -s -o /dev/null -w "%{speed_upload} %{size_upload} %{time_total}" -X POST -d @- "http://speed.cloudflare.com/__up"';
-    return shellExec(cmd).then(function (res) {
+    // Use time-based measurement
+    var cmd = 'T1=$(date +%s%N); dd if=/dev/zero bs=1024 count=1024 2>/dev/null | curl -sL -o /dev/null -X POST -d @- "http://speed.cloudflare.com/__up"; T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "1048576 $MS"';
+    return shellExec(cmd, 60000).then(function (res) {
       var output = (res.output || res.result || '').trim();
       addLog('Result: ' + output);
       var parts = output.split(/\s+/);
-      if (parts.length >= 3) {
-        var speedBytes = parseFloat(parts[0]);
-        var MBps = speedBytes / 1048576;
-        return MBps;
+      if (parts.length >= 2) {
+        var bytes = parseFloat(parts[0]);
+        var ms = parseFloat(parts[1]);
+        if (ms > 0) {
+          return bytes / (ms / 1000) / 1048576;
+        }
       }
       return -1;
     }).catch(function () { return -1; });
