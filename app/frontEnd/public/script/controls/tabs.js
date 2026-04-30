@@ -14,7 +14,11 @@
     });
     // Toggle panels
     document.querySelectorAll('.ctrl-panel').forEach(function (p) {
-      p.style.display = p.dataset.ctrlPanel === name ? '' : 'none';
+      if (p.dataset.ctrlPanel === name) {
+        p.style.display = p.dataset.ctrlPanel === 'quick_shell' ? 'flex' : '';
+      } else {
+        p.style.display = 'none';
+      }
     });
     // Toggle empty state
     var empty = document.getElementById('ctrlEmpty');
@@ -44,7 +48,11 @@
       b.classList.toggle('active', b.dataset.ctrlTab === saved);
     });
     document.querySelectorAll('.ctrl-panel').forEach(function (p) {
-      p.style.display = p.dataset.ctrlPanel === saved ? '' : 'none';
+      if (p.dataset.ctrlPanel === saved) {
+        p.style.display = p.dataset.ctrlPanel === 'quick_shell' ? 'flex' : '';
+      } else {
+        p.style.display = 'none';
+      }
     });
     var empty = document.getElementById('ctrlEmpty');
     if (empty) empty.style.display = 'none';

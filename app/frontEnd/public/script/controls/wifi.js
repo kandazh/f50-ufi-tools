@@ -3,6 +3,35 @@
  * Listens for 'ctrl-panel-show' event with tab='wifi'.
  */
 (function () {
+  var broadcastToggle = null;
+
+  function initBroadcastToggle() {
+    if (broadcastToggle) return;
+    var container = document.getElementById('wifi_broadcast_switch');
+    if (!container) return;
+    container.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ctrl-toggle off';
+    btn.innerHTML = '<span class="ctrl-toggle-knob"></span>';
+    var state = false;
+    var hiddenInput = document.querySelector('input[name="ApBroadcastDisabled"]');
+    btn.addEventListener('click', function () {
+      state = !state;
+      btn.className = 'ctrl-toggle ' + (state ? 'on' : 'off');
+      if (hiddenInput) hiddenInput.value = state ? '0' : '1';
+    });
+    container.appendChild(btn);
+    broadcastToggle = {
+      get: function () { return state; },
+      set: function (v) {
+        state = !!v;
+        btn.className = 'ctrl-toggle ' + (state ? 'on' : 'off');
+        if (hiddenInput) hiddenInput.value = state ? '0' : '1';
+      }
+    };
+  }
+
   async function loadWiFiData() {
     var form = document.getElementById('WIFICtrlForm');
     if (!form) return;
@@ -51,8 +80,8 @@
 
       // Broadcast switch (0 = broadcast ON)
       var broadcastOn = (ap.ApBroadcastDisabled || '').toString() === '0';
-      var broadcastContainer = document.getElementById('wifi_broadcast_switch');
-      if (broadcastContainer && broadcastContainer.toggleUpdate) broadcastContainer.toggleUpdate(broadcastOn);
+      initBroadcastToggle();
+      if (broadcastToggle) broadcastToggle.set(broadcastOn);
 
       // Auth mode
       var authEl = document.getElementById('WIFI_ENC_MODE_CTRL');

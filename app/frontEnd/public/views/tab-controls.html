@@ -1,64 +1,67 @@
-﻿            <!-- Controls: sidebar + content layout -->
+            <!-- Controls: sidebar + content layout -->
             <div class="ctrl-layout">
                 <!-- Left sidebar: function list -->
                 <div class="ctrl-sidebar">
                     <div class="ctrl-nav">
-                        <div class="ctrl-nav-group-title" data-i18n="nav_network">Network</div>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="lan"><span class="ctrl-nav-icon">🌐</span><span data-i18n="lan_mgmt">LAN Settings</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="wifi"><span class="ctrl-nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span><span data-i18n="wifi_mgmt">WiFi Settings</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="apn"><span class="ctrl-nav-icon">🔗</span><span data-i18n="apn_setting">APN Settings</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="clients"><span class="ctrl-nav-icon">👥</span><span data-i18n="client_mgmt">Connected Devices</span></button>
+                        <div class="ctrl-nav-group-title">Network</div>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="lan"><span class="ctrl-nav-icon">🌐</span><span>LAN Settings</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="wifi"><span class="ctrl-nav-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span><span>WiFi Settings</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="apn"><span class="ctrl-nav-icon">🔗</span><span>APN Settings</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="clients"><span class="ctrl-nav-icon">👥</span><span>Devices</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="firewall"><span class="ctrl-nav-icon">🛡️</span><span>Firewall</span></button>
 
-                        <div class="ctrl-nav-group-title" data-i18n="nav_messaging">Messaging</div>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="sms"><span class="ctrl-nav-icon">💬</span><span data-i18n="sms">SMS</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="sms_forward"><span class="ctrl-nav-icon">↗️</span><span data-i18n="sms_forward">SMS Forwarding</span></button>
+                        <div class="ctrl-nav-group-title">Messaging</div>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="sms"><span class="ctrl-nav-icon">💬</span><span>SMS</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="sms_forward"><span class="ctrl-nav-icon">↗️</span><span>SMS Forwarding</span></button>
 
-                        <div class="ctrl-nav-group-title" data-i18n="nav_tools">Tools</div>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="speedtest"><span class="ctrl-nav-icon">⚡</span><span data-i18n="speed_test">Speed Test</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="cellular_speedtest"><span class="ctrl-nav-icon">📡</span><span data-i18n="cellular_speed_test">Cellular Speed Test</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="at"><span class="ctrl-nav-icon">⌨️</span><span data-i18n="at_cmd">AT Commands</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="data_mgmt"><span class="ctrl-nav-icon">📊</span><span data-i18n="data_mgmt">Data Management</span></button>
+                        <div class="ctrl-nav-group-title">Tools</div>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="speedtest"><span class="ctrl-nav-icon">⚡</span><span>Speed Test</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="cellular_speedtest"><span class="ctrl-nav-icon">📡</span><span>Cellular Speed Test</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="at"><span class="ctrl-nav-icon">⌨️</span><span>AT Commands</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="data_mgmt"><span class="ctrl-nav-icon">📊</span><span>Data Management</span></button>
 
-                        <div class="ctrl-nav-group-title" data-i18n="nav_system">System</div>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="changepwd"><span class="ctrl-nav-icon">🔑</span><span data-i18n="change_password">Change Password</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot"><span class="ctrl-nav-icon">🔄</span><span data-i18n="schedule_reboot">Scheduled Reboot</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="scheduled_task"><span class="ctrl-nav-icon">📋</span><span data-i18n="scheduled_task">Scheduled Task</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="plugin"><span class="ctrl-nav-icon">🧩</span><span data-i18n="plugin_setting">Plugin</span></button>
-                        <button class="ctrl-nav-btn" data-ctrl-tab="advanced"><span class="ctrl-nav-icon">⚙️</span><span data-i18n="advanced">Advanced</span></button>
+                        <div class="ctrl-nav-group-title">System</div>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="root_access"><span class="ctrl-nav-icon">🔓</span><span>Root Access</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="quick_shell"><span class="ctrl-nav-icon">⚡</span><span>Quick Shell</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="changepwd"><span class="ctrl-nav-icon">🔑</span><span>Change Password</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot"><span class="ctrl-nav-icon">🔄</span><span>Scheduled Reboot</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="scheduled_task"><span class="ctrl-nav-icon">📋</span><span>Scheduled Task</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="plugin"><span class="ctrl-nav-icon">🧩</span><span>Plugin</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="advanced"><span class="ctrl-nav-icon">⚙️</span><span>Advanced</span></button>
                     </div>
                     <!-- Dropdowns kept below nav -->
                     <div class="ctrl-selects">
                         <select class="select" id="NET_TYPE" onchange="changeNetwork(event)">
-                            <option value="WL_AND_5G" data-i18n="net_auto">5G/4G/3G</option>
-                            <option value="LTE_AND_5G" data-i18n="net_nsa">5G NSA</option>
-                            <option value="Only_5G" data-i18n="net_sa">5G SA</option>
-                            <option value="WCDMA_AND_LTE" data-i18n="net_4g_3g">4G/3G</option>
-                            <option value="Only_LTE" data-i18n="net_4g">4G Only</option>
-                            <option value="Only_WCDMA" data-i18n="net_3g">3G Only</option>
+                            <option value="WL_AND_5G">5G/4G/3G</option>
+                            <option value="LTE_AND_5G">5G NSA</option>
+                            <option value="Only_5G">5G SA</option>
+                            <option value="WCDMA_AND_LTE">4G/3G</option>
+                            <option value="Only_LTE">4G Only</option>
+                            <option value="Only_WCDMA">3G Only</option>
                         </select>
                         <select class="select" id="USB_TYPE" onchange="changeUSBNetwork(event)">
-                            <option value="0" data-i18n="usb_auto">USB: Auto</option>
-                            <option value="1" data-i18n="usb_rndis">RNDIS</option>
-                            <option value="2" data-i18n="usb_cdc">CDC-ECM</option>
+                            <option value="0">USB: Auto</option>
+                            <option value="1">RNDIS</option>
+                            <option value="2">CDC-ECM</option>
                         </select>
                         <select class="select" id="SIM_CARD_TYPE" style="display:none" onchange="changeSimCard(event)">
-                            <option value="0" data-i18n="sim1">SIM1</option>
-                            <option value="1" data-i18n="sim2">SIM2</option>
+                            <option value="0">SIM1</option>
+                            <option value="1">SIM2</option>
                         </select>
                         <select class="select" id="SIM_CARD_TYPE_V50" style="display:none" onchange="changeSimCard(event)">
-                            <option value="0" data-i18n="sim1_v50">Mobile</option>
-                            <option value="1" data-i18n="sim2_v50">Telecom</option>
-                            <option value="2" data-i18n="sim3_v50">Unicom</option>
-                            <option value="11" data-i18n="sim4_v50">External</option>
+                            <option value="0">Mobile</option>
+                            <option value="1">Telecom</option>
+                            <option value="2">Unicom</option>
+                            <option value="11">External</option>
                         </select>
                         <select class="select" id="SLEEP_TIME" style="display:none" onchange="changeSleepTime(event)">
-                            <option value="-1" data-i18n="sleep_never">Never Sleep</option>
-                            <option value="5" data-i18n="sleep_5_min">5 min</option>
-                            <option value="10" data-i18n="sleep_10_min">10 min</option>
-                            <option value="20" data-i18n="sleep_20_min">20 min</option>
-                            <option value="30" data-i18n="sleep_30_min">30 min</option>
-                            <option value="60" data-i18n="sleep_1_hr">1 hr</option>
-                            <option value="120" data-i18n="sleep_2_hr">2 hr</option>
+                            <option value="-1">Never Sleep</option>
+                            <option value="5">5 min</option>
+                            <option value="10">10 min</option>
+                            <option value="20">20 min</option>
+                            <option value="30">30 min</option>
+                            <option value="60">1 hr</option>
+                            <option value="120">2 hr</option>
                         </select>
                         <select class="select" id="LANG"></select>
                     </div>
@@ -67,19 +70,19 @@
                 <div class="ctrl-content" id="ctrlContent">
                     <div class="ctrl-empty" id="ctrlEmpty">
                         <span class="ctrl-empty-icon">⚙️</span>
-                        <span data-i18n="ctrl_select_hint">Select a function from the list</span>
+                        <span>Select a function from the list</span>
                     </div>
 
                     <!-- LAN Settings panel -->
                     <div class="ctrl-panel" data-ctrl-panel="lan" style="display:none">
-                        <div class="ctrl-panel-title" data-i18n="lan_title">LAN Settings</div>
+                        <div class="ctrl-panel-title">LAN Settings</div>
                         <form id="LANManagementForm">
                             <!-- Network section -->
                             <div class="ctrl-section">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🌐</span> <span data-i18n="lan_network_section">Network</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🌐</span> <span>Network</span></div>
                                 <div class="ctrl-form">
                                     <label class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="lan_ip_label">Gateway Address <span class="ctrl-required">*</span></span>
+                                        <span class="ctrl-label">Gateway Address <span class="ctrl-required">*</span></span>
                                         <div class="ctrl-ip-input" data-name="lanIp">
                                             <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="192">
                                             <span class="ctrl-ip-dot">.</span>
@@ -92,7 +95,7 @@
                                         </div>
                                     </label>
                                     <label class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="lan_netmask_label">Subnet Mask <span class="ctrl-required">*</span></span>
+                                        <span class="ctrl-label">Subnet Mask <span class="ctrl-required">*</span></span>
                                         <div class="ctrl-ip-input" data-name="lanNetmask">
                                             <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="255">
                                             <span class="ctrl-ip-dot">.</span>
@@ -112,19 +115,19 @@
                             </div>
                             <!-- DHCP section -->
                             <div class="ctrl-section">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🔀</span> <span data-i18n="lan_dhcp_section">DHCP Server</span> <span class="ctrl-required">*</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🔀</span> <span>DHCP Server</span> <span class="ctrl-required">*</span></div>
                                 <div class="ctrl-form">
                                     <div class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="lan_dhcp_label">DHCP Switch：</span>
+                                        <span class="ctrl-label">DHCP Switch:</span>
                                         <div style="display:flex;align-items:center;gap:8px">
                                             <div id="collapse_dhcp_switch"></div>
                                             <input style="display:none" id="enableDHCP" name="lanDhcpType" type="text" value="SERVER">
                                         </div>
                                     </div>
-                                    <div id="collapse_dhcp" class="collapse">
+                                    <div id="collapse_dhcp" class="collapse" style="display:none">
                                         <div class="collapse_box">
                                             <label class="ctrl-field">
-                                                <span class="ctrl-label" data-i18n="lan_dhcp_range_label">DHCP IP Range</span>
+                                                <span class="ctrl-label">DHCP IP Range</span>
                                                 <div class="ctrl-ip-range">
                                                     <div class="ctrl-ip-input" data-name="dhcpStart">
                                                         <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="192">
@@ -150,11 +153,13 @@
                                                 </div>
                                             </label>
                                             <label class="ctrl-field">
-                                                <span class="ctrl-label" data-i18n="lan_dhcp_lease_label">DHCP Lease Time：</span>
+                                                <span class="ctrl-label">DHCP Lease Time:</span>
                                                 <div class="ctrl-stepper">
-                                                    <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">−</button>
-                                                    <input class="ctrl-input ctrl-stepper-input" name="dhcpLease" type="number" min="1" data-i18n-placeholder="lan_dhcp_lease_placeholder" placeholder="24">
-                                                    <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">+</button>
+                                                    <input class="ctrl-input ctrl-stepper-input" name="dhcpLease" type="number" min="1" placeholder="24">
+                                                    <div class="ctrl-stepper-arrows">
+                                                        <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                                        <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                                    </div>
                                                 </div>
                                             </label>
                                         </div>
@@ -176,65 +181,198 @@
                                 </div>
                             </div>
                             <div class="ctrl-actions">
-                                <button type="submit" class="ctrl-submit-btn" data-i18n="submit_btn">Save Changes</button>
+                                <button type="submit" class="ctrl-submit-btn">Save</button>
                             </div>
                         </form>
                     </div>
 
+                    <!-- Firewall panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="firewall" style="display:none">
+                        <div class="ctrl-panel-title">Firewall</div>
+                        <!-- NAT / UPnP section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔄</span> <span>NAT & UPnP</span></div>
+                            <div class="ctrl-form">
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">NAT Mode</span>
+                                    <select class="ctrl-select" id="ADV_NAT_MODE">
+                                        <option value="0">Cone (Open)</option>
+                                        <option value="1">Symmetric (Strict)</option>
+                                    </select>
+                                </label>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">UPnP</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_UPNP_SWITCH"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DMZ section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🛡️</span> DMZ</div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">DMZ Enable</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_DMZ_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <label class="ctrl-field" id="ADV_DMZ_IP_FIELD">
+                                    <span class="ctrl-label">DMZ Host IP</span>
+                                    <div class="ctrl-ip-input" data-name="dmzIp" id="ADV_DMZ_IP_WRAP">
+                                        <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="192">
+                                        <span class="ctrl-ip-dot">.</span>
+                                        <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="168">
+                                        <span class="ctrl-ip-dot">.</span>
+                                        <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="0">
+                                        <span class="ctrl-ip-dot">.</span>
+                                        <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="100">
+                                        <input type="hidden" name="dmzIp">
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- System Security section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔒</span> <span>System Security</span></div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Remote Management</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_REMOTE_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">WAN Ping Response</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_WANPING_SWITCH"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Port Forwarding section -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">↔️</span> <span>Port Forwarding</span></div>
+                            <div class="ctrl-adv-pf-table-wrap" id="ADV_PF_TABLE_WRAP">
+                                <table class="ctrl-adv-pf-table">
+                                    <thead>
+                                        <tr>
+                                            <th>IP Address</th>
+                                            <th>Start Port</th>
+                                            <th>End Port</th>
+                                            <th>Protocol</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ADV_PF_TBODY"></tbody>
+                                    <tfoot>
+                                        <tr class="ctrl-adv-pf-add-row">
+                                            <td>
+                                                <div class="ctrl-ip-input" data-name="pfIp" id="ADV_PF_IP_WRAP">
+                                                    <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="192">
+                                                    <span class="ctrl-ip-dot">.</span>
+                                                    <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="168">
+                                                    <span class="ctrl-ip-dot">.</span>
+                                                    <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="0">
+                                                    <span class="ctrl-ip-dot">.</span>
+                                                    <input class="ctrl-ip-seg" type="text" maxlength="3" placeholder="x">
+                                                    <input type="hidden" name="pfIp">
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="ctrl-stepper">
+                                                    <input class="ctrl-input ctrl-stepper-input" id="ADV_PF_PORT_START" type="number" placeholder="8080" min="1" max="65535">
+                                                    <div class="ctrl-stepper-arrows">
+                                                        <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                                        <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="ctrl-stepper">
+                                                    <input class="ctrl-input ctrl-stepper-input" id="ADV_PF_PORT_END" type="number" placeholder="8080" min="1" max="65535">
+                                                    <div class="ctrl-stepper-arrows">
+                                                        <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                                        <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <select class="ctrl-select" id="ADV_PF_PROTO" style="width:auto">
+                                                    <option value="TCP">TCP</option>
+                                                    <option value="UDP">UDP</option>
+                                                    <option value="TCP&UDP">Both</option>
+                                                </select>
+                                            </td>
+                                            <td style="text-align:right">
+                                                <button type="button" class="ctrl-device-btn" id="ADV_PF_ADD_BTN">Add</button>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                <div class="ctrl-adv-pf-empty" id="ADV_PF_EMPTY">No port forwarding rules</div>
+                            </div>
+                        </div>
+                        <div class="ctrl-actions">
+                            <button type="button" class="ctrl-submit-btn" id="LAN_NET_SAVE_BTN">Save</button>
+                        </div>
+                    </div>
+
                     <!-- WiFi Settings panel -->
                     <div class="ctrl-panel" data-ctrl-panel="wifi" style="display:none">
-                        <div class="ctrl-panel-title" data-i18n="wifi_title">WiFi Settings</div>
+                        <div class="ctrl-panel-title">WiFi Settings</div>
                         <form id="WIFICtrlForm">
                             <input type="hidden" name="AccessPointIndex" value="0">
                             <input type="hidden" name="ApIsolate" value="0">
                             <input type="hidden" name="ChipIndex" value="0">
                             <!-- Radio section -->
                             <div class="ctrl-section">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📡</span> <span data-i18n="wifi_radio_section">Radio</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📡</span> <span>Radio</span></div>
                                 <div class="ctrl-form">
                                     <label class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="wifi_switch_label">WiFi Band：</span>
+                                        <span class="ctrl-label">WiFi Band:</span>
                                         <select class="ctrl-select" id="WIFI_SWITCH_CTRL">
-                                            <option value="0" data-i18n="wifi_option_off">WiFi: Off</option>
-                                            <option value="chip1" data-i18n="wifi_option_24g">WiFi: 2.4G</option>
-                                            <option value="chip2" data-i18n="wifi_option_5g">WiFi: 5G</option>
+                                            <option value="0">WiFi: Off</option>
+                                            <option value="chip1">WiFi: 2.4G</option>
+                                            <option value="chip2">WiFi: 5G</option>
                                         </select>
                                     </label>
                                 </div>
                             </div>
                             <!-- Network section -->
                             <div class="ctrl-section" id="wifiCtrlInfo">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🌐</span> <span data-i18n="wifi_network_section">Network</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📶</span> <span>Network</span></div>
                                 <div class="ctrl-form">
                                     <label class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="wifi_ssid_label">SSID：</span>
-                                        <input class="ctrl-input" name="SSID" type="text" data-i18n-placeholder="wifi_ssid_placeholder" placeholder="Enter WiFi SSID">
+                                        <span class="ctrl-label">SSID:</span>
+                                        <input class="ctrl-input" name="SSID" type="text" placeholder="Enter WiFi SSID">
                                     </label>
                                     <div class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="wifi_broadcast_label">Broadcast SSID：</span>
-                                        <div id="wifi_broadcast_switch" data-toggle="ApBroadcastDisabled" data-toggle-on="0" data-toggle-off="1" data-toggle-default="on" data-toggle-class="wifi_broadcast"></div>
+                                        <span class="ctrl-label">Broadcast:</span>
+                                        <div id="wifi_broadcast_switch"></div>
                                         <input type="hidden" name="ApBroadcastDisabled" value="0">
                                     </div>
                                 </div>
                             </div>
                             <!-- Security section -->
                             <div class="ctrl-section" id="wifiCtrlSecurity" style="display:none">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🔒</span> <span data-i18n="wifi_security_section">Security</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🔐</span> <span>Security</span></div>
                                 <div class="ctrl-form">
                                     <label class="ctrl-field">
-                                        <span class="ctrl-label" data-i18n="wifi_security_label">Auth Mode：</span>
+                                        <span class="ctrl-label">Auth Mode:</span>
                                         <select class="ctrl-select" id="WIFI_ENC_MODE_CTRL" name="AuthMode" onchange="var s=document.getElementById('WIFI_FORM_SHOWABLE_CTRL');if(s)s.style.display=this.value==='OPEN'?'none':''">
-                                            <option value="OPEN" data-value="OPEN" data-i18n="wifi_mode_open">OPEN</option>
-                                            <option value="WPA2PSK" data-value="WPA2PSK" data-i18n="wifi_mode_wpa2">WPA2(AES)-PSK</option>
-                                            <option value="WPA3PSK" data-value="WPA3PSK" data-i18n="wifi_mode_wpa3">WPA3-PSK</option>
-                                            <option value="WPA2PSKWPA3PSK" data-value="WPA2PSKWPA3PSK" data-i18n="wifi_mode_wpa2_wpa3">WPA2-PSK/WPA3-PSK</option>
+                                            <option value="OPEN" data-value="OPEN">OPEN</option>
+                                            <option value="WPA2PSK" data-value="WPA2PSK">WPA2(AES)-PSK</option>
+                                            <option value="WPA3PSK" data-value="WPA3PSK">WPA3-PSK</option>
+                                            <option value="WPA2PSKWPA3PSK" data-value="WPA2PSKWPA3PSK">WPA2-PSK/WPA3-PSK</option>
                                         </select>
                                     </label>
                                     <div id="WIFI_FORM_SHOWABLE_CTRL">
                                         <label class="ctrl-field">
-                                            <span class="ctrl-label" data-i18n="wifi_password_label">Password：</span>
+                                            <span class="ctrl-label">Password:</span>
                                             <div style="display:flex;gap:8px;align-items:center;flex:1">
-                                                <input class="ctrl-input" id="WIFI_PASSWORD_CTRL" name="Password" type="password" autocomplete="none" data-i18n-placeholder="wifi_password_placeholder" placeholder="Min 8 characters" minlength="8">
+                                                <input class="ctrl-input" id="WIFI_PASSWORD_CTRL" name="Password" type="password" autocomplete="none" placeholder="Min 8 characters" minlength="8">
                                                 <button type="button" class="ctrl-eye-btn" data-eye-target="WIFI_PASSWORD_CTRL">
                                                     <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                                     <svg class="eye-closed" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -242,11 +380,13 @@
                                             </div>
                                         </label>
                                         <label class="ctrl-field">
-                                            <span class="ctrl-label" data-i18n="wifi_max_client_label">Max Clients：</span>
+                                            <span class="ctrl-label">Max Clients:</span>
                                             <div class="ctrl-stepper">
-                                                <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">−</button>
                                                 <input class="ctrl-input ctrl-stepper-input" name="ApMaxStationNumber" type="number" min="1" max="10" value="10">
-                                                <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">+</button>
+                                                <div class="ctrl-stepper-arrows">
+                                                    <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                                    <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                                </div>
                                             </div>
                                         </label>
                                     </div>
@@ -254,14 +394,14 @@
                             </div>
                             <!-- QR Code section -->
                             <div class="ctrl-section" id="wifiCtrlQR" style="display:none">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📱</span> <span data-i18n="wifi_qrcode_section">QR Code</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📱</span> <span>QR Code</span></div>
                                 <div class="ctrl-qr-container">
                                     <img id="WifiQRCodeImg" class="ctrl-qr-img" src="" alt="WiFi QR Code">
-                                    <p class="ctrl-qr-hint" data-i18n="wifi_qrcode_hint">Scan to connect</p>
+                                    <p class="ctrl-qr-hint">Scan to connect</p>
                                 </div>
                             </div>
                             <div class="ctrl-actions">
-                                <button type="submit" class="ctrl-submit-btn" data-i18n="submit_btn">Save Changes</button>
+                                <button type="submit" class="ctrl-submit-btn">Save</button>
                             </div>
                         </form>
                     </div>
@@ -274,37 +414,37 @@
                         <form id="APNCtrlForm" class="ctrl-form" autocomplete="off">
                             <!-- Mode section -->
                             <div class="ctrl-section">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">⚙️</span> <span data-i18n="apn_mode_section">Mode</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">🔧</span> <span>Mode</span></div>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_mode_label">APN Mode：</span>
+                                    <span class="ctrl-label">APN Mode:</span>
                                     <select class="ctrl-select" id="APN_MODE_CTRL" name="apn_mode">
                                         <option value="auto">Auto</option>
                                         <option value="manual">Manual</option>
                                     </select>
                                 </label>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_profile_label">Profile：</span>
+                                    <span class="ctrl-label">Profile:</span>
                                     <select class="ctrl-select" id="APN_PROFILE_CTRL" name="profile">
                                     </select>
                                 </label>
                             </div>
                             <!-- Profile details -->
                             <div class="ctrl-section" id="apnCtrlDetails">
-                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📝</span> <span data-i18n="apn_details_section">Profile Details</span></div>
+                                <div class="ctrl-section-title"><span class="ctrl-section-icon">📝</span> <span>Profile Details</span></div>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_name_label">Name <span class="ctrl-required">*</span>：</span>
+                                    <span class="ctrl-label">Name <span class="ctrl-required">*</span>:</span>
                                     <input class="ctrl-input" id="APN_NAME_CTRL" name="profile_name" type="text" placeholder="Profile name" required>
                                 </label>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_apn_label">APN <span class="ctrl-required">*</span>：</span>
+                                    <span class="ctrl-label">APN <span class="ctrl-required">*</span>:</span>
                                     <input class="ctrl-input" id="APN_APN_CTRL" name="apn" type="text" placeholder="e.g. internet" required>
                                 </label>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_user_label">Username：</span>
+                                    <span class="ctrl-label">Username:</span>
                                     <input class="ctrl-input" id="APN_USER_CTRL" name="username" type="text" placeholder="Optional">
                                 </label>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_pass_label">Password：</span>
+                                    <span class="ctrl-label">Password:</span>
                                     <div style="display:flex;gap:8px;align-items:center;flex:1">
                                         <input class="ctrl-input" id="APN_PASS_CTRL" name="password" type="password" placeholder="Optional">
                                         <button type="button" class="ctrl-eye-btn" data-eye-target="APN_PASS_CTRL">
@@ -314,7 +454,7 @@
                                     </div>
                                 </label>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_auth_label">Auth：</span>
+                                    <span class="ctrl-label">Auth:</span>
                                     <select class="ctrl-select" id="APN_AUTH_CTRL" name="auth_method">
                                         <option value="none">None</option>
                                         <option value="chap">CHAP</option>
@@ -322,7 +462,7 @@
                                     </select>
                                 </label>
                                 <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="apn_pdp_label">PDP Type：</span>
+                                    <span class="ctrl-label">PDP Type:</span>
                                     <select class="ctrl-select" id="APN_PDP_CTRL" name="pdp_method">
                                         <option value="IP">IPv4</option>
                                         <option value="IPv6">IPv6</option>
@@ -332,26 +472,26 @@
                             </div>
                             <!-- Actions -->
                             <div class="ctrl-actions">
-                                <button type="button" class="ctrl-submit-btn" id="APN_NEW_BTN" style="background:#2563eb" data-i18n="apn_new_btn">New</button>
-                                <button type="submit" class="ctrl-submit-btn" data-i18n="apn_save_btn">Save</button>
-                                <button type="button" class="ctrl-delete-btn" id="APN_DELETE_BTN" data-i18n="apn_delete_btn">Delete</button>
+                                <button type="button" class="ctrl-submit-btn" id="APN_NEW_BTN" style="background:#2563eb">New</button>
+                                <button type="submit" class="ctrl-submit-btn">Save</button>
+                                <button type="button" class="ctrl-delete-btn" id="APN_DELETE_BTN">Delete</button>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Connected Devices Panel -->
+                    <!-- Devices Panel -->
                     <div class="ctrl-panel" data-ctrl-panel="clients" style="display:none">
-                        <div class="ctrl-panel-title">Connected Devices</div>
+                        <div class="ctrl-panel-title">Devices</div>
                         <!-- Connected list -->
                         <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">&#x1F4E1;</span> <span data-i18n="client_mgmt_connected">Connected</span> <span id="clientsCount" style="opacity:0.5"></span></div>
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">&#x1F4E1;</span> <span>Connected</span> <span id="clientsCount" style="opacity:0.5"></span></div>
                             <div id="CTRL_CONN_LIST" class="ctrl-device-list">
                                 <div class="ctrl-device-empty">No devices connected</div>
                             </div>
                         </div>
                         <!-- Blacklist -->
                         <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🚫</span> <span data-i18n="client_mgmt_blacklist">Blacklist</span> <span id="blacklistCount" style="opacity:0.5"></span></div>
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🚫</span> <span>Blacklist</span> <span id="blacklistCount" style="opacity:0.5"></span></div>
                             <div id="CTRL_BLACK_LIST" class="ctrl-device-list">
                                 <div class="ctrl-device-empty">No blocked devices</div>
                             </div>
@@ -374,75 +514,123 @@
                             </div>
                         </div>
                         <div class="ctrl-actions">
-                            <button type="button" class="ctrl-submit-btn" id="CTRL_REFRESH_CLIENTS" data-i18n="common_refresh_btn">Refresh</button>
+                            <button type="button" class="ctrl-submit-btn" id="CTRL_REFRESH_CLIENTS">Refresh</button>
                         </div>
                     </div>
 
-                    <!-- Advanced Panel -->
-                    <div class="ctrl-panel" data-ctrl-panel="advanced" style="display:none">
+                    <!-- Root Access Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="root_access" style="display:none">
                         <div class="ctrl-panel-title">
-                            <span data-i18n="advance_title">Advanced Features</span>
-                            <span class="ctrl-adv-title-warn" data-i18n="advance_warning_short">⚠️ Advanced users only</span>
+                            <span>Root Access</span>
+                            <span class="ctrl-adv-title-warn">⚠️ Advanced users only</span>
                         </div>
-
-                        <!-- System Tools section -->
+                        <!-- Root Access box -->
                         <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔧</span> <span data-i18n="adv_system_tools">System Tools</span></div>
-                            <!-- Root access card -->
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔓</span> Root Access</div>
                             <div class="ctrl-adv-root-card">
                                 <div class="ctrl-adv-toggle-row" id="ADV_ROOT_ROW">
                                     <span class="ctrl-adv-indicator" id="ADV_INDICATOR"></span>
-                                    <span class="ctrl-adv-toggle-label" data-i18n="adv_root_access">Root Access</span>
-                                    <button type="button" class="ctrl-adv-toggle-btn" id="ADV_ROOT_TOGGLE">
-                                        <span class="ctrl-adv-toggle-knob"></span>
-                                    </button>
+                                    <span class="ctrl-adv-toggle-label">Root Access</span>
+                                    <div id="ADV_ROOT_TOGGLE"></div>
                                 </div>
                                 <details class="ctrl-adv-log-box" id="ADV_LOG_BOX">
-                                    <summary class="ctrl-adv-log-summary" data-i18n="adv_log">Log</summary>
+                                    <summary class="ctrl-adv-log-summary">Log</summary>
                                     <div class="ctrl-adv-log-content" id="ADV_RESULT"></div>
                                 </details>
                             </div>
-                            <!-- Quick Shell Execution card -->
-                            <div class="ctrl-adv-info-card">
-                                <div class="ctrl-adv-info-header">
-                                    <span class="ctrl-adv-info-icon">⚡</span>
-                                    <span class="ctrl-adv-info-title" data-i18n="adv_quick_shell_title">Quick Shell (ADB)</span>
-                                    <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm" id="ADV_SHELL_LOAD_BTN">Load</button>
-                                    <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm" id="ADV_SHELL_SAVE_BTN">Save</button>
-                                    <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm ctrl-adv-btn-primary" id="ADV_SHELL_BTN" data-i18n="adv_quick_shell_run">Save & Run</button>
+                            <div class="ctrl-adv-info-desc" style="margin-top:12px; display:flex; align-items:flex-start; gap:8px;">
+                                <span style="font-size:20px; line-height:1;">💡</span>
+                                <span>
+                                    Grants root shell access via Samba hook.<br>
+                                    Required for boot scripts • CPU core control • System-level operations.
+                                </span>
+                            </div>
+                        </div>
+                        <!-- CPU Cores box -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">⚡</span> CPU Core Control</div>
+                            <div class="ctrl-adv-root-card">
+                                <div class="ctrl-adv-toggle-row" id="ADV_BOOT_CORE_ROW">
+                                    <span class="ctrl-adv-indicator enabled"></span>
+                                    <span class="ctrl-adv-toggle-label">CPU0 | Boot Core • Always Active</span>
                                 </div>
-                                <div class="ctrl-adv-info-desc" data-i18n="adv_quick_shell_desc">
-                                    Edit <code>/sdcard/quick_shell.sh</code> below, then save or run via ZTE Engineer Mode. Does not require root.
+                                <div class="ctrl-adv-toggle-row" id="ADV_CORE_ROW" style="border-top:1px solid rgba(148,163,184,0.08)">
+                                    <span class="ctrl-adv-indicator" id="ADV_CORE_INDICATOR"></span>
+                                    <span class="ctrl-adv-toggle-label">CPU1–CPU3 | Little Cores</span>
+                                    <div id="ADV_CORE_TOGGLE"></div>
                                 </div>
-                                <div class="ctrl-adv-shell-editor">
-                                    <textarea id="ADV_SHELL_EDITOR" spellcheck="false" placeholder="#!/system/bin/sh&#10;# Write your script here...&#10;sync&#10;">#!/system/bin/sh
+                                <div class="ctrl-adv-toggle-row" id="ADV_BIG_CORE_ROW" style="border-top:1px solid rgba(148,163,184,0.08)">
+                                    <span class="ctrl-adv-indicator" id="ADV_BIG_CORE_INDICATOR"></span>
+                                    <span class="ctrl-adv-toggle-label">CPU4–CPU7 | Mid & Big Cores</span>
+                                    <div id="ADV_BIG_CORE_TOGGLE"></div>
+                                </div>
+                                <details class="ctrl-adv-log-box" id="ADV_CORE_LOG_BOX">
+                                    <summary class="ctrl-adv-log-summary">Log</summary>
+                                    <div class="ctrl-adv-log-content" id="ADV_CORE_RESULT"></div>
+                                </details>
+                            </div>
+                            <div class="ctrl-adv-info-desc" style="margin-top:12px; display:flex; align-items:flex-start; gap:8px;">
+                                <span style="font-size:20px; line-height:1;">💡</span>
+                                <span>
+                                    CPU0 handles system scheduling and is always active.<br>
+                                    Little cores off → less heat • Mid & big cores off → less power draw • Keep at least one group enabled.
+                                </span>
+                            </div>
+                        </div>
+                        <!-- System tools box -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🛠️</span> System Tools</div>
+                            <div class="ctrl-adv-grid ctrl-adv-grid-cards">
+                                <button type="button" class="ctrl-adv-card-btn" id="ADV_EDIT_BOOT_BTN">
+                                    <span class="ctrl-adv-card-icon">📝</span>
+                                    <span>
+                                        <span class="ctrl-adv-card-label">Edit Boot Script</span><br>
+                                        <span class="ctrl-adv-card-desc">View & edit startup script</span>
+                                    </span>
+                                </button>
+                                <button type="button" class="ctrl-adv-card-btn" id="ADV_DUMP_BOOT_BTN">
+                                    <span class="ctrl-adv-card-icon">📦</span>
+                                    <span>
+                                        <span class="ctrl-adv-card-label">Extract Boot</span><br>
+                                        <span class="ctrl-adv-card-desc">Dump boot partition</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Shell Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="quick_shell" style="display:none;flex:1;flex-direction:column;height:0;overflow-y:auto">
+                        <div class="ctrl-panel-title">
+                            <span>Quick Shell (ADB)</span>
+                        </div>
+                        <div class="ctrl-section" style="flex:1;display:flex;flex-direction:column">
+                            <div class="ctrl-adv-shell-actions" style="display:flex;gap:8px;justify-content:flex-start;align-items:center">
+                                <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm" id="ADV_SHELL_LOAD_BTN">Load from device</button>
+                                <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm" id="ADV_SHELL_SAVE_BTN">Save to device</button>
+                                <button type="button" class="ctrl-adv-btn ctrl-adv-btn-sm ctrl-adv-btn-primary" id="ADV_SHELL_BTN">Save & Run</button>
+                                <button type="button" class="ctrl-adv-btn" id="ADV_SHELL_MAXIMIZE_BTN" title="Maximize editor" style="margin-left:auto;font-size:24px;width:36px;height:36px;min-width:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;line-height:1">&#x26F6;</button>
+                            </div>
+                            <div class="ctrl-adv-shell-editor" id="ADV_SHELL_EDITOR_WRAP" style="margin-top:12px;flex:1;display:flex;flex-direction:column;position:relative">
+                                <textarea id="ADV_SHELL_EDITOR" spellcheck="false" placeholder="#!/system/bin/sh&#10;# Write your script here...&#10;sync&#10;" style="flex:1;min-height:200px;resize:none">#!/system/bin/sh
 # Write your script here
 sync
 </textarea>
-                                </div>
-                                <details class="ctrl-adv-shell-log" id="ADV_SHELL_LOG">
-                                    <summary class="ctrl-adv-log-summary">Output</summary>
-                                    <div class="ctrl-adv-log-content" id="ADV_SHELL_RESULT"></div>
-                                </details>
-                                <details class="ctrl-adv-info-details">
-                                    <summary data-i18n="adv_quick_shell_how">How it works</summary>
-                                    <ol class="ctrl-adv-info-steps">
-                                        <li data-i18n="adv_qs_step1">Create a script at <code>/sdcard/quick_shell.sh</code></li>
-                                        <li data-i18n="adv_qs_step2">Click <strong>Run</strong> — the app opens Engineer Mode via ADB</li>
-                                        <li data-i18n="adv_qs_step3">It navigates to DEBUG&LOG → ADB Shell automatically</li>
-                                        <li data-i18n="adv_qs_step4">Your script is typed and executed as the <code>shell</code> user</li>
-                                    </ol>
-                                    <div class="ctrl-adv-info-usecases">
-                                        <strong data-i18n="adv_qs_usecases_title">Use cases:</strong>
-                                        <ul>
-                                            <li data-i18n="adv_qs_use1">Grant app permissions before root is available</li>
-                                            <li data-i18n="adv_qs_use2">Enable ADB over WiFi on a fresh device</li>
-                                            <li data-i18n="adv_qs_use3">Automate device settings without root</li>
-                                        </ul>
-                                    </div>
-                                    <div class="ctrl-adv-info-sample">
-                                        <strong data-i18n="adv_qs_sample_title">Example script:</strong>
-                                        <pre class="ctrl-adv-code-block">#!/system/bin/sh
+                            </div>
+                            <div class="ctrl-adv-shell-log" id="ADV_SHELL_LOG" style="margin-top:12px">
+                                <div class="ctrl-adv-log-summary">Output</div>
+                                <div class="ctrl-adv-log-content" id="ADV_SHELL_RESULT">$ quick_shell.sh</div>
+                            </div>
+                        </div>
+                        <div class="ctrl-adv-info-card" style="margin-top:auto">
+                            <p style="margin:0 0 5px"><strong>🔄 Flow:</strong> Edit above → <strong>Save &amp; Run</strong> → saved to device → executed</p>
+                            <p style="margin:0 0 5px"><strong>📁 File:</strong> <code>/sdcard/quick_shell.sh</code></p>
+                            <p style="margin:0 0 5px"><strong>👤 Runs as:</strong> <code>shell</code> user (UID 2000) — no root needed</p>
+                            <p style="margin:0 0 5px"><strong>🛠️ Method:</strong> ZTE Engineer Mode → DEBUG&LOG → ADB Shell (UI automation)</p>
+                            <p style="margin:0 0 8px"><strong>✅ Use for:</strong> granting permissions, enabling WiFi ADB, automating settings — all without root</p>
+                            <details style="margin-top:4px">
+                                <summary style="cursor:pointer;font-size:10px;opacity:.7">📖 Example script</summary>
+                                <pre class="ctrl-adv-code-block" style="margin-top:6px;font-size:10px">#!/system/bin/sh
 # Enable WiFi ADB
 setprop service.adb.tcp.port 5555
 stop adbd; start adbd
@@ -454,145 +642,60 @@ pm grant com.minikano.f50_sms android.permission.READ_PHONE_STATE
 
 # Keep screen on for 5 min
 settings put system screen_off_timeout 300000</pre>
-                                    </div>
-                                </details>
-                            </div>
-                            <!-- Other system tools -->
-                            <div class="ctrl-adv-grid">
-                                <button type="button" class="ctrl-adv-btn" id="ADV_DISABLE_FOTA_BTN" data-i18n="advance_disable_update">Disable ZTE Update</button>
-                                <button type="button" class="ctrl-adv-btn" id="ADV_EDIT_BOOT_BTN" data-i18n="edit_boot_script">Edit Boot Script</button>
-                                <button type="button" class="ctrl-adv-btn" id="ADV_DISABLE_CORE_BTN" data-i18n="advance_disable_little_core">Disable Little Cores</button>
-                                <button type="button" class="ctrl-adv-btn" id="ADV_ENABLE_CORE_BTN" data-i18n="advance_enable_little_core">Enable Little Cores</button>
-                                <button type="button" class="ctrl-adv-btn" id="ADV_DUMP_BOOT_BTN" data-i18n="advance_dump_boot">Extract Boot</button>
-                            </div>
+                            </details>
                         </div>
+                    </div>
 
-                        <!-- NAT / UPnP section -->
-                        <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🌍</span> <span data-i18n="adv_nat_section">NAT & UPnP</span></div>
-                            <div class="ctrl-form">
-                                <label class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_nat_mode">NAT Mode</span>
-                                    <select class="ctrl-select" id="ADV_NAT_MODE">
-                                        <option value="0" data-i18n="adv_nat_cone">Cone (Open)</option>
-                                        <option value="1" data-i18n="adv_nat_symmetric">Symmetric (Strict)</option>
-                                    </select>
-                                </label>
-                                <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_upnp">UPnP</span>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        <div id="ADV_UPNP_SWITCH"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- DMZ section -->
-                        <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🛡️</span> DMZ</div>
-                            <div class="ctrl-form">
-                                <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_dmz_enable">DMZ Enable</span>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        <div id="ADV_DMZ_SWITCH"></div>
-                                    </div>
-                                </div>
-                                <label class="ctrl-field" id="ADV_DMZ_IP_FIELD">
-                                    <span class="ctrl-label" data-i18n="adv_dmz_ip">DMZ Host IP</span>
-                                    <input class="ctrl-input" id="ADV_DMZ_IP" type="text" placeholder="192.168.0.100" maxlength="15">
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- System Security section -->
-                        <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔒</span> <span data-i18n="adv_security_section">System Security</span></div>
-                            <div class="ctrl-form">
-                                <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_remote_mgmt">Remote Management</span>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        <div id="ADV_REMOTE_SWITCH"></div>
-                                    </div>
-                                </div>
-                                <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_wan_ping">WAN Ping Response</span>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        <div id="ADV_WANPING_SWITCH"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Port Forwarding section -->
-                        <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔀</span> <span data-i18n="adv_port_forward_section">Port Forwarding</span></div>
-                            <div class="ctrl-adv-pf-table-wrap" id="ADV_PF_TABLE_WRAP">
-                                <table class="ctrl-adv-pf-table">
-                                    <thead>
-                                        <tr>
-                                            <th data-i18n="adv_pf_ip">IP Address</th>
-                                            <th data-i18n="adv_pf_port_start">Start Port</th>
-                                            <th data-i18n="adv_pf_port_end">End Port</th>
-                                            <th data-i18n="adv_pf_protocol">Protocol</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="ADV_PF_TBODY"></tbody>
-                                </table>
-                                <div class="ctrl-adv-pf-empty" id="ADV_PF_EMPTY" data-i18n="adv_pf_no_rules">No port forwarding rules</div>
-                            </div>
-                            <div class="ctrl-form" style="margin-top:10px">
-                                <div class="ctrl-field-row">
-                                    <input class="ctrl-input" id="ADV_PF_IP" type="text" placeholder="192.168.0.x" maxlength="15" style="flex:2">
-                                    <input class="ctrl-input" id="ADV_PF_PORT_START" type="number" placeholder="Start" min="1" max="65535" style="flex:1">
-                                    <input class="ctrl-input" id="ADV_PF_PORT_END" type="number" placeholder="End" min="1" max="65535" style="flex:1">
-                                    <select class="ctrl-select" id="ADV_PF_PROTO" style="flex:1">
-                                        <option value="TCP">TCP</option>
-                                        <option value="UDP">UDP</option>
-                                        <option value="TCP&UDP">Both</option>
-                                    </select>
-                                    <button type="button" class="ctrl-adv-btn" id="ADV_PF_ADD_BTN" data-i18n="adv_pf_add">Add</button>
-                                </div>
-                            </div>
+                    <!-- Advanced Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="advanced" style="display:none">
+                        <div class="ctrl-panel-title">
+                            <span>Advanced Features</span>
+                            <span class="ctrl-adv-title-warn">⚠️ Advanced users only</span>
                         </div>
 
                         <!-- FOTA / OTA Update section -->
                         <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📡</span> <span data-i18n="adv_fota_section">Firmware Update (FOTA)</span></div>
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📡</span> <span>Firmware Update (FOTA)</span></div>
                             <div class="ctrl-form">
                                 <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_fota_auto">Auto Update</span>
+                                    <span class="ctrl-label">Firmware Update</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="ADV_ZTE_UPDATE_SWITCH"></div>
+                                    </div>
+                                </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Auto Check</span>
                                     <div style="display:flex;align-items:center;gap:8px">
                                         <div id="ADV_FOTA_SWITCH"></div>
                                     </div>
                                 </div>
-                                <label class="ctrl-field" id="ADV_FOTA_INTERVAL_FIELD">
-                                    <span class="ctrl-label" data-i18n="adv_fota_interval">Check Interval (days)</span>
-                                    <input class="ctrl-input" id="ADV_FOTA_INTERVAL" type="number" min="1" max="365" value="7" style="width:80px">
-                                </label>
                                 <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_fota_roaming">Update on Roaming</span>
+                                    <span class="ctrl-label">Roaming</span>
                                     <div style="display:flex;align-items:center;gap:8px">
                                         <div id="ADV_FOTA_ROAM_SWITCH"></div>
                                     </div>
                                 </div>
+                                <label class="ctrl-field" id="ADV_FOTA_INTERVAL_FIELD">
+                                    <span class="ctrl-label">Interval (days)</span>
+                                    <div class="ctrl-stepper">
+                                        <input class="ctrl-input ctrl-stepper-input" id="ADV_FOTA_INTERVAL" type="number" min="1" max="365" value="7">
+                                        <div class="ctrl-stepper-arrows">
+                                            <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                            <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                        </div>
+                                    </div>
+                                </label>
                             </div>
                         </div>
 
                         <!-- Device Options section -->
                         <div class="ctrl-section">
-                            <div class="ctrl-section-title"><span class="ctrl-section-icon">💡</span> <span data-i18n="adv_device_section">Device Options</span></div>
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">💡</span> <span>Device Options</span></div>
                             <div class="ctrl-form">
                                 <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_indicator_light">Indicator Light</span>
+                                    <span class="ctrl-label">Indicator Light</span>
                                     <div style="display:flex;align-items:center;gap:8px">
                                         <div id="ADV_LIGHT_SWITCH"></div>
-                                    </div>
-                                </div>
-                                <div class="ctrl-field">
-                                    <span class="ctrl-label" data-i18n="adv_performance_mode">Performance Mode</span>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        <div id="ADV_PERF_SWITCH"></div>
                                     </div>
                                 </div>
                             </div>
@@ -600,7 +703,7 @@ settings put system screen_off_timeout 300000</pre>
 
                         <!-- Save button for router settings -->
                         <div class="ctrl-actions">
-                            <button type="button" class="ctrl-submit-btn" id="ADV_SAVE_BTN" data-i18n="submit_btn">Save Changes</button>
+                            <button type="button" class="ctrl-submit-btn" id="ADV_SAVE_BTN">Save</button>
                         </div>
                     </div>
                 </div>

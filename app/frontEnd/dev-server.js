@@ -28,6 +28,8 @@ const toggleState = {
     1: 'MyISP($)data.isp.com($)($)($)chap($)user1($)pass123($)IPv4v6($)($)($)',
     2: 'Custom($)custom.apn($)($)($)pap($)admin($)secret($)IPv6($)($)($)',
   },
+  // CPU core online state (cpu0–cpu7)
+  cpu_online: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 },
   // WiFi AP settings
   wifi_module_switch: '1',
   wifi_chip: 'chip1',
@@ -66,6 +68,7 @@ const toggleState = {
   UpgMode: '1',
   UpgIntervalDay: '7',
   UpgRoamPermission: '0',
+  zte_update_enabled: '1',
   // Device options
   indicator_light_switch: '0',
   performance_mode: '1',
@@ -111,6 +114,30 @@ app.use('/api/root_shell', (req, res) => {
         const cmd = (command || '').trim();
         if (cmd === 'whoami') {
           res.json({ result: toggleState._advancedEnabled ? 'root' : '' });
+        } else if (cmd.includes('cat') && cmd.includes('/sys/devices/system/cpu/cpu')) {
+          // CPU core online status read
+          const m = cmd.match(/cpu(\d+)\/online/);
+          if (m) {
+            const cpuId = parseInt(m[1]);
+            const val = toggleState.cpu_online[cpuId] !== undefined ? toggleState.cpu_online[cpuId] : 1;
+            res.json({ result: String(val) });
+          } else {
+            res.json({ result: '1' });
+          }
+        } else if (cmd.includes('> /sys/devices/system/cpu/cpu')) {
+          // CPU core online write (echo 0/1 > /sys/devices/system/cpu/cpuN/online)
+          const writes = cmd.split(/[;\n]/).map(s => s.trim()).filter(Boolean);
+          for (const w of writes) {
+            const m = w.match(/echo\s+(\d)\s*>\s*\/sys\/devices\/system\/cpu\/cpu(\d+)\/online/);
+            if (m) {
+              const val = parseInt(m[1]);
+              const cpuId = parseInt(m[2]);
+              // cpu0 cannot be offlined (boot CPU)
+              if (cpuId === 0 && val === 0) continue;
+              toggleState.cpu_online[cpuId] = val;
+            }
+          }
+          res.json({ result: '' });
         } else if (cmd.includes('cat') && cmd.includes('quick_shell')) {
           res.json({ result: '#!/system/bin/sh\n# Example script from device\necho "Hello from quick_shell.sh"\nsync\n' });
         } else if (cmd.includes('ls ') && cmd.includes('/files/')) {
@@ -394,6 +421,7 @@ app.use('/api/goform', (req, res) => {
           if (params.get('UpgMode') !== null) toggleState.UpgMode = params.get('UpgMode');
           if (params.get('UpgIntervalDay')) toggleState.UpgIntervalDay = params.get('UpgIntervalDay');
           if (params.get('UpgRoamPermission') !== null) toggleState.UpgRoamPermission = params.get('UpgRoamPermission');
+          if (params.get('zte_update_enabled') !== null) toggleState.zte_update_enabled = params.get('zte_update_enabled');
         }
         if (goformId === 'INDICATOR_LIGHT_SETTING') {
           if (params.get('indicator_light_switch') !== null) toggleState.indicator_light_switch = params.get('indicator_light_switch');
@@ -524,6 +552,7 @@ app.use('/api/goform', (req, res) => {
     UpgMode: toggleState.UpgMode,
     UpgIntervalDay: toggleState.UpgIntervalDay,
     UpgRoamPermission: toggleState.UpgRoamPermission,
+    zte_update_enabled: toggleState.zte_update_enabled,
     // Device options
     indicator_light_switch: toggleState.indicator_light_switch,
     performance_mode: toggleState.performance_mode,

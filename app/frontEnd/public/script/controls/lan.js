@@ -3,6 +3,38 @@
  * Listens for 'ctrl-panel-show' event with tab='lan'.
  */
 (function () {
+  var dhcpToggle = null;
+
+  function initDhcpToggle() {
+    if (dhcpToggle) return;
+    var container = document.getElementById('collapse_dhcp_switch');
+    if (!container) return;
+    container.innerHTML = '';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ctrl-toggle off';
+    btn.innerHTML = '<span class="ctrl-toggle-knob"></span>';
+    var state = false;
+    var hiddenInput = document.getElementById('enableDHCP');
+    var collapseEl = document.getElementById('collapse_dhcp');
+    btn.addEventListener('click', function () {
+      state = !state;
+      btn.className = 'ctrl-toggle ' + (state ? 'on' : 'off');
+      if (hiddenInput) hiddenInput.value = state ? 'SERVER' : 'DISABLE';
+      if (collapseEl) collapseEl.style.display = state ? '' : 'none';
+    });
+    container.appendChild(btn);
+    dhcpToggle = {
+      get: function () { return state; },
+      set: function (v) {
+        state = !!v;
+        btn.className = 'ctrl-toggle ' + (state ? 'on' : 'off');
+        if (hiddenInput) hiddenInput.value = state ? 'SERVER' : 'DISABLE';
+        if (collapseEl) collapseEl.style.display = state ? '' : 'none';
+      }
+    };
+  }
+
   function loadLANData() {
     var form = document.getElementById('LANManagementForm');
     if (!form) return;
@@ -34,14 +66,9 @@
       if (mtuInput) mtuInput.value = res.mtu || '';
       if (mssInput) mssInput.value = res.tcp_mss || '';
 
-      var collapseDhcp = document.getElementById('collapse_dhcp');
-      if (collapseDhcp) {
-        if (collapseDhcp.dataset.name === 'open' && dhcpEnabled !== '1') {
-          collapseDhcp.dataset.name = 'close';
-        } else if (collapseDhcp.dataset.name === 'close' && dhcpEnabled === '1') {
-          collapseDhcp.dataset.name = 'open';
-        }
-      }
+      // DHCP toggle
+      initDhcpToggle();
+      if (dhcpToggle) dhcpToggle.set(dhcpEnabled === '1');
     }).catch(function () { /* silent */ });
   }
 

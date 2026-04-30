@@ -197,6 +197,8 @@
     <script src="/script/controls/wifi.js"></script>
     <script src="/script/controls/apn.js"></script>
     <script src="/script/controls/clients.js"></script>
+    <script src="/script/controls/root-access.js"></script>
+    <script src="/script/controls/quick-shell.js"></script>
     <script src="/script/controls/advanced.js"></script>
     <script src="/script/memory-cleaner.js"></script>
 </body>

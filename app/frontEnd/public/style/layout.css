@@ -710,6 +710,10 @@
 /* --- Responsive breakpoints --- */
 
 @media (max-width: 600px) {
+  .container {
+    gap: 8px;
+    padding: 0 4px;
+  }
   .icon-bar {
     position: fixed;
     bottom: 0;
@@ -750,6 +754,36 @@
     width: 100%;
     flex-wrap: wrap;
     border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 0.65rem;
+  }
+  .tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .tab-bar .tab-btn {
+    padding: 8px 10px;
+    font-size: 0.72rem;
+    min-width: max-content;
+  }
+  .tab-bar .tab-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .kano_function_main {
+    padding: 10px 10px;
+    border-radius: var(--radius);
+  }
+  .deviceList strong,
+  .deviceList .card-item {
+    font-size: 11px;
+    padding: 5px 8px;
+    margin: 3px;
   }
 }
 
