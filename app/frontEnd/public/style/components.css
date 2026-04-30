@@ -3246,72 +3246,83 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
-  padding: 24px 0;
+  gap: 20px;
+  padding: 20px 0;
 }
 .speedtest-gauge-area {
   position: relative;
-  width: 240px;
-  height: 240px;
+  width: 280px;
+  height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.speedtest-gauge-ring {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
 .speedtest-gauge-svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  transform: scaleX(1);
 }
-.speedtest-gauge-progress {
-  transition: stroke-dashoffset 0.25s ease-out;
+.speedtest-needle {
+  transition: transform 0.3s ease-out;
+  transform-origin: 150px 150px;
 }
 .speedtest-gauge-center {
   position: absolute;
-  inset: 0;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   pointer-events: none;
-}
-.speedtest-phase-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: rgba(226, 232, 240, 0.5);
-  margin-bottom: 4px;
-  min-height: 14px;
+  transition: opacity 0.3s ease;
 }
 .speedtest-speed-value {
-  font-size: 48px;
+  font-size: 44px;
   font-weight: 700;
   color: #fff;
   font-family: var(--font-mono);
   line-height: 1;
+  min-height: 44px;
+}
+.speedtest-speed-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.speedtest-phase-icon {
+  font-size: 14px;
 }
 .speedtest-speed-unit {
   font-size: 13px;
   color: rgba(226, 232, 240, 0.5);
   font-weight: 600;
-  margin-top: 4px;
+}
+.speedtest-phase-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.4);
+  margin-top: 2px;
+  min-height: 12px;
 }
 .speedtest-go-btn {
   position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 120px;
-  height: 120px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
-  border: 3px solid rgba(56, 189, 248, 0.5);
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+  border: 6px solid transparent;
+  background:
+    radial-gradient(circle, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.7) 100%) padding-box,
+    linear-gradient(135deg, rgba(74, 222, 128, 0.6), rgba(34, 211, 238, 0.6), rgba(167, 139, 250, 0.6)) border-box;
   color: #fff;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 800;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -3319,61 +3330,64 @@ textarea:focus {
   z-index: 2;
 }
 .speedtest-go-btn:hover {
-  border-color: rgba(56, 189, 248, 0.9);
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
-  transform: scale(1.05);
-  box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+  background:
+    radial-gradient(circle, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.6) 100%) padding-box,
+    linear-gradient(135deg, rgba(74, 222, 128, 0.9), rgba(34, 211, 238, 0.9), rgba(167, 139, 250, 0.9)) border-box;
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.3);
 }
 .speedtest-go-btn.hidden {
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.8);
-}
-.speedtest-gauge-center {
-  transition: opacity 0.3s ease;
+  transform: translate(-50%, -50%) scale(0.7);
 }
 .speedtest-gauge-area.idle .speedtest-gauge-center {
   opacity: 0;
 }
-.speedtest-live-results {
+.speedtest-results {
   display: flex;
-  gap: 32px;
+  gap: 16px;
+  width: 100%;
   justify-content: center;
   flex-wrap: wrap;
 }
-.speedtest-live-item {
+.speedtest-result-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 80px;
-  opacity: 0.4;
-  transition: opacity 0.4s ease;
+  gap: 4px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 10px;
+  padding: 12px 20px;
+  min-width: 100px;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
-.speedtest-live-item.active {
-  opacity: 1;
+.speedtest-result-card.active {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.1);
 }
-.speedtest-live-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(226, 232, 240, 0.5);
+.speedtest-result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.speedtest-live-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff;
-  font-family: var(--font-mono);
-  line-height: 1.2;
+.speedtest-result-icon svg {
+  width: 32px;
+  height: 32px;
 }
-.speedtest-live-unit {
+.speedtest-result-label {
   font-size: 10px;
-  color: rgba(226, 232, 240, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(226, 232, 240, 0.5);
   font-weight: 600;
 }
-.speedtest-live-item.active .speedtest-live-label {
-  color: var(--accent);
+.speedtest-result-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.8);
+  font-family: var(--font-mono);
 }
 .speedtest-settings {
   padding-top: 12px;

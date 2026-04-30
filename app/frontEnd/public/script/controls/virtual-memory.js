@@ -7,14 +7,53 @@
   var SH_FILE = '/sdcard/kano_swap.sh';
   var LOG_FILE = '/data/swap_setup.log';
   var BOOT_SH = '/sdcard/ufi_tools_boot.sh';
-  var SWAP_SIZE_MB = 1536; // 1.5 GB
+  var SWAP_SIZE_MB = parseInt(localStorage.getItem('swap_size_mb')) || 1536;
 
   var toggleWrap = document.getElementById('SWAP_TOGGLE_SWITCH');
   var statusEl = document.getElementById('swap_status');
   var sizeEl = document.getElementById('swap_size');
   var logEl = document.getElementById('swap_log');
+  var sizeInput = document.getElementById('swap_size_input');
+  var saveSizeBtn = document.getElementById('swap_save_size_btn');
 
   if (!toggleWrap) return;
+
+  if (sizeInput) sizeInput.value = SWAP_SIZE_MB;
+
+  if (saveSizeBtn) {
+    saveSizeBtn.addEventListener('click', function() {
+      var val = parseInt(sizeInput.value);
+      if (!val || val < 256 || val > 4096) {
+        showCtrlToast('Size must be between 256–4096 MB', 'error');
+        return;
+      }
+      SWAP_SIZE_MB = val;
+      localStorage.setItem('swap_size_mb', val);
+
+      // Check if swap is currently active — need reboot to apply
+      try {
+        var res = await runShellWithRoot('cat /proc/swaps');
+        if (res.success && res.content.includes(SWAP_FILE)) {
+          if (!confirm('Swap is active. To apply the new size (' + val + ' MB), the device needs to reboot.\n\nReboot now?')) {
+            showCtrlToast('Size saved. Will apply after manual reboot.');
+            return;
+          }
+          // Disable swap, delete file, and reboot
+          setLog('Disabling swap and rebooting...');
+          await runShellWithRoot('swapoff ' + SWAP_FILE);
+          await runShellWithRoot('rm -f ' + SWAP_FILE);
+          // Update boot script to recreate swap with new size on boot
+          await runShellWithRoot("sed -i '/swapon/d' " + BOOT_SH);
+          await runShellWithRoot("echo 'sh " + SH_FILE + " && swapon " + SWAP_FILE + " &' >> " + BOOT_SH);
+          await uploadScript();
+          showCtrlToast('Rebooting device...');
+          await runShellWithRoot('reboot');
+          return;
+        }
+      } catch (e) {}
+      showCtrlToast('Swap size set to ' + val + ' MB.');
+    });
+  }
 
   var busy = false;
 
@@ -29,23 +68,26 @@
     }
   }
 
-  var SCRIPT = [
-    '#!/system/bin/sh',
-    'SWAP_FILE="' + SWAP_FILE + '"',
-    'SWAP_SIZE_MB=' + SWAP_SIZE_MB,
-    'LOG_FILE="' + LOG_FILE + '"',
-    '',
-    'log() { echo "$@" >> "$LOG_FILE"; }',
-    'rm -f "$LOG_FILE"',
-    'log "=== Starting swap file setup ==="',
-    'log "[1/5] Creating ${SWAP_SIZE_MB}MB swap file..."',
-    'dd if=/dev/zero of="$SWAP_FILE" bs=1M count=$SWAP_SIZE_MB >>"$LOG_FILE" 2>&1',
-    'if [ $? -ne 0 ]; then log "Failed to create swap file"; exit 1; fi',
-    'log "[2/5] Setting permissions..."',
-    'chmod 600 "$SWAP_FILE" >>"$LOG_FILE" 2>&1',
-    'log "[3/5] Formatting as swap..."',
-    'mkswap "$SWAP_FILE" >>"$LOG_FILE" 2>&1',
-    'if [ $? -ne 0 ]; then log "mkswap failed"; exit 1; fi',
+  var SCRIPT = null;
+
+  function buildScript() {
+    return [
+      '#!/system/bin/sh',
+      'SWAP_FILE="' + SWAP_FILE + '"',
+      'SWAP_SIZE_MB=' + SWAP_SIZE_MB,
+      'LOG_FILE="' + LOG_FILE + '"',
+      '',
+      'log() { echo "$@" >> "$LOG_FILE"; }',
+      'rm -f "$LOG_FILE"',
+      'log "=== Starting swap file setup ==="',
+      'log "[1/5] Creating ${SWAP_SIZE_MB}MB swap file..."',
+      'dd if=/dev/zero of="$SWAP_FILE" bs=1M count=$SWAP_SIZE_MB >>"$LOG_FILE" 2>&1',
+      'if [ $? -ne 0 ]; then log "Failed to create swap file"; exit 1; fi',
+      'log "[2/5] Setting permissions..."',
+      'chmod 600 "$SWAP_FILE" >>"$LOG_FILE" 2>&1',
+      'log "[3/5] Formatting as swap..."',
+      'mkswap "$SWAP_FILE" >>"$LOG_FILE" 2>&1',
+      'if [ $? -ne 0 ]; then log "mkswap failed"; exit 1; fi',
     'log "[4/5] Enabling swap..."',
     'swapon "$SWAP_FILE" >>"$LOG_FILE" 2>&1',
     'if [ $? -ne 0 ]; then log "swapon failed"; exit 1; fi',
@@ -53,7 +95,8 @@
     'cat /proc/swaps >> "$LOG_FILE"',
     'free -h >> "$LOG_FILE"',
     'log "=== Swap setup completed ==="'
-  ].join('\n');
+    ].join('\n');
+  }
 
   function setLog(text) {
     logEl.textContent = text || '';
@@ -108,7 +151,7 @@
   }
 
   async function uploadScript() {
-    var file = new File([SCRIPT], 'kano_swap.sh', { type: 'text/plain' });
+    var file = new File([buildScript()], 'kano_swap.sh', { type: 'text/plain' });
     var form = new FormData();
     form.append('file', file);
 

@@ -970,7 +970,18 @@ app.get('/api/plugins_store', (req, res) => {
           { name: 'signal-logger.js', size: 2048, modified: '2025-12-01T10:00:00Z' },
           { name: 'band-lock.js', size: 1536, modified: '2025-11-15T08:30:00Z' },
           { name: 'auto-reconnect.js', size: 3072, modified: '2025-10-20T14:00:00Z' },
-          { name: 'sms-notify.js', size: 1024, modified: '2025-09-05T09:00:00Z' }
+          { name: 'sms-notify.js', size: 1024, modified: '2025-09-05T09:00:00Z' },
+          { name: 'wifi-scheduler.js', size: 4096, modified: '2025-08-12T11:00:00Z' },
+          { name: 'data-usage-monitor.js', size: 2560, modified: '2025-07-22T16:30:00Z' },
+          { name: 'battery-saver.js', size: 1280, modified: '2025-06-18T09:45:00Z' },
+          { name: 'dns-override.js', size: 1792, modified: '2025-05-10T13:00:00Z' },
+          { name: 'vpn-auto-connect.js', size: 3584, modified: '2025-04-25T07:20:00Z' },
+          { name: 'network-watchdog.js', size: 2816, modified: '2025-03-30T18:00:00Z' },
+          { name: 'speed-limiter.js', size: 1920, modified: '2025-02-14T12:00:00Z' },
+          { name: 'connection-stats.js', size: 2304, modified: '2025-01-08T10:30:00Z' },
+          { name: 'reboot-scheduler.js', size: 1408, modified: '2024-12-20T15:00:00Z' },
+          { name: 'ttl-modifier.js', size: 896, modified: '2024-11-05T08:00:00Z' },
+          { name: 'imei-toolkit.js', size: 5120, modified: '2024-10-15T14:30:00Z' }
         ]
       }
     }

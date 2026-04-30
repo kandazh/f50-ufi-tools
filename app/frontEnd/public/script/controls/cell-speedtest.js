@@ -5,29 +5,119 @@
 (function () {
   var startBtn = document.getElementById('cell_speedtest_start_btn');
   var speedEl = document.getElementById('cell_speedtest_speed');
+  var unitEl = document.getElementById('cell_speedtest_unit');
   var statusEl = document.getElementById('cell_speedtest_status');
-  var gaugeFill = document.getElementById('cell_speedtest_gauge_fill');
+  var needleEl = document.getElementById('cell_speedtest_needle');
+  var arcBg = document.getElementById('cell_speedtest_arc_bg');
+  var arcFill = document.getElementById('cell_speedtest_arc_fill');
   var resultsEl = document.getElementById('cell_speedtest_results');
   var downloadEl = document.getElementById('cell_speedtest_download');
   var uploadEl = document.getElementById('cell_speedtest_upload');
   var latencyEl = document.getElementById('cell_speedtest_latency');
+  var pingCard = document.getElementById('cell_speedtest_ping_card');
+  var downloadCard = document.getElementById('cell_speedtest_download_card');
+  var uploadCard = document.getElementById('cell_speedtest_upload_card');
   var logEl = document.getElementById('cell_speedtest_log');
   var serverSelect = document.getElementById('cell_speedtest_server');
+  var gaugeArea = document.getElementById('cell_gauge_area');
 
   if (!startBtn) return;
 
+  // Gauge geometry — same as local speedtest
+  var CX = 150, CY = 150, R = 115;
+  var START_ANGLE = 225;
+  var END_ANGLE = -45;
+  var SWEEP = 270;
+  var SCALE_VALUES = [0, 5, 10, 50, 100, 250, 500, 750, 1000];
+
+  function degToRad(d) { return d * Math.PI / 180; }
+  function polarToXY(angle, radius) {
+    var rad = degToRad(angle);
+    return { x: CX + radius * Math.cos(rad), y: CY - radius * Math.sin(rad) };
+  }
+  function mbpsToAngle(mbps) {
+    if (mbps <= 0) return START_ANGLE;
+    var fraction = Math.log10(mbps + 1) / Math.log10(1001);
+    return START_ANGLE - fraction * SWEEP;
+  }
+  function arcPath(startAng, endAng, radius) {
+    var s = polarToXY(startAng, radius);
+    var e = polarToXY(endAng, radius);
+    var sweep = startAng - endAng;
+    var largeArc = sweep > 180 ? 1 : 0;
+    return 'M' + s.x.toFixed(1) + ',' + s.y.toFixed(1) +
+           ' A' + radius + ',' + radius + ' 0 ' + largeArc + ' 1 ' +
+           e.x.toFixed(1) + ',' + e.y.toFixed(1);
+  }
+  function initGauge() {
+    if (arcBg) arcBg.setAttribute('d', arcPath(START_ANGLE, END_ANGLE, R));
+    if (arcFill) arcFill.setAttribute('d', 'M0,0');
+    var labelsG = document.querySelector('.cell-scale-labels');
+    if (labelsG) {
+      labelsG.innerHTML = '';
+      SCALE_VALUES.forEach(function(val) {
+        var angle = mbpsToAngle(val);
+        var pos = polarToXY(angle, R + 22);
+        var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', pos.x.toFixed(1));
+        text.setAttribute('y', pos.y.toFixed(1));
+        text.setAttribute('dy', '0.35em');
+        text.textContent = val;
+        labelsG.appendChild(text);
+      });
+    }
+    setNeedle(0);
+  }
+  function setNeedle(mbps) {
+    if (!needleEl) return;
+    var angle = mbpsToAngle(mbps);
+    var svgAngle = 90 - angle;
+    needleEl.style.transform = 'rotate(' + svgAngle + 'deg)';
+  }
+  function setArcFill(mbps) {
+    if (!arcFill) return;
+    if (mbps <= 0) { arcFill.setAttribute('d', 'M0,0'); return; }
+    arcFill.setAttribute('d', arcPath(START_ANGLE, mbpsToAngle(mbps), R));
+  }
+
+  function animateGaugeDown(fromMbps, duration) {
+    return new Promise(function(resolve) {
+      var start = performance.now();
+      var dur = duration || 800;
+      function step(now) {
+        var t = Math.min((now - start) / dur, 1);
+        var ease = 1 - Math.pow(1 - t, 3);
+        var val = fromMbps * (1 - ease);
+        setNeedle(val);
+        setArcFill(val);
+        if (speedEl) speedEl.textContent = val >= 0.01 ? formatSpeed(val / 8) : '0.00';
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          setNeedle(0);
+          setArcFill(0);
+          if (speedEl) speedEl.textContent = '0.00';
+          resolve();
+        }
+      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  if (gaugeArea) gaugeArea.classList.add('idle');
+  initGauge();
+
   var running = false;
-  var ARC_LENGTH = 251.2;
 
   function formatSpeed(MBps) {
     if (MBps >= 1) return MBps.toFixed(2) + ' MB/s';
     return (MBps * 1024).toFixed(0) + ' KB/s';
   }
 
-  function setGauge(fraction) {
-    if (!gaugeFill) return;
-    var offset = ARC_LENGTH * (1 - Math.min(fraction, 1));
-    gaugeFill.setAttribute('stroke-dashoffset', offset.toFixed(1));
+  function formatMbps(mbps) {
+    if (mbps >= 100) return mbps.toFixed(0);
+    if (mbps >= 10) return mbps.toFixed(1);
+    return mbps.toFixed(2);
   }
 
   function setStatus(text) {
@@ -35,18 +125,11 @@
   }
 
   function setSpeed(MBps) {
-    if (speedEl) {
-      if (MBps >= 1) {
-        speedEl.textContent = MBps.toFixed(2);
-      } else {
-        speedEl.textContent = (MBps * 1024).toFixed(0);
-      }
-    }
-    var unitEl = document.getElementById('cell_speedtest_speed');
-    if (unitEl && unitEl.nextElementSibling) {
-      unitEl.nextElementSibling.textContent = MBps >= 1 ? 'MB/s' : 'KB/s';
-    }
-    setGauge(MBps / 12.5);
+    var mbps = MBps * 8;
+    if (speedEl) speedEl.textContent = formatMbps(mbps);
+    if (unitEl) unitEl.textContent = 'Mbps';
+    setNeedle(mbps);
+    setArcFill(mbps);
   }
 
   function addLog(msg) {
@@ -188,11 +271,17 @@
   async function runTest() {
     if (running) return;
     running = true;
-    startBtn.disabled = true;
-    startBtn.textContent = '⏳ TESTING...';
-    if (resultsEl) resultsEl.style.display = 'none';
+    startBtn.classList.add('hidden');
+    if (gaugeArea) gaugeArea.classList.remove('idle');
     clearLog();
-    setSpeed(0);
+    setNeedle(0);
+    setArcFill(0);
+
+    // Reset result cards
+    [pingCard, downloadCard, uploadCard].forEach(function(c) { if(c) c.classList.remove('active'); });
+    if (latencyEl) latencyEl.textContent = '--';
+    if (downloadEl) downloadEl.textContent = '--';
+    if (uploadEl) uploadEl.textContent = '--';
 
     var selectedValue = serverSelect ? serverSelect.value : 'auto';
     var url;
@@ -205,36 +294,56 @@
     }
 
     // Latency
+    setStatus('PING');
+    if (pingCard) pingCard.classList.add('active');
     var latency = await measureLatency();
     if (latency > 0) {
       addLog('Latency: ' + latency.toFixed(1) + ' ms');
+      if (latencyEl) latencyEl.textContent = latency.toFixed(0) + ' ms';
     }
 
     // Download
+    setStatus('DOWNLOAD');
+    if (pingCard) pingCard.classList.remove('active');
+    if (downloadCard) downloadCard.classList.add('active');
     var dlResult = await measureDownload(url);
     if (dlResult.MBps > 0) {
       setSpeed(dlResult.MBps);
       addLog('Download: ' + formatSpeed(dlResult.MBps));
+      if (downloadEl) downloadEl.textContent = formatSpeed(dlResult.MBps);
+    } else {
+      if (downloadEl) downloadEl.textContent = 'Error';
     }
 
     // Upload
+    var lastDlMbps = dlResult.MBps > 0 ? dlResult.MBps * 8 : 0;
+    await animateGaugeDown(lastDlMbps, 800);
+    await new Promise(function(r) { setTimeout(r, 2000); });
+    setStatus('UPLOAD');
+    if (downloadCard) downloadCard.classList.remove('active');
+    if (uploadCard) uploadCard.classList.add('active');
     var upload = await measureUpload();
     if (upload > 0) {
+      setSpeed(upload);
       addLog('Upload: ' + formatSpeed(upload));
+      if (uploadEl) uploadEl.textContent = formatSpeed(upload);
+    } else {
+      if (uploadEl) uploadEl.textContent = 'Error';
     }
 
     // Show results
-    setStatus('Test complete');
-    if (resultsEl) resultsEl.style.display = '';
-    if (downloadEl) downloadEl.textContent = dlResult.MBps > 0 ? formatSpeed(dlResult.MBps) : 'Error';
-    if (uploadEl) uploadEl.textContent = upload > 0 ? formatSpeed(upload) : 'Error';
-    if (latencyEl) latencyEl.textContent = latency > 0 ? latency.toFixed(1) + ' ms' : 'Error';
+    setStatus('');
+    [pingCard, downloadCard, uploadCard].forEach(function(c) { if(c) c.classList.add('active'); });
 
-    setSpeed(dlResult.MBps > 0 ? dlResult.MBps : 0);
+    var finalMbps = dlResult.MBps > 0 ? dlResult.MBps * 8 : 0;
+    setNeedle(finalMbps);
+    setArcFill(finalMbps);
+    if (speedEl) speedEl.textContent = '';
+    if (unitEl) unitEl.textContent = '';
 
     running = false;
-    startBtn.disabled = false;
-    startBtn.textContent = '▶ START';
+    startBtn.classList.remove('hidden');
+    startBtn.textContent = 'GO';
   }
 
   startBtn.addEventListener('click', runTest);

@@ -1374,34 +1374,58 @@ uptime</pre>
                         <!-- CELLULAR Speed Test -->
                         <div class="ctrl-section speedtest-panel-cellular" id="speedtest_cellular_panel">
                             <div class="speedtest-container">
-                                <div class="speedtest-gauge-wrap">
-                                    <svg class="speedtest-gauge" viewBox="0 0 200 120" width="200" height="120">
-                                        <path class="speedtest-gauge-bg" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="rgba(226,232,240,0.1)" stroke-width="12" stroke-linecap="round"/>
-                                        <path class="speedtest-gauge-fill" id="cell_speedtest_gauge_fill" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="#10b981" stroke-width="12" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                                <!-- Gauge Area -->
+                                <div class="speedtest-gauge-area" id="cell_gauge_area">
+                                    <svg class="speedtest-gauge-svg" viewBox="0 0 300 300">
+                                        <defs>
+                                            <linearGradient id="cellGaugeGradient" gradientUnits="userSpaceOnUse" x1="35" y1="150" x2="265" y2="150">
+                                                <stop offset="0%" stop-color="#4ade80"/>
+                                                <stop offset="30%" stop-color="#22d3ee"/>
+                                                <stop offset="60%" stop-color="#06b6d4"/>
+                                                <stop offset="100%" stop-color="#8b5cf6"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <!-- Background arc (dark) -->
+                                        <path id="cell_speedtest_arc_bg" d="" fill="none" stroke="rgba(226,232,240,0.12)" stroke-width="22" stroke-linecap="round"/>
+                                        <!-- Filled arc (color gradient) -->
+                                        <path id="cell_speedtest_arc_fill" d="" fill="none" stroke="url(#cellGaugeGradient)" stroke-width="22" stroke-linecap="round"/>
+                                        <!-- Scale labels -->
+                                        <g class="speedtest-scale-labels cell-scale-labels" fill="rgba(226,232,240,0.6)" font-size="12" font-weight="600" text-anchor="middle">
+                                        </g>
+                                        <!-- Needle (broad triangular pointer) -->
+                                        <g id="cell_speedtest_needle" class="speedtest-needle">
+                                            <polygon points="150,48 143,150 157,150" fill="rgba(255,255,255,0.9)"/>
+                                            <circle cx="150" cy="150" r="10" fill="#fff"/>
+                                            <circle cx="150" cy="150" r="5" fill="#1e293b"/>
+                                        </g>
                                     </svg>
-                                    <div class="speedtest-speed-display">
-                                        <span class="speedtest-speed-value" id="cell_speedtest_speed">0.00</span>
-                                        <span class="speedtest-speed-unit">MB/s</span>
+                                    <!-- Speed display (centered below gauge) -->
+                                    <div class="speedtest-gauge-center">
+                                        <div class="speedtest-speed-value" id="cell_speedtest_speed">0.00</div>
+                                        <div class="speedtest-speed-meta">
+                                            <span class="speedtest-speed-unit" id="cell_speedtest_unit">MB/s</span>
+                                        </div>
+                                        <div class="speedtest-phase-label" id="cell_speedtest_status">Ready to test</div>
                                     </div>
+                                    <!-- GO Button -->
+                                    <button type="button" class="speedtest-go-btn" id="cell_speedtest_start_btn">GO</button>
                                 </div>
-                                <div class="speedtest-status" id="cell_speedtest_status">Ready to test</div>
-                                <button type="button" class="ctrl-submit-btn speedtest-start-btn" id="cell_speedtest_start_btn" style="padding:10px 32px;font-size:13px;font-weight:700;letter-spacing:0.05em;background:linear-gradient(135deg,#10b981,#059669) !important">
-                                    ▶ START
-                                </button>
-                                <div class="speedtest-results" id="cell_speedtest_results" style="display:none">
-                                    <div class="speedtest-result-card">
+
+                                <!-- Results cards -->
+                                <div class="speedtest-results" id="cell_speedtest_results">
+                                    <div class="speedtest-result-card" id="cell_speedtest_download_card">
                                         <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
                                         <span class="speedtest-result-label">Download</span>
                                         <span class="speedtest-result-value" id="cell_speedtest_download">--</span>
                                     </div>
-                                    <div class="speedtest-result-card">
+                                    <div class="speedtest-result-card" id="cell_speedtest_upload_card">
                                         <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
                                         <span class="speedtest-result-label">Upload</span>
                                         <span class="speedtest-result-value" id="cell_speedtest_upload">--</span>
                                     </div>
-                                    <div class="speedtest-result-card">
+                                    <div class="speedtest-result-card" id="cell_speedtest_ping_card">
                                         <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                                        <span class="speedtest-result-label">Latency</span>
+                                        <span class="speedtest-result-label">Ping</span>
                                         <span class="speedtest-result-value" id="cell_speedtest_latency">--</span>
                                     </div>
                                 </div>
@@ -1439,37 +1463,64 @@ uptime</pre>
                         <!-- LOCAL Speed Test -->
                         <div class="ctrl-section speedtest-panel-local" id="speedtest_local_panel" style="display:none">
                             <div class="speedtest-container">
-                                <div class="speedtest-gauge-wrap">
-                                    <svg class="speedtest-gauge" viewBox="0 0 200 120" width="200" height="120">
-                                        <path class="speedtest-gauge-bg" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="rgba(226,232,240,0.1)" stroke-width="12" stroke-linecap="round"/>
-                                        <path class="speedtest-gauge-fill" id="speedtest_gauge_fill" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                                <!-- Gauge Area -->
+                                <div class="speedtest-gauge-area">
+                                    <svg class="speedtest-gauge-svg" viewBox="0 0 300 300">
+                                        <defs>
+                                            <linearGradient id="gaugeGradient" gradientUnits="userSpaceOnUse" x1="35" y1="150" x2="265" y2="150">
+                                                <stop offset="0%" stop-color="#4ade80"/>
+                                                <stop offset="30%" stop-color="#22d3ee"/>
+                                                <stop offset="60%" stop-color="#06b6d4"/>
+                                                <stop offset="100%" stop-color="#8b5cf6"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <!-- Background arc (dark) -->
+                                        <path id="speedtest_arc_bg" d="" fill="none" stroke="rgba(226,232,240,0.12)" stroke-width="22" stroke-linecap="round"/>
+                                        <!-- Filled arc (color gradient) -->
+                                        <path id="speedtest_arc_fill" d="" fill="none" stroke="url(#gaugeGradient)" stroke-width="22" stroke-linecap="round"/>
+                                        <!-- Scale labels -->
+                                        <g class="speedtest-scale-labels" fill="rgba(226,232,240,0.6)" font-size="12" font-weight="600" text-anchor="middle">
+                                        </g>
+                                        <!-- Needle (broad triangular pointer) -->
+                                        <g id="speedtest_needle" class="speedtest-needle">
+                                            <polygon points="150,48 143,150 157,150" fill="rgba(255,255,255,0.9)"/>
+                                            <circle cx="150" cy="150" r="10" fill="#fff"/>
+                                            <circle cx="150" cy="150" r="5" fill="#1e293b"/>
+                                        </g>
                                     </svg>
-                                    <div class="speedtest-speed-display">
-                                        <span class="speedtest-speed-value" id="speedtest_speed">0.00</span>
-                                        <span class="speedtest-speed-unit">MB/s</span>
+                                    <!-- Speed display (centered below gauge) -->
+                                    <div class="speedtest-gauge-center">
+                                        <div class="speedtest-speed-value" id="speedtest_speed"></div>
+                                        <div class="speedtest-speed-meta">
+                                            <span class="speedtest-phase-icon" id="speedtest_phase_icon"></span>
+                                            <span class="speedtest-speed-unit" id="speedtest_unit">Mbps</span>
+                                        </div>
+                                        <div class="speedtest-phase-label" id="speedtest_phase"></div>
                                     </div>
+                                    <!-- GO Button -->
+                                    <button type="button" class="speedtest-go-btn" id="speedtest_start_btn">GO</button>
                                 </div>
-                                <div class="speedtest-status" id="speedtest_status">Ready to test</div>
-                                <button type="button" class="ctrl-submit-btn speedtest-start-btn" id="speedtest_start_btn" style="padding:10px 32px;font-size:13px;font-weight:700;letter-spacing:0.05em">
-                                    ▶ START
-                                </button>
-                                <div class="speedtest-results" id="speedtest_results" style="display:none">
-                                    <div class="speedtest-result-card">
+
+                                <!-- Results cards -->
+                                <div class="speedtest-results" id="speedtest_results">
+                                    <div class="speedtest-result-card" id="speedtest_download_card">
                                         <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
                                         <span class="speedtest-result-label">Download</span>
                                         <span class="speedtest-result-value" id="speedtest_download">--</span>
                                     </div>
-                                    <div class="speedtest-result-card">
+                                    <div class="speedtest-result-card" id="speedtest_upload_card">
                                         <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
                                         <span class="speedtest-result-label">Upload</span>
                                         <span class="speedtest-result-value" id="speedtest_upload">--</span>
                                     </div>
-                                    <div class="speedtest-result-card">
+                                    <div class="speedtest-result-card" id="speedtest_ping_card">
                                         <span class="speedtest-result-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                                         <span class="speedtest-result-label">Ping</span>
                                         <span class="speedtest-result-value" id="speedtest_ping">--</span>
                                     </div>
                                 </div>
+
+                                <!-- Settings -->
                                 <div class="speedtest-settings">
                                     <div class="ctrl-field" style="justify-content:center;gap:12px">
                                         <span class="ctrl-label" style="width:auto">Chunk Size:</span>
@@ -1766,7 +1817,7 @@ uptime</pre>
                         <div class="ctrl-panel-title">Virtual Memory</div>
                         <div class="ctrl-section">
                             <div class="ctrl-section-title"><span class="ctrl-section-icon">💾</span> Virtual Memory</div>
-                            <p class="plugin-desc">Creates a 1.5 GB virtual memory (swap) file on the device to expand available RAM. Persists across reboots. Requires root access.</p>
+                            <p class="plugin-desc">Creates a virtual memory (swap) file on the device to expand available RAM. Persists across reboots. Requires root access.</p>
                             <div class="swap-status-cards">
                                 <div class="data-mgmt-card">
                                     <div class="data-mgmt-card-icon">
@@ -1787,6 +1838,15 @@ uptime</pre>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📐</span> Swap Size</div>
+                            <div class="ctrl-row" style="align-items:center;gap:10px;">
+                                <input type="number" id="swap_size_input" class="ctrl-input" value="1536" min="256" max="4096" step="256" style="width:100px;text-align:center;">
+                                <span style="color:rgba(226,232,240,0.6);font-size:13px;">MB</span>
+                                <button class="ctrl-btn ctrl-btn-sm" id="swap_save_size_btn">Save</button>
+                            </div>
+                            <p class="plugin-desc" style="margin-top:6px;font-size:11px;">Set the swap file size (256–4096 MB). Changes apply on next enable.</p>
                         </div>
                         <div class="ctrl-section">
                             <div class="ctrl-adv-toggle-row">
@@ -1842,6 +1902,7 @@ uptime</pre>
                             <div class="ctrl-actions" style="gap:8px;flex-wrap:wrap">
                                 <button type="button" class="ctrl-submit-btn" id="agh_open_btn" style="background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:#38bdf8">Home Page</button>
                                 <button type="button" class="ctrl-submit-btn" id="agh_export_btn" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.3);color:#a78bfa">Export Config</button>
+                                <button type="button" class="ctrl-submit-btn" id="agh_viewlog_btn" style="background:rgba(148,163,184,0.1);border-color:rgba(148,163,184,0.3);color:#94a3b8">View Logs</button>
                                 <button type="button" class="ctrl-submit-btn" id="agh_download_btn" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.3);color:#fbbf24">Download</button>
                                 <button type="button" class="ctrl-submit-btn" id="agh_update_btn" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:#22c55e">Check Update</button>
                             </div>
@@ -1879,16 +1940,16 @@ uptime</pre>
                                     <p class="plugin-desc">Inject custom JavaScript that runs on the device. Plugins are stored persistently and execute on page load.</p>
                                     <textarea class="plugin-editor" id="plugin_code" rows="12" spellcheck="false" placeholder="// Enter your plugin JavaScript code here..."></textarea>
                                 </div>
-                                <div class="ctrl-section">
-                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">🏪</span> Plugin Store</div>
-                                    <div class="plugin-store-list" id="plugin_store_list">
-                                        <div class="sched-empty">Loading store...</div>
-                                    </div>
-                                </div>
-                                <div class="ctrl-actions" style="gap:10px">
+                                <div class="ctrl-actions" style="gap:10px;margin-bottom:16px">
                                     <button type="button" class="ctrl-submit-btn" id="plugin_save_btn">Save & Apply</button>
                                     <button type="button" class="ctrl-submit-btn" id="plugin_load_btn" style="background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:#38bdf8">Load Current</button>
                                     <button type="button" class="ctrl-submit-btn" id="plugin_clear_btn" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Clear</button>
+                                </div>
+                                <div class="ctrl-section">
+                                    <div class="ctrl-section-title"><span class="ctrl-section-icon">🏪</span> Plugin Store</div>
+                                    <div class="plugin-store-list" id="plugin_store_list" style="max-height:300px;overflow-y:auto">
+                                        <div class="sched-empty">Loading store...</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

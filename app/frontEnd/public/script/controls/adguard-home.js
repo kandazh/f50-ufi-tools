@@ -1,5 +1,6 @@
 /**
  * AdGuard Home Panel — Install, manage, and update AdGuard Home DNS blocker
+ * Scripts are fetched from app assets and deployed directly (no zip required).
  */
 (function () {
   var panel = document.querySelector('[data-ctrl-panel="adguard"]');
@@ -11,6 +12,9 @@
   var AGH_DOWNLOAD_NAME = 'AdGuardHome_linux_arm64.tar.gz';
   var AGH_DOWNLOAD_PATH = '/data/' + AGH_DOWNLOAD_NAME;
 
+  // Script assets base path (served by the app/dev-server)
+  var AGH_ASSETS = '/shell/agh';
+
   var serviceEl = document.getElementById('agh_service_status');
   var versionEl = document.getElementById('agh_version');
   var logEl = document.getElementById('agh_log');
@@ -21,10 +25,28 @@
   var uninstallBtn = document.getElementById('agh_uninstall_btn');
   var openBtn = document.getElementById('agh_open_btn');
   var exportBtn = document.getElementById('agh_export_btn');
+  var viewlogBtn = document.getElementById('agh_viewlog_btn');
   var downloadBtn = document.getElementById('agh_download_btn');
   var updateBtn = document.getElementById('agh_update_btn');
 
   var busy = false;
+
+  // Fetch a script file from app assets
+  async function fetchAsset(path) {
+    var res = await fetch(AGH_ASSETS + '/' + path);
+    if (!res.ok) throw new Error('Failed to fetch ' + path);
+    return await res.text();
+  }
+
+  // Upload script content to device path
+  async function deployFile(content, filename, destPath) {
+    var file = new File([content], filename, { type: 'text/plain' });
+    var ok = await saveConfig(file, destPath);
+    if (ok) {
+      await runShellWithRoot('chmod 755 ' + destPath);
+    }
+    return ok;
+  }
 
   function log(msg) {
     logEl.textContent += msg + '\n';
@@ -76,7 +98,12 @@
     var version = await getInstalledVersion();
     if (version) {
       versionEl.textContent = version;
-      setService('Running', '#34d399');
+      var pidRes = await runShellWithRoot('cat /data/agh/agh/bin/agh.pid 2>/dev/null && kill -0 $(cat /data/agh/agh/bin/agh.pid) 2>/dev/null && echo RUNNING');
+      if (pidRes.success && pidRes.content.includes('RUNNING')) {
+        setService('Running', '#34d399');
+      } else {
+        setService('Stopped', '#fbbf24');
+      }
     } else {
       versionEl.textContent = '--';
       setService('Not Installed', '#94a3b8');
@@ -99,34 +126,66 @@
         return;
       }
 
-      log('[1/6] Cleaning up old files...');
-      await runShellWithRoot('rm -rf /data/agh; rm -f /data/kano_ad_guard_home.zip; rm -f /data/adg_customize.sh');
+      log('[1/8] Cleaning up old files...');
+      await runShellWithRoot('rm -rf /data/agh');
 
-      log('[2/6] Copying files from sdcard...');
-      var res1 = await runShellWithRoot('cp /sdcard/Documents/kano_ad_guard_home.zip /data/', 120000);
-      if (!res1.success) { log('ERROR: Failed to copy files'); showCtrlToast('Failed to copy files', 'error'); return; }
+      log('[2/8] Creating directory structure...');
+      var mkRes = await runShellWithRoot('mkdir -p /data/agh/agh/bin /data/agh/agh/scripts');
+      if (!mkRes.success) { log('ERROR: Failed to create directories'); showCtrlToast('Failed to create directories', 'error'); return; }
 
-      log('[3/6] Extracting...');
-      var res2 = await runShellWithRoot('unzip -o /data/kano_ad_guard_home.zip "adg_customize.sh" -d /data/ >/dev/null 2>&1', 60000);
-      if (!res2.success) { log('ERROR: Extraction failed'); showCtrlToast('Extraction failed', 'error'); return; }
+      log('[3/8] Fetching scripts from app...');
+      var scripts = [
+        { asset: 'settings.conf', path: '/data/agh/agh/settings.conf' },
+        { asset: 'scripts/base.sh', path: '/data/agh/agh/scripts/base.sh' },
+        { asset: 'scripts/tool.sh', path: '/data/agh/agh/scripts/tool.sh' },
+        { asset: 'scripts/iptables.sh', path: '/data/agh/agh/scripts/iptables.sh' },
+        { asset: 'scripts/debug.sh', path: '/data/agh/agh/scripts/debug.sh' },
+        { asset: 'action.sh', path: '/data/agh/action.sh' },
+        { asset: 'boot.sh', path: '/data/agh/boot.sh' },
+        { asset: 'uninstall.sh', path: '/data/agh/uninstall.sh' },
+        { asset: 'AdGuardHome.yaml', path: '/data/agh/agh/bin/AdGuardHome.yaml' },
+      ];
 
-      log('[4/6] Verifying files...');
-      var res3 = await runShellWithRoot('ls /data/', 60000);
-      if (!res3.success || !res3.content.includes('adg_customize.sh')) { log('ERROR: Files not found'); showCtrlToast('Verification failed', 'error'); return; }
+      log('[4/8] Deploying scripts to device...');
+      for (var i = 0; i < scripts.length; i++) {
+        var s = scripts[i];
+        log('  → ' + s.asset);
+        var content = await fetchAsset(s.asset);
+        var ok = await deployFile(content, s.asset.split('/').pop(), s.path);
+        if (!ok) { log('ERROR: Failed to deploy ' + s.asset); showCtrlToast('Failed to deploy ' + s.asset, 'error'); return; }
+      }
 
-      log('[5/6] Setting permissions & installing...');
-      await runShellWithRoot('chmod 777 /data/adg_customize.sh', 60000);
-      var res5 = await runShellWithRoot('/data/adg_customize.sh', 60000);
-      if (!res5.success) { log('ERROR: Install script failed'); showCtrlToast('Installation failed', 'error'); return; }
-      log(res5.content);
+      log('[5/8] Fetching latest release info...');
+      var release = await getLatestRelease();
+      if (!release) { log('ERROR: Failed to fetch release info. Check internet connection.'); showCtrlToast('Failed to fetch release info', 'error'); return; }
 
-      log('[6/6] Registering boot script & starting...');
+      log('[6/8] Downloading AdGuard Home ' + release.version + '...');
+      var dlRes = await runShellWithRoot(
+        '/data/data/com.minikano.f50_sms/files/curl -L "' + release.downloadUrl + '" -o "' + AGH_DOWNLOAD_PATH + '"',
+        300000
+      );
+      if (!dlRes.success) { log('ERROR: Download failed'); showCtrlToast('Download failed', 'error'); return; }
+
+      log('[7/8] Extracting & installing binary...');
+      await runShellWithRoot('rm -rf /data/agh_update_tmp');
+      var extRes = await runShellWithRoot('mkdir -p /data/agh_update_tmp && tar -xzf "' + AGH_DOWNLOAD_PATH + '" -C /data/agh_update_tmp', 60000);
+      if (!extRes.success) { log('ERROR: Extraction failed'); showCtrlToast('Extraction failed', 'error'); return; }
+      await runShellWithRoot('cp -f /data/agh_update_tmp/AdGuardHome/AdGuardHome /data/agh/agh/bin/AdGuardHome');
+      await runShellWithRoot('chmod 755 /data/agh/agh/bin/AdGuardHome');
+      await runShellWithRoot('rm -rf /data/agh_update_tmp "' + AGH_DOWNLOAD_PATH + '"');
+
+      log('[8/8] Registering boot script & starting...');
       await runShellWithRoot("grep -qxF 'sh /data/agh/boot.sh &' " + BOOT_SH_FILE + " || echo 'sh /data/agh/boot.sh &' >> " + BOOT_SH_FILE);
       await runShellWithRoot('sh ' + SH_FILE + ' &');
 
       log('=== Installation complete ===');
+      log('Address: http://192.168.0.1:3000');
+      log('Default user: root');
       showCtrlToast('AdGuard Home installed!');
       refreshStatus();
+    } catch (e) {
+      log('ERROR: ' + e.message);
+      showCtrlToast('Installation failed: ' + e.message, 'error');
     } finally { busy = false; }
   }
 
@@ -286,12 +345,33 @@
     } finally { busy = false; }
   }
 
+  async function viewLogs() {
+    if (busy) return;
+    busy = true;
+    clearLog();
+    try {
+      if (!(await checkRoot())) { showCtrlToast('Advanced features not enabled', 'error'); return; }
+      log('--- history.log (last 50 lines) ---');
+      var r1 = await runShellWithRoot('tail -n 50 /data/agh/history.log 2>/dev/null || echo "(no history log)"');
+      log(r1.content || '(empty)');
+      log('');
+      log('--- bin.log (last 30 lines) ---');
+      var r2 = await runShellWithRoot('tail -n 30 /data/agh/agh/bin.log 2>/dev/null || echo "(no bin log)"');
+      log(r2.content || '(empty)');
+      log('');
+      log('--- boot.log ---');
+      var r3 = await runShellWithRoot('cat /data/agh/boot.log 2>/dev/null || echo "(no boot log)"');
+      log(r3.content || '(empty)');
+    } finally { busy = false; }
+  }
+
   // Button bindings
   installBtn.addEventListener('click', install);
   restartBtn.addEventListener('click', restart);
   stopBtn.addEventListener('click', stop);
   uninstallBtn.addEventListener('click', uninstall);
   exportBtn.addEventListener('click', exportConfig);
+  viewlogBtn.addEventListener('click', viewLogs);
   downloadBtn.addEventListener('click', downloadLatest);
   updateBtn.addEventListener('click', checkForUpdate);
   openBtn.addEventListener('click', function () {
