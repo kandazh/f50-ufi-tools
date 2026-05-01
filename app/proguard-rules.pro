@@ -1,25 +1,10 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard rules for UFI-TOOLS
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep line numbers for crash debugging
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
+# Strip SLF4J logging
 -assumenosideeffects class org.slf4j.Logger {
     public void info(...);
     public void debug(...);
@@ -32,104 +17,64 @@
     public boolean isErrorEnabled();
     public boolean isTraceEnabled();
 }
-
 -assumenosideeffects class org.slf4j.LoggerFactory {
     public static org.slf4j.Logger getLogger(...);
 }
+-dontwarn org.slf4j.**
 
-# -------- Keep JavaMail related classes ----------
+# -------- JavaMail (uses reflection for providers) --------
 -keep class javax.mail.** { *; }
 -keep class com.sun.mail.** { *; }
 -keep class jakarta.mail.** { *; }
 -keep class javax.activation.** { *; }
 -keep class com.sun.activation.** { *; }
--keep class javax.activation.** { *; }
-
-# Keep constructors (mail classes are often created via reflection)
--keepclassmembers class * {
-    public <init>(...);
-    public *;
-}
 -keep class com.sun.mail.util.MailLogger { *; }
--dontwarn org.slf4j.**
 
-# Avoid removing mailcap configuration (some MIME type registrations)
--dontoptimize
--dontshrink
+# -------- Ktor (coroutines + service loading) --------
+-keep class io.ktor.** { *; }
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn io.ktor.**
+-dontwarn kotlinx.coroutines.**
 
-# Ignore annotation classes required by junixsocket but not used at runtime
+# -------- Kotlinx Serialization --------
+-keepattributes *Annotation*
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers @kotlinx.serialization.Serializable class * {
+    static *Companion *;
+    <fields>;
+}
+
+# -------- OkHttp --------
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# -------- jcifs-ng (SMB, uses reflection) --------
+-keep class jcifs.** { *; }
+-keep class org.newsclub.net.unix.** { *; }
+-keep class com.kohlschutter.util.** { *; }
+-keepnames class org.newsclub.net.unix.**
+-dontwarn jcifs.**
+
+# -------- junixsocket annotations --------
 -dontwarn com.kohlschutter.annotations.compiletime.SuppressFBWarnings
 -dontwarn com.kohlschutter.annotations.compiletime.ExcludeFromCodeCoverageGeneratedReport
 -dontwarn org.eclipse.jdt.annotation.NonNullByDefault
 -dontwarn java.rmi.server.RemoteServer
 
-# Keep junixsocket related classes to prevent loss of reflection or native calls
--keep class org.newsclub.net.unix.** { *; }
--keep class com.kohlschutter.util.** { *; }
+# -------- Firebase Crashlytics buildtools --------
+-dontwarn com.google.firebase.crashlytics.buildtools.reloc.**
 
-# Prevent class names from being obfuscated
--keepnames class org.newsclub.net.unix.**
--dontwarn java.beans.BeanInfo
--dontwarn java.beans.IntrospectionException
--dontwarn java.beans.Introspector
--dontwarn java.beans.PropertyDescriptor
--dontwarn java.lang.management.ManagementFactory
--dontwarn java.lang.management.RuntimeMXBean
--dontwarn afu.org.checkerframework.dataflow.qual.Pure
--dontwarn afu.org.checkerframework.dataflow.qual.SideEffectFree
--dontwarn afu.org.checkerframework.framework.qual.EnsuresQualifierIf
--dontwarn afu.org.checkerframework.framework.qual.EnsuresQualifiersIf
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.afu.org.checkerframework.checker.formatter.qual.ConversionCategory
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.afu.org.checkerframework.checker.formatter.qual.ReturnsFormat
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.afu.org.checkerframework.checker.nullness.qual.EnsuresNonNull
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.afu.org.checkerframework.checker.regex.qual.Regex
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.org.checkerframework.checker.formatter.qual.ConversionCategory
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.org.checkerframework.checker.formatter.qual.ReturnsFormat
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.org.checkerframework.checker.nullness.qual.EnsuresNonNull
--dontwarn com.google.firebase.crashlytics.buildtools.reloc.org.checkerframework.checker.regex.qual.Regex
+# -------- Missing platform classes (safe to ignore on Android) --------
+-dontwarn java.beans.**
+-dontwarn java.lang.management.**
 -dontwarn javax.lang.model.element.Modifier
--dontwarn javax.naming.InvalidNameException
--dontwarn javax.naming.NamingException
--dontwarn javax.naming.directory.Attribute
--dontwarn javax.naming.directory.Attributes
--dontwarn javax.naming.ldap.LdapName
--dontwarn javax.naming.ldap.Rdn
--dontwarn javax.security.auth.callback.NameCallback
--dontwarn javax.security.auth.kerberos.KerberosKey
--dontwarn javax.security.auth.kerberos.KerberosPrincipal
--dontwarn javax.security.auth.kerberos.KerberosTicket
--dontwarn javax.security.auth.login.AppConfigurationEntry$LoginModuleControlFlag
--dontwarn javax.security.auth.login.AppConfigurationEntry
--dontwarn javax.security.auth.login.Configuration
--dontwarn javax.security.auth.login.LoginContext
--dontwarn javax.servlet.Filter
--dontwarn javax.servlet.FilterChain
--dontwarn javax.servlet.FilterConfig
--dontwarn javax.servlet.ServletConfig
--dontwarn javax.servlet.ServletContextEvent
--dontwarn javax.servlet.ServletContextListener
--dontwarn javax.servlet.ServletException
--dontwarn javax.servlet.ServletOutputStream
--dontwarn javax.servlet.ServletRequest
--dontwarn javax.servlet.ServletResponse
--dontwarn javax.servlet.http.HttpServlet
--dontwarn javax.servlet.http.HttpServletRequest
--dontwarn javax.servlet.http.HttpServletRequestWrapper
--dontwarn javax.servlet.http.HttpServletResponse
--dontwarn javax.servlet.http.HttpSession
--dontwarn org.apache.avalon.framework.logger.Logger
--dontwarn org.apache.log.Hierarchy
--dontwarn org.apache.log.Logger
--dontwarn org.apache.log4j.Level
--dontwarn org.apache.log4j.Logger
--dontwarn org.apache.log4j.Priority
--dontwarn org.checkerframework.dataflow.qual.Pure
--dontwarn org.checkerframework.dataflow.qual.SideEffectFree
--dontwarn org.checkerframework.framework.qual.EnsuresQualifierIf
--dontwarn org.ietf.jgss.GSSContext
--dontwarn org.ietf.jgss.GSSCredential
--dontwarn org.ietf.jgss.GSSException
--dontwarn org.ietf.jgss.GSSManager
--dontwarn org.ietf.jgss.GSSName
--dontwarn org.ietf.jgss.MessageProp
--dontwarn org.ietf.jgss.Oid
+-dontwarn javax.naming.**
+-dontwarn javax.security.auth.**
+-dontwarn javax.servlet.**
+-dontwarn org.apache.avalon.framework.logger.**
+-dontwarn org.apache.log.**
+-dontwarn org.apache.log4j.**
+-dontwarn org.checkerframework.**
+-dontwarn afu.org.checkerframework.**
+-dontwarn org.ietf.jgss.**
