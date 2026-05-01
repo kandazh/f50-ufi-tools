@@ -36,6 +36,25 @@
 -dontwarn io.ktor.**
 -dontwarn kotlinx.coroutines.**
 
+# -------- Netty (SSL engine) --------
+-keep class io.netty.** { *; }
+-dontwarn io.netty.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+-dontwarn reactor.blockhound.**
+-dontwarn org.apache.logging.**
+-dontwarn org.apache.log4j.**
+-dontwarn org.jboss.marshalling.**
+-dontwarn com.google.protobuf.**
+-dontwarn com.jcraft.jzlib.**
+-dontwarn com.ning.**
+-dontwarn lzma.sdk.**
+-dontwarn net.jpountz.**
+-dontwarn com.aayushatharva.brotli4j.**
+-dontwarn com.github.luben.zstd.**
+-dontwarn sun.security.**
+
 # -------- Kotlinx Serialization --------
 -keepattributes *Annotation*
 -keep class kotlinx.serialization.** { *; }

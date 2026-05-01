@@ -135,7 +135,7 @@ dependencies {
 
     // Ktor core and CIO engine
     implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.netty)
 
     // Common feature plugins
     implementation(libs.ktor.server.default.headers)

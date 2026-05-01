@@ -298,7 +298,7 @@ class MainActivity : ComponentActivity() {
 
                     if (isServerRunning) {
                         ServerUI(
-                            serverAddress = "http://${gatewayIp.substringBefore(":")}:$port",
+                            serverAddress = "https://${gatewayIp.substringBefore(":")}:$port",
                             gatewayIp,
                             versionName = versionName ?: "unknown",
                             onStopServer = {

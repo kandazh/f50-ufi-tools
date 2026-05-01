@@ -31,6 +31,12 @@ release.keystore
 apk-download/
 apk-latest/
 
+# Local deploy script (machine-specific paths)
+deploy.ps1
+
+# Platform tools (adb) - downloaded locally
+platform-tools/
+
 # Frontend build artifacts
 app/frontEnd/node_modules/
 app/frontEnd/package-lock.json

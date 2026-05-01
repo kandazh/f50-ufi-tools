@@ -90,12 +90,12 @@ class WebService : Service() {
                 val currentIp = prefs.getString("gateway_ip", "0.0.0.0:8080") ?: "0.0.0.0:8080"
                 allowAutoStart = true
                 try {
-                    Log.d("UFI_TOOLS_LOG", "Starting web service, binding to: http://0.0.0.0:$port")
+                    Log.d("UFI_TOOLS_LOG", "Starting web service, binding to: https://0.0.0.0:$port")
                     val server = KanoWebServer(applicationContext, 2333, currentIp)
                     server.start()
                     webServer = server
                     sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", true))
-                    Log.d("UFI_TOOLS_LOG", "Service started successfully, address: http://0.0.0.0:$port")
+                    Log.d("UFI_TOOLS_LOG", "Service started successfully, address: https://0.0.0.0:$port")
                 } catch (fallbackEx: Exception) {
                     webServer = null
                     Log.e("UFI_TOOLS_LOG", "Service start failed: ${fallbackEx.message}")
