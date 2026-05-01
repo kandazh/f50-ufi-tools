@@ -106,7 +106,7 @@
 
   async function loadTasks() {
     try {
-      var res = await fetch(KANO_baseURL + '/list_tasks', { headers: common_headers });
+      var res = await fetch(HOTBOX_baseURL + '/list_tasks', { headers: common_headers });
       var data = await res.json();
       var tasks = (data.tasks || []).filter(function (t) {
         return t.id && t.id.startsWith('reboot_');
@@ -138,7 +138,7 @@
 
   async function removeTask(id) {
     try {
-      await fetch(KANO_baseURL + '/remove_task', {
+      await fetch(HOTBOX_baseURL + '/remove_task', {
         method: 'POST',
         headers: { ...common_headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id })
@@ -158,7 +158,7 @@
     var repeatDaily = repeatSwitch ? repeatSwitch.get() : true;
 
     try {
-      await fetch(KANO_baseURL + '/add_task', {
+      await fetch(HOTBOX_baseURL + '/add_task', {
         method: 'POST',
         headers: { ...common_headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({

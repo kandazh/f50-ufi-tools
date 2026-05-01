@@ -34,7 +34,7 @@ const chartUpdater = (prop, value) => {
                     else if (cur.length == 2) cur = `&nbsp;&nbsp;${cur}`
                     else if (cur.length == 3) cur = `&nbsp;${cur}`
                     const btnColor = getCssVariableColor('--dark-btn-color-active')
-                    html += `${kano_parseSignalBar(cur_origin, 0, max, max * 0.9, max * 0.9, {
+                    html += `${hotbox_parseSignalBar(cur_origin, 0, max, max * 0.9, max * 0.9, {
                         g: '#ffa5008f',
                         o: '#ffa5008f',
                         r: btnColor
@@ -82,7 +82,7 @@ const ANI_DURATION = 300
 
 // CPU usage
 const updateCpuChart = (() => {
-    const canvas = document.getElementById('kanoCpuChart');
+    const canvas = document.getElementById('hotboxCpuChart');
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     const labels = Array(MAX_length).fill('0')
@@ -151,7 +151,7 @@ const updateCpuChart = (() => {
 
 // CPU core usage
 const updateCpuCoreChart = (() => {
-    const canvas = document.getElementById('kanoCpuCoreChart');
+    const canvas = document.getElementById('hotboxCpuCoreChart');
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     const labels = ['Core 1', 'Core 2', 'Core 3', 'Core 4', 'Core 5', 'Core 6', 'Core 7', 'Core 8']
@@ -218,7 +218,7 @@ const updateCpuCoreChart = (() => {
 
 // Memory usage
 const updateMemChart = (() => {
-    const canvas = document.getElementById('kanoMemChart');
+    const canvas = document.getElementById('hotboxMemChart');
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     const labels = Array(MAX_length).fill('0')
@@ -295,7 +295,7 @@ const updateMemChart = (() => {
 
 // CPU temperature chart
 const updateTempChart = (() => {
-    const canvas = document.getElementById('kanoTempChart');
+    const canvas = document.getElementById('hotboxTempChart');
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     const labels = Array(MAX_length).fill('0')
@@ -371,7 +371,7 @@ const updateTempChart = (() => {
 
 // Network speed chart
 const updateNetworkChart = (() => {
-    const canvas = document.getElementById('kanoNetChart');
+    const canvas = document.getElementById('hotboxNetChart');
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     const labels = Array(MAX_length).fill('0')
@@ -481,7 +481,7 @@ const updateNetworkChart = (() => {
 
 // Data usage chart
 const updateDataHistoryChart = (() => {
-    const canvas = document.getElementById('kanoDataHistoryChart');
+    const canvas = document.getElementById('hotboxDataHistoryChart');
     const ctx = canvas.getContext('2d');
     const labels = Array(MAX_length).fill('')
     const data = Array(MAX_length).fill(0)

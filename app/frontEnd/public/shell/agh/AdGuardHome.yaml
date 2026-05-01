@@ -161,7 +161,7 @@ user_rules:
   - '! ---- Block ZTE domains ----'
   - '||ztems.com^$important'
   - '||ztesmarthome.com^$important'
-  - '||kanokano.cn^$important'
+  - '||hotboxhotbox.cn^$important'
   - '! ---- Allow YouTube core domains ----'
   - '@@||youtube.com^$important'
   - '@@||googlevideo.com^$important'

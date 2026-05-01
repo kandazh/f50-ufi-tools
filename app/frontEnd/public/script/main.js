@@ -106,7 +106,7 @@ const needToken = async (shouldThrowError = false, fetchMaxRetries = 3) => {
 
     while (retries < fetchMaxRetries) {
         try {
-            res = await (await fetchWithTimeout(`${KANO_baseURL}/need_token`, { headers: { ...common_headers } }, 1000)).json()
+            res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/need_token`, { headers: { ...common_headers } }, 1000)).json()
             if (res) {
                 break
             }
@@ -502,12 +502,12 @@ function main_func() {
             let token = tokenInput && (tokenInput.value)
             let password = pwdInput && (pwdInput.value)
             if (!password || !password?.trim()) return createToast(t('toast_please_input_pwd'), 'red')
-            KANO_PASSWORD = password.trim()
+            HOTBOX_PASSWORD = password.trim()
             if (isNeedToken) {
                 if (!token || !token?.trim()) return createToast(t('toast_please_input_token'), 'red')
             }
-            KANO_TOKEN = SHA256(token.trim()).toLowerCase()
-            common_headers.authorization = KANO_TOKEN
+            HOTBOX_TOKEN = SHA256(token.trim()).toLowerCase()
+            common_headers.authorization = HOTBOX_TOKEN
 
             const data = new URLSearchParams({
                 cmd: 'psw_fail_num_str,login_lock_time'
@@ -515,7 +515,7 @@ function main_func() {
             data.append('isTest', 'false')
             data.append('_', Date.now())
             toastTimer = createTimer()
-            const res = await fetchWithTimeout(KANO_baseURL + "/goform/goform_get_cmd_process?" + data.toString(), {
+            const res = await fetchWithTimeout(HOTBOX_baseURL + "/goform/goform_get_cmd_process?" + data.toString(), {
                 method: "GET",
                 headers: {
                     ...common_headers,
@@ -559,8 +559,8 @@ function main_func() {
                 console.error('Update admin password failed:', update_res ? update_res.message : 'No response');
             }
             createToast(t('toast_login_success'), 'green')
-            localStorage.setItem('kano_sms_pwd', password.trim())
-            localStorage.setItem('kano_sms_token', SHA256(token.trim()).toLowerCase())
+            localStorage.setItem('hotbox_sms_pwd', password.trim())
+            localStorage.setItem('hotbox_sms_token', SHA256(token.trim()).toLowerCase())
             closeModal('#tokenModal')
             initRenderMethod()
             initMessage()
@@ -570,11 +570,11 @@ function main_func() {
             if (loginRememberMe && loginRememberMe.checked) {
                 // AES encrypt stored password
                 if (CryptoJS) {
-                    const payload = CryptoJS.AES.encrypt(`${password.trim()}<kano_CryptoJS_split>${token.trim()}`, 'kano_secret_key_1145141919810721')
-                    localStorage.setItem('kano_remembered_loginfo', payload)
+                    const payload = CryptoJS.AES.encrypt(`${password.trim()}<hotbox_CryptoJS_split>${token.trim()}`, 'hotbox_secret_key_1145141919810721')
+                    localStorage.setItem('hotbox_remembered_loginfo', payload)
                 }
             } else if (loginRememberMe && !loginRememberMe.checked) {
-                localStorage.removeItem('kano_remembered_loginfo')
+                localStorage.removeItem('hotbox_remembered_loginfo')
             }
         }
         catch (e) {
@@ -585,7 +585,7 @@ function main_func() {
 
     let timer_out = null
     const toggleLoginLogout = () => {
-        const isLoggedIn = !!localStorage.getItem('kano_sms_pwd')
+        const isLoggedIn = !!localStorage.getItem('hotbox_sms_pwd')
         if (isLoggedIn) {
             out()
             createToast('Logged out', 'green')
@@ -597,7 +597,7 @@ function main_func() {
     const updateLoginIcon = () => {
         const btn = document.querySelector('#loginBtnIcon')
         if (!btn) return
-        const isLoggedIn = !!localStorage.getItem('kano_sms_pwd')
+        const isLoggedIn = !!localStorage.getItem('hotbox_sms_pwd')
         if (isLoggedIn) {
             btn.innerHTML = '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'
             btn.parentElement.title = 'Logout'
@@ -681,7 +681,7 @@ function main_func() {
         const now = Date.now()
         if (now - _lastAdbnetCheck > 10000) {
             _lastAdbnetCheck = now
-            fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+            fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
                 method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
             }, 2000).then(r => r.json()).then(res => {
                 qtSet('adbnet', res.enabled === 'true' || res.enabled === true)
@@ -714,7 +714,7 @@ function main_func() {
                     break
                 }
                 case 'adbnet': {
-                    const res = await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                    const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
                         method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
                     }, 3000)).json()
                     const on = res.enabled === 'true' || res.enabled === true
@@ -723,17 +723,17 @@ function main_func() {
                         d.usb_port_switch = '1'
                         qtSet('adb', true)
                     }
-                    await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                    await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
                         method: 'POST',
                         headers: { ...common_headers, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ enabled: !on, password: KANO_PASSWORD })
+                        body: JSON.stringify({ enabled: !on, password: HOTBOX_PASSWORD })
                     })).json()
                     // Poll until actual state matches desired state
                     const desired = !on
                     for (let attempt = 0; attempt < 10; attempt++) {
                         await new Promise(r => setTimeout(r, 1000))
                         try {
-                            const check = await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                            const check = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
                                 method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
                             }, 3000)).json()
                             const actual = check.enabled === 'true' || check.enabled === true
@@ -751,7 +751,7 @@ function main_func() {
                     for (let attempt = 0; attempt < 10; attempt++) {
                         await new Promise(r => setTimeout(r, 1000))
                         try {
-                            const info = await (await fetchWithTimeout(`${KANO_baseURL}/baseDeviceInfo`, {
+                            const info = await (await fetchWithTimeout(`${HOTBOX_baseURL}/baseDeviceInfo`, {
                                 headers: { ...common_headers }
                             }, 5000)).json()
                             const usage = info.cpuUsageInfo || {}
@@ -806,8 +806,8 @@ function main_func() {
 
     function out() {
         smsSender && smsSender()
-        localStorage.removeItem('kano_sms_pwd')
-        localStorage.removeItem('kano_sms_token')
+        localStorage.removeItem('hotbox_sms_pwd')
+        localStorage.removeItem('hotbox_sms_token')
         closeModal('#smsList')
         clearTimeout(timer_out)
         timer_out = setTimeout(() => {
@@ -816,17 +816,17 @@ function main_func() {
     }
 
     let initRequestData = async () => {
-        const PWD = localStorage.getItem('kano_sms_pwd')
-        const TOKEN = localStorage.getItem('kano_sms_token')
+        const PWD = localStorage.getItem('hotbox_sms_pwd')
+        const TOKEN = localStorage.getItem('hotbox_sms_token')
         if (!PWD) {
             return false
         }
         if (isNeedToken && !TOKEN) {
             return false
         }
-        KANO_TOKEN = TOKEN
-        common_headers.authorization = KANO_TOKEN
-        KANO_PASSWORD = PWD
+        HOTBOX_TOKEN = TOKEN
+        common_headers.authorization = HOTBOX_TOKEN
+        HOTBOX_PASSWORD = PWD
         return true
     }
 
@@ -1017,7 +1017,7 @@ function main_func() {
         let isEnabled = await checkAdvancedFunc()
         if (isEnabled) {
             try {
-                const res = await runShellWithRoot(`/data/data/com.minikano.f50_sms/files/imei_reader`)
+                const res = await runShellWithRoot(`/data/data/com.hotbox.f50_app/files/imei_reader`)
                 const imei = res.content.replace(/IMEI[0-9]:/g, "").split('\n')[0]
                 cachedDiagImeiQueryResult = imei
                 return imei
@@ -1039,12 +1039,12 @@ function main_func() {
     let handlerStatusRender = async (flag = false) => {
         const status = document.querySelector('#STATUS')
         if (flag) {
-            const TOKEN = localStorage.getItem('kano_sms_token')
+            const TOKEN = localStorage.getItem('hotbox_sms_token')
             if (!TOKEN && isNeedToken) {
                 return false
             }
-            KANO_TOKEN = TOKEN
-            common_headers.authorization = KANO_TOKEN
+            HOTBOX_TOKEN = TOKEN
+            common_headers.authorization = HOTBOX_TOKEN
             status.innerHTML = `
         <li style="padding-top: 15px;">
             <strong class="green" style="margin: 10px auto;margin-top: 0; display: flex;flex-direction: column;padding: 40px;">
@@ -1060,7 +1060,7 @@ function main_func() {
                 status.innerHTML = `<li style="padding-top: 15px;"><strong onclick="copyText(event)" class="green">${t('status_load_failed')}</strong></li>`
                 createToast(t('toast_get_data_failed_check_network_pwd'), 'red')
             }
-            if ((!KANO_TOKEN || !common_headers.authorization) && isNotLoginOnce) {
+            if ((!HOTBOX_TOKEN || !common_headers.authorization) && isNotLoginOnce) {
                 status.innerHTML = `<li style="padding-top: 15px;"><strong onclick="copyText(event)" class="green">${t('status_load_failed')}</strong></li>`
                 createToast(t('toast_login_to_get_data'), 'pink')
                 isNotLoginOnce = false
@@ -1088,9 +1088,9 @@ function main_func() {
                             out()
                             isFirstRender = true
                             lastRequestSmsIds = null
-                            localStorage.removeItem('kano_sms_pwd')
-                            localStorage.removeItem('kano_sms_token')
-                            KANO_TOKEN = null
+                            localStorage.removeItem('hotbox_sms_pwd')
+                            localStorage.removeItem('hotbox_sms_token')
+                            HOTBOX_TOKEN = null
                             common_headers.authorization = null
                             initRenderMethod()
                             status_login_try_times = 0
@@ -1313,9 +1313,9 @@ function main_func() {
                 <td>${BAND_STR}</td>
                 <td>${FCN}</td>
                 <td>${PCI}</td>
-                <td>${kano_parseSignalBar(RSRP)}</td>
-                <td>${kano_parseSignalBar(SINR, -10, 30, 13, 0)}</td>
-                <td>${kano_parseSignalBar(RSRQ, -20, -3, -9, -12)}</td>
+                <td>${hotbox_parseSignalBar(RSRP)}</td>
+                <td>${hotbox_parseSignalBar(SINR, -10, 30, 13, 0)}</td>
+                <td>${hotbox_parseSignalBar(RSRQ, -20, -3, -9, -12)}</td>
             </tr>
             `
                 }
@@ -1341,12 +1341,12 @@ function main_func() {
                 QORS_MESSAGE: `${notNullOrundefinedOrIsShow(res, "QORS_MESSAGE") ? `<strong onclick="copyText(event)"  class="green">${QORS_MESSAGE}</strong>` : ''}`,
                 network_type: `${notNullOrundefinedOrIsShow(res, 'network_type') ? `<strong onclick="copyText(event)"  class="green">${t('network_status')}：${res.network_provider} ${res.network_type == '20' ? '5G' : res.network_type == '13' ? '4G' : res.network_type}</strong>` : ''}`,
                 wifi_access_sta_num: `${notNullOrundefinedOrIsShow(res, 'wifi_access_sta_num') ? `<strong onclick="copyText(event)"  class="blue">${t('wifi_client_num')}：${res.wifi_access_sta_num}</strong>` : ''}`,
-                battery: `${notNullOrundefinedOrIsShow(res, 'battery') && (res.battery_value != '' || res.battery_vol_percent != '') ? `<strong onclick="copyText(event)"  class="green">${res.battery_charging == "1" ? `${t('charging')}` : `${t('battery_level')}`}：${kano_parseSignalBar(res.battery, 1, 100, 50, 10, undefined, " %")}</strong>` : ''}`,
-                rssi: `${notNullOrundefinedOrIsShow(res, 'rssi') || notNullOrundefinedOrIsShow(res, 'network_signalbar', true) ? `<strong onclick="copyText(event)"  class="green">${t('rssi')}：${kano_getSignalEmoji(notNullOrundefinedOrIsShow(res, 'rssi') ? res.rssi : res.network_signalbar)}</strong>` : ''}`,
+                battery: `${notNullOrundefinedOrIsShow(res, 'battery') && (res.battery_value != '' || res.battery_vol_percent != '') ? `<strong onclick="copyText(event)"  class="green">${res.battery_charging == "1" ? `${t('charging')}` : `${t('battery_level')}`}：${hotbox_parseSignalBar(res.battery, 1, 100, 50, 10, undefined, " %")}</strong>` : ''}`,
+                rssi: `${notNullOrundefinedOrIsShow(res, 'rssi') || notNullOrundefinedOrIsShow(res, 'network_signalbar', true) ? `<strong onclick="copyText(event)"  class="green">${t('rssi')}：${hotbox_getSignalEmoji(notNullOrundefinedOrIsShow(res, 'rssi') ? res.rssi : res.network_signalbar)}</strong>` : ''}`,
                 cpu_temp: `${notNullOrundefinedOrIsShow(res, 'cpu_temp') ? `<strong onclick="copyText(event)"  class="blue">${t('cpu_temp')}：<span style="text-align:center;display:inline-block;width: 8ch;">${String(Number(res.cpu_temp / 1000).toFixed(2)).padStart(5, ' ')} ℃</span></strong>` : ''}`,
                 cpu_usage: `${notNullOrundefinedOrIsShow(res, 'cpu_usage') ? `<strong onclick="copyText(event)"  class="blue">${t('cpu_usage')}：<span style="text-align:center;display:inline-block;width: 8ch;">${String(Number(res.cpu_usage).toFixed(2)).padStart(5, ' ')} %</span></strong>` : ''}`,
                 mem_usage: `${notNullOrundefinedOrIsShow(res, 'mem_usage') ? `<strong onclick="copyText(event)"  class="blue">${t("ram_usage")}：<span style="text-align:center;display:inline-block;width: 8ch;">${String(Number(res.mem_usage).toFixed(2)).padStart(5, ' ')} %</span></strong>` : ''}`,
-                realtime_time: `${notNullOrundefinedOrIsShow(res, 'realtime_time') ? `<strong onclick="copyText(event)"  class="blue">${t('link_realtime')}：${kano_formatTime(Number(res.realtime_time))}${res.monthly_time ? `&nbsp;<span style="color:white">/</span>&nbsp;${t('total_link_time')}: ` + kano_formatTime(Number(res.monthly_time)) : ''}</strong>` : ''}`,
+                realtime_time: `${notNullOrundefinedOrIsShow(res, 'realtime_time') ? `<strong onclick="copyText(event)"  class="blue">${t('link_realtime')}：${hotbox_formatTime(Number(res.realtime_time))}${res.monthly_time ? `&nbsp;<span style="color:white">/</span>&nbsp;${t('total_link_time')}: ` + hotbox_formatTime(Number(res.monthly_time)) : ''}</strong>` : ''}`,
                 monthly_tx_bytes: `${notNullOrundefinedOrIsShow(res, 'monthly_tx_bytes') || notNullOrundefinedOrIsShow(res, 'monthly_rx_bytes') ? `<strong onclick="copyText(event)"  class="blue">${t("monthly_rx_bytes")}：<span class="red">${formatBytes(Number((res.monthly_tx_bytes + res.monthly_rx_bytes)))}</span>${(res.data_volume_limit_size || res.flux_data_volume_limit_size) && (res.flux_data_volume_limit_switch == '1' || res.data_volume_limit_switch == '1') ? `&nbsp;<span style="color:white">/</span>&nbsp;${t('total_limit_bytes')}：` + formatBytes((() => {
                     const limit_size = res.data_volume_limit_size ? res.data_volume_limit_size : res.flux_data_volume_limit_size
                     if (!limit_size) return ''
@@ -1358,23 +1358,23 @@ function main_func() {
                 realtime_rx_thrpt: `${notNullOrundefinedOrIsShow(res, 'realtime_tx_thrpt') || notNullOrundefinedOrIsShow(res, 'realtime_rx_thrpt') ? `<strong onclick="copyText(event)" class="blue">${t("current_network_speed")}: <span style="text-align:center;white-space:nowrap;overflow:hidden;display:inline-block;width: 14ch;">⬇️&nbsp;${formatBytes(Number((res.realtime_rx_thrpt)))}/S</span><span style="white-space:nowrap;overflow:hidden;text-align:center;display:inline-block;width: 14ch;font-weight:bolder">⬆️&nbsp;${formatBytes(Number((res.realtime_tx_thrpt)))}/S</span></strong>` : ''}`,
             }
             let statusHtml_net = {
-                lte_rsrp: notNullOrundefinedOrIsShow(res, 'lte_rsrp') ? `<strong onclick="copyText(event)" class="green">${t('4g_rsrp')}：${kano_parseSignalBar(res.lte_rsrp)}</strong>` : '',
-                Lte_snr: notNullOrundefinedOrIsShow(res, 'Lte_snr') ? `<strong onclick="copyText(event)" class="blue">${t('4g_sinr')}：${kano_parseSignalBar(res.Lte_snr, -10, 30, 13, 0)}</strong>` : '',
+                lte_rsrp: notNullOrundefinedOrIsShow(res, 'lte_rsrp') ? `<strong onclick="copyText(event)" class="green">${t('4g_rsrp')}：${hotbox_parseSignalBar(res.lte_rsrp)}</strong>` : '',
+                Lte_snr: notNullOrundefinedOrIsShow(res, 'Lte_snr') ? `<strong onclick="copyText(event)" class="blue">${t('4g_sinr')}：${hotbox_parseSignalBar(res.Lte_snr, -10, 30, 13, 0)}</strong>` : '',
                 Lte_bands: notNullOrundefinedOrIsShow(res, 'Lte_bands') ? `<strong onclick="copyText(event)" class="blue">${t('4g_band')}：B${res.Lte_bands}</strong>` : '',
                 Lte_fcn: notNullOrundefinedOrIsShow(res, 'Lte_fcn') ? `<strong onclick="copyText(event)" class="green">${t('4g_freq')}：${res.Lte_fcn}</strong>` : '',
                 Lte_bands_widths: notNullOrundefinedOrIsShow(res, 'Lte_bands_widths') ? `<strong onclick="copyText(event)" class="green">${t('4g_bandwidth')}：${res.Lte_bands_widths}</strong>` : '',
                 Lte_pci: notNullOrundefinedOrIsShow(res, 'Lte_pci') ? `<strong onclick="copyText(event)" class="blue">${t('4g_pci')}：${res.Lte_pci}</strong>` : '',
-                lte_rsrq: notNullOrundefinedOrIsShow(res, 'lte_rsrq') ? `<strong onclick="copyText(event)" class="blue">${t('4g_rsrq')}：${kano_parseSignalBar(res.lte_rsrq, -20, -3, -9, -12)}</strong>` : '',
+                lte_rsrq: notNullOrundefinedOrIsShow(res, 'lte_rsrq') ? `<strong onclick="copyText(event)" class="blue">${t('4g_rsrq')}：${hotbox_parseSignalBar(res.lte_rsrq, -20, -3, -9, -12)}</strong>` : '',
                 lte_rssi: notNullOrundefinedOrIsShow(res, 'lte_rssi') ? `<strong onclick="copyText(event)" class="green">${t('4g_rssi')}：${res.lte_rssi}</strong>` : '',
                 Lte_cell_id: notNullOrundefinedOrIsShow(res, 'Lte_cell_id') ? `<strong onclick="copyText(event)" class="green">${t('4g_cell_id')}：${res.Lte_cell_id}</strong>` : '',
 
-                Z5g_rsrp: notNullOrundefinedOrIsShow(res, 'Z5g_rsrp') ? `<strong onclick="copyText(event)" class="green">${t('5g_rsrp')}：${kano_parseSignalBar(res.Z5g_rsrp)}</strong>` : '',
-                Nr_snr: notNullOrundefinedOrIsShow(res, 'Nr_snr') ? `<strong onclick="copyText(event)" class="green">${t('5g_sinr')}：${kano_parseSignalBar(res.Nr_snr, -10, 30, 13, 0)}</strong>` : '',
+                Z5g_rsrp: notNullOrundefinedOrIsShow(res, 'Z5g_rsrp') ? `<strong onclick="copyText(event)" class="green">${t('5g_rsrp')}：${hotbox_parseSignalBar(res.Z5g_rsrp)}</strong>` : '',
+                Nr_snr: notNullOrundefinedOrIsShow(res, 'Nr_snr') ? `<strong onclick="copyText(event)" class="green">${t('5g_sinr')}：${hotbox_parseSignalBar(res.Nr_snr, -10, 30, 13, 0)}</strong>` : '',
                 Nr_bands: notNullOrundefinedOrIsShow(res, 'Nr_bands') ? `<strong onclick="copyText(event)" class="green">${t('5g_band')}：N${res.Nr_bands}</strong>` : '',
                 Nr_fcn: notNullOrundefinedOrIsShow(res, 'Nr_fcn') ? `<strong onclick="copyText(event)" class="blue">${t('5g_freq')}：${res.Nr_fcn}</strong>` : '',
                 Nr_bands_widths: notNullOrundefinedOrIsShow(res, 'Nr_bands_widths') ? `<strong onclick="copyText(event)" class="blue">${t('5g_bandwidth')}：${res.Nr_bands_widths}</strong>` : '',
                 Nr_pci: notNullOrundefinedOrIsShow(res, 'Nr_pci') ? `<strong onclick="copyText(event)" class="green">${t('5g_pci')}：${res.Nr_pci}</strong>` : '',
-                nr_rsrq: notNullOrundefinedOrIsShow(res, 'nr_rsrq') ? `<strong onclick="copyText(event)" class="green">${t('5g_rsrq')}：${kano_parseSignalBar(res.nr_rsrq, -20, -3, -9, -12)}</strong>` : '',
+                nr_rsrq: notNullOrundefinedOrIsShow(res, 'nr_rsrq') ? `<strong onclick="copyText(event)" class="green">${t('5g_rsrq')}：${hotbox_parseSignalBar(res.nr_rsrq, -20, -3, -9, -12)}</strong>` : '',
                 nr_rssi: notNullOrundefinedOrIsShow(res, 'nr_rssi') ? `<strong onclick="copyText(event)" class="blue">${t('5g_rssi')}：${res.nr_rssi}</strong>` : '',
                 Nr_cell_id: notNullOrundefinedOrIsShow(res, 'Nr_cell_id') ? `<strong onclick="copyText(event)" class="blue">${t('5g_cell_id')}：${res.Nr_cell_id}</strong>` : '',
             };
@@ -1479,7 +1479,7 @@ function main_func() {
             return null
         }
 
-        let res = await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+        let res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
             method: 'GET',
             headers: {
                 ...common_headers,
@@ -1505,7 +1505,7 @@ function main_func() {
                         usb_port_switch: '1'
                     })).json()
                 }
-                let res1 = await (await fetchWithTimeout(`${KANO_baseURL}/adb_wifi_setting`, {
+                let res1 = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
                     method: 'POST',
                     headers: {
                         ...common_headers,
@@ -1513,7 +1513,7 @@ function main_func() {
                     },
                     body: JSON.stringify({
                         enabled: res.enabled == "true" || res.enabled == true ? false : true,
-                        password: KANO_PASSWORD
+                        password: HOTBOX_PASSWORD
                     })
                 }, 3000)).json()
                 if (res1.result == 'success') {
@@ -1593,9 +1593,9 @@ function main_func() {
     if (clearBtn) clearBtn.onclick = async () => {
         isFirstRender = true
         lastRequestSmsIds = null
-        localStorage.removeItem('kano_sms_pwd')
-        localStorage.removeItem('kano_sms_token')
-        KANO_TOKEN = null
+        localStorage.removeItem('hotbox_sms_pwd')
+        localStorage.removeItem('hotbox_sms_token')
+        HOTBOX_TOKEN = null
         common_headers.authorization = null
         initRenderMethod()
         // Logout request
@@ -1613,12 +1613,12 @@ function main_func() {
         tokenEl.style.display = "flex"
         // Fill password
         if (CryptoJS) {
-            const str = localStorage.getItem('kano_remembered_loginfo')
+            const str = localStorage.getItem('hotbox_remembered_loginfo')
             if (str) {
                 try {
-                    const bytes = CryptoJS.AES.decrypt(str, 'kano_secret_key_1145141919810721')
+                    const bytes = CryptoJS.AES.decrypt(str, 'hotbox_secret_key_1145141919810721')
                     const originalText = bytes.toString(CryptoJS.enc.Utf8)
-                    const [remembered_password, remembered_token] = originalText.split('<kano_CryptoJS_split>')
+                    const [remembered_password, remembered_token] = originalText.split('<hotbox_CryptoJS_split>')
                     if (remembered_password && remembered_token) {
                         pwdEl.value = remembered_password
                         tokenInput.value = remembered_token
@@ -2115,9 +2115,9 @@ function main_func() {
                         <td>${band}</td>
                         <td>${earfcn}</td>
                         <td>${pci}</td>
-                        <td>${kano_parseSignalBar(rsrp)}</td>
-                        <td>${kano_parseSignalBar(sinr, -10, 30, 13, 0)}</td>
-                        <td>${kano_parseSignalBar(rsrq, -20, -3, -9, -12)}</td>
+                        <td>${hotbox_parseSignalBar(rsrp)}</td>
+                        <td>${hotbox_parseSignalBar(sinr, -10, 30, 13, 0)}</td>
+                        <td>${hotbox_parseSignalBar(rsrq, -20, -3, -9, -12)}</td>
                     </tr>
                 `
                     }).join('')
@@ -2676,7 +2676,7 @@ function main_func() {
                         ApBroadcastDisabledEl && (ApBroadcastDisabledEl.checked = item.ApBroadcastDisabled.toString() == '0')
                         SSIDEl && (SSIDEl.value = item.SSID)
                         // QR code
-                        fetch(KANO_baseURL + item.QrImageUrl, {
+                        fetch(HOTBOX_baseURL + item.QrImageUrl, {
                             headers: common_headers
                         }).then(async (res) => {
                             const blob = await res.blob();
@@ -2958,20 +2958,20 @@ function main_func() {
     }
 
     const editHostName = async (name, mac) => {
-        const { el, close } = createFixedToast('kano_edit_hostname', `
+        const { el, close } = createFixedToast('hotbox_edit_hostname', `
                 <div style="pointer-events:all;width:80vw;max-width:300px;">
                 <div class="title" style="margin:0" data-i18n="please_input_hostname">${t('please_input_hostname')}</div>
                 <input class="user_select_none" type="text" style="border: none;padding:6px;width:100%;margin-top:10px" disabled value="MAC: ${mac}"></input>
-                <input type="text" id="KANO_CONN_HOSTNAME" style="padding:6px;width:100%;margin:10px 0" data-i18n-placeholder="hostname" placeholder="${t("hostname")}" value="${name}"></input>
+                <input type="text" id="HOTBOX_CONN_HOSTNAME" style="padding:6px;width:100%;margin:10px 0" data-i18n-placeholder="hostname" placeholder="${t("hostname")}" value="${name}"></input>
                 <div style="display:flex;gap:10px">
-                    <button id="close_kano_edit_hostname_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="confirm_btn">${t("confirm_btn")}</button>
-                    <button id="close_kano_edit_hostname_toast_btn1" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="cancel_btn">${t("cancel_btn")}</button>
+                    <button id="close_hotbox_edit_hostname_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="confirm_btn">${t("confirm_btn")}</button>
+                    <button id="close_hotbox_edit_hostname_toast_btn1" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="cancel_btn">${t("cancel_btn")}</button>
                 </div>
                 </div>
                 `, 'red')
-        const btn = el.querySelector('#close_kano_edit_hostname_toast_btn')
-        const btn2 = el.querySelector('#close_kano_edit_hostname_toast_btn1')
-        const hostname = el.querySelector("#KANO_CONN_HOSTNAME")
+        const btn = el.querySelector('#close_hotbox_edit_hostname_toast_btn')
+        const btn2 = el.querySelector('#close_hotbox_edit_hostname_toast_btn1')
+        const hostname = el.querySelector("#HOTBOX_CONN_HOSTNAME")
 
         if (!btn && !btn2 && !hostname) {
             close()
@@ -2988,7 +2988,7 @@ function main_func() {
             try {
                 const res = await seConntHostName(mac, hostname.value.trim())
                 if (res.result == 'success') {
-                    try { var o = JSON.parse(localStorage.getItem('kano_hostname_overrides')) || {}; o[mac] = hostname.value.trim(); localStorage.setItem('kano_hostname_overrides', JSON.stringify(o)); } catch(e){}
+                    try { var o = JSON.parse(localStorage.getItem('hotbox_hostname_overrides')) || {}; o[mac] = hostname.value.trim(); localStorage.setItem('hotbox_hostname_overrides', JSON.stringify(o)); } catch(e){}
                     createToast(t("toast_save_success"), 'pink')
                     initClientManagementModal()
                 } else {
@@ -3086,7 +3086,7 @@ function main_func() {
     // title
     const loadTitle = async () => {
         try {
-            const { app_ver, model, nickname } = await (await fetch(`${KANO_baseURL}/version_info`, { headers: common_headers })).json()
+            const { app_ver, model, nickname } = await (await fetch(`${HOTBOX_baseURL}/version_info`, { headers: common_headers })).json()
             const displayName = (model == nickname || !nickname) ? model : `${model} (${nickname})`;
             MODEL.style.display = 'none';
             document.querySelector('#MAIN_TITLE').innerHTML =
@@ -3196,7 +3196,7 @@ function main_func() {
             if (!port) return
             const TTYD_INPUT = document.querySelector('#TTYD_INPUT')
             TTYD_INPUT && (TTYD_INPUT.value = port)
-            const res = await (await fetch(`${KANO_baseURL}/hasTTYD?port=${port}`, {
+            const res = await (await fetch(`${HOTBOX_baseURL}/hasTTYD?port=${port}`, {
                 method: "get",
                 headers: common_headers
             })).json()
@@ -3276,7 +3276,7 @@ function main_func() {
         if (!RES_SERVER_INPUT) return
         const url = RES_SERVER_INPUT.value.trim()
         if (!url || url.length == 0) return createToast("Please input res server!", 'red')
-        const res = await (await fetchWithTimeout(`${KANO_baseURL}/set_res_server`, {
+        const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/set_res_server`, {
             method: 'POST',
             headers: common_headers,
             body: JSON.stringify({ res_server: url })
@@ -3292,7 +3292,7 @@ function main_func() {
         const RES_SERVER_INPUT = document.querySelector('#RES_SERVER_INPUT')
         if (!RES_SERVER_INPUT) return
         try {
-            const { res_server } = await (await fetchWithTimeout(`${KANO_baseURL}/get_res_server`, {
+            const { res_server } = await (await fetchWithTimeout(`${HOTBOX_baseURL}/get_res_server`, {
                 method: 'GET',
                 headers: common_headers
             })).json()
@@ -3327,7 +3327,7 @@ function main_func() {
         }
         try {
             const command_enc = encodeURIComponent(command)
-            const res = await (await fetch(`${KANO_baseURL}/AT?command=${command_enc}&slot=${slot}`, { headers: common_headers })).json()
+            const res = await (await fetch(`${HOTBOX_baseURL}/AT?command=${command_enc}&slot=${slot}`, { headers: common_headers })).json()
             return res
         } catch (e) {
             return null
@@ -3599,7 +3599,7 @@ function main_func() {
             } catch { }
         }
         try {
-            const res = await (await fetch(`${KANO_baseURL}/smbPath?enable=${flag}`, { headers: common_headers })).json()
+            const res = await (await fetch(`${HOTBOX_baseURL}/smbPath?enable=${flag}`, { headers: common_headers })).json()
             if (res) {
                 if (res.error) {
                     AT_RESULT.innerHTML = res.error;
@@ -3662,8 +3662,8 @@ function main_func() {
                     if (!update_res || update_res.result != 'success') {
                         console.error('Update admin password failed:', update_res ? update_res.message : 'No response');
                     }
-                    KANO_PASSWORD = newPassword.trim()
-                    localStorage.setItem('kano_sms_pwd', newPassword.trim())
+                    HOTBOX_PASSWORD = newPassword.trim()
+                    localStorage.setItem('hotbox_sms_pwd', newPassword.trim())
                     closeModal('#changePassModal')
                 } else {
                     throw t('toast_change_failed')
@@ -3715,7 +3715,7 @@ function main_func() {
         if (!exp.test(newToken)) return createToast(t('toast_token_invalid'), 'red')
         try {
             try {
-                const res = await (await fetchWithTimeout(`${KANO_baseURL}/set_token`, {
+                const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/set_token`, {
                     method: 'POST',
                     headers: common_headers,
                     body: JSON.stringify({
@@ -3725,12 +3725,12 @@ function main_func() {
                 if (res && res.result == 'success') {
                     createToast(t('toast_change_success'), 'green')
                     const new_token = SHA256(newToken.trim()).toLowerCase()
-                    KANO_TOKEN = new_token
-                    common_headers.authorization = KANO_TOKEN
-                    localStorage.setItem('kano_sms_token', new_token)
+                    HOTBOX_TOKEN = new_token
+                    common_headers.authorization = HOTBOX_TOKEN
+                    localStorage.setItem('hotbox_sms_token', new_token)
                     form.reset()
                     const md = createModal({
-                        name: "kano_token_confirm",
+                        name: "hotbox_token_confirm",
                         noBlur: true,
                         isMask: true,
                         title: t('remind_your_token'),
@@ -3767,7 +3767,7 @@ function main_func() {
     // SIM card switch
     let initSimCardType = async () => {
         let selectEl = document.querySelector('#SIM_CARD_TYPE')
-        const { model } = await (await fetch(`${KANO_baseURL}/version_info`, { headers: common_headers })).json()
+        const { model } = await (await fetch(`${HOTBOX_baseURL}/version_info`, { headers: common_headers })).json()
         if (model.toLowerCase() == 'v50') {
             selectEl = document.querySelector('#SIM_CARD_TYPE_V50')
             var simField = document.querySelector('#SIM_CARD_TYPE_V50_FIELD');
@@ -3915,7 +3915,7 @@ function main_func() {
         e.target.style.backgroundColor = 'var(--dark-btn-disabled-color)';
         e.target.innerHTML = t('speedtest_stop_btn');
 
-        const serverUrl = `${KANO_baseURL}/speedtest`;
+        const serverUrl = `${HOTBOX_baseURL}/speedtest`;
 
         const ckSize = document.querySelector('#speedTestModal #ckSize').value;
         const chunkSize = !isNaN(Number(ckSize)) ? Number(ckSize) : 1000;
@@ -4019,7 +4019,7 @@ function main_func() {
                 try {
                     const formData = new FormData();
                     formData.append("file", file);
-                    const res = await (await fetch(`${KANO_baseURL}/upload_img`, {
+                    const res = await (await fetch(`${HOTBOX_baseURL}/upload_img`, {
                         method: "POST",
                         headers: common_headers,
                         body: formData,
@@ -4028,7 +4028,7 @@ function main_func() {
                     if (res.url) {
                         const BG_INPUT = document.querySelector('#BG_INPUT')
                         const BG = document.querySelector("#BG")
-                        const url = `${KANO_baseURL}${res.url}`
+                        const url = `${HOTBOX_baseURL}${res.url}`
                         BG_INPUT.value = url
                         localStorage.setItem('backgroundUrl', url)
                         document.querySelector('#isCheckedBG').checked = true
@@ -4125,7 +4125,7 @@ function main_func() {
         AT_RESULT.innerHTML = t('toast_running_please_wait')
 
         try {
-            const res = await (await fetch(`${KANO_baseURL}/quick_shell`, {
+            const res = await (await fetch(`${HOTBOX_baseURL}/quick_shell`, {
                 headers: common_headers
             })).json()
             if (res) {
@@ -4150,14 +4150,14 @@ function main_func() {
     // Init SMS forward form
     const initSmsForward = async (needSwitch = true, method = undefined) => {
         if (!method) {
-            const { sms_forward_method } = await (await fetchWithTimeout(`${KANO_baseURL}/sms_forward_method`, {
+            const { sms_forward_method } = await (await fetchWithTimeout(`${HOTBOX_baseURL}/sms_forward_method`, {
                 method: 'GET',
                 headers: common_headers
             })).json()
             method = sms_forward_method
         }
         if (method.toLowerCase() == 'smtp') {
-            const data = await (await fetch(`${KANO_baseURL}/sms_forward_mail`, {
+            const data = await (await fetch(`${HOTBOX_baseURL}/sms_forward_mail`, {
                 method: 'GET',
                 headers: common_headers
             })).json()
@@ -4176,7 +4176,7 @@ function main_func() {
             smtpToEl.value = smtp_to || ''
             needSwitch && switchSmsForwardMethodTab({ target: document.querySelector('#smtp_btn') })
         } else if (method.toLowerCase() == 'curl') {
-            const data = await (await fetch(`${KANO_baseURL}/sms_forward_curl`, {
+            const data = await (await fetch(`${HOTBOX_baseURL}/sms_forward_curl`, {
                 method: 'GET',
                 headers: common_headers
             })).json()
@@ -4185,7 +4185,7 @@ function main_func() {
             curlTextEl.value = curl_text || ''
             needSwitch && switchSmsForwardMethodTab({ target: document.querySelector('#curl_btn') })
         } else if (method.toLowerCase() == 'dingtalk') {
-            const data = await (await fetch(`${KANO_baseURL}/sms_forward_dingtalk`, {
+            const data = await (await fetch(`${HOTBOX_baseURL}/sms_forward_dingtalk`, {
                 method: 'GET',
                 headers: common_headers
             })).json()
@@ -4203,7 +4203,7 @@ function main_func() {
     }
 
     const initSmsForwardSwitch = async () => {
-        const { enabled } = await (await fetch(`${KANO_baseURL}/sms_forward_enabled`, {
+        const { enabled } = await (await fetch(`${HOTBOX_baseURL}/sms_forward_enabled`, {
             method: 'GET',
             headers: common_headers
         })).json()
@@ -4255,7 +4255,7 @@ function main_func() {
         onChange: async (checked) => {
             if (checked != undefined) {
                 try {
-                    await (await fetch(`${KANO_baseURL}/power_status_forward_enabled?enable=${checked ? "1" : "0"}`, {
+                    await (await fetch(`${HOTBOX_baseURL}/power_status_forward_enabled?enable=${checked ? "1" : "0"}`, {
                         method: 'post',
                         headers: {
                             ...common_headers,
@@ -4288,7 +4288,7 @@ function main_func() {
                 showModal('#smsForwardModal')
                 if (collapse_smsforward_power_status_btn_component) {
                     try {
-                        const { enabled } = await (await fetch(`${KANO_baseURL}/power_status_forward_enabled`, {
+                        const { enabled } = await (await fetch(`${HOTBOX_baseURL}/power_status_forward_enabled`, {
                             method: 'GET',
                             headers: common_headers
                         })).json()
@@ -4322,7 +4322,7 @@ function main_func() {
 
         // Request
         try {
-            const res = await (await fetch(`${KANO_baseURL}/sms_forward_mail`, {
+            const res = await (await fetch(`${HOTBOX_baseURL}/sms_forward_mail`, {
                 method: 'POST',
                 headers: {
                     ...common_headers,
@@ -4365,7 +4365,7 @@ function main_func() {
 
         // Request
         try {
-            const res = await (await fetch(`${KANO_baseURL}/sms_forward_curl`, {
+            const res = await (await fetch(`${HOTBOX_baseURL}/sms_forward_curl`, {
                 method: 'POST',
                 headers: {
                     ...common_headers,
@@ -4409,7 +4409,7 @@ function main_func() {
 
         // Request
         try {
-            const res = await (await fetch(`${KANO_baseURL}/sms_forward_dingtalk`, {
+            const res = await (await fetch(`${HOTBOX_baseURL}/sms_forward_dingtalk`, {
                 method: 'POST',
                 headers: {
                     ...common_headers,
@@ -4462,7 +4462,7 @@ function main_func() {
         if (enabled != undefined) {
             try {
                 // Enable master switch
-                await (await fetch(`${KANO_baseURL}/sms_forward_enabled?enable=${enabled}`, {
+                await (await fetch(`${HOTBOX_baseURL}/sms_forward_enabled?enable=${enabled}`, {
                     method: 'post',
                     headers: {
                         ...common_headers,
@@ -4495,16 +4495,16 @@ function main_func() {
     const openNicknameSetting = async () => {
         try {
             // Get data
-            const { nickname, model } = await (await fetch(`${KANO_baseURL}/version_info`, {
+            const { nickname, model } = await (await fetch(`${HOTBOX_baseURL}/version_info`, {
                 method: 'GET',
                 headers: common_headers
             })).json()
 
 
-            const { el, close } = createFixedToast('kano_nickname_set_toast', `
+            const { el, close } = createFixedToast('hotbox_nickname_set_toast', `
             <div style="pointer-events:all;width:80vw;max-width:400px">
             <div class="title" style="margin:0" data-i18n="forward_nickname_setting_btn">${t('forward_nickname_setting_btn')}</div>
-            <input maxlength="255" id="kano_nickname_set_phone_list" class="input" style="padding:6px;margin:10px 0 5px 0;width: 100%;box-sizing: border-box;" placeholder="${model}">
+            <input maxlength="255" id="hotbox_nickname_set_phone_list" class="input" style="padding:6px;margin:10px 0 5px 0;width: 100%;box-sizing: border-box;" placeholder="${model}">
             <div style="display:flex;gap:10px">
                 <button id="confirm_nickname_set_setting_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="submit_btn">${t("submit_btn")}</button>
                 <button id="close_nickname_set_setting_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="cancel_btn">${t("cancel_btn")}</button>
@@ -4513,7 +4513,7 @@ function main_func() {
             `)
             const confirmBtn = el.querySelector("#confirm_nickname_set_setting_btn")
             const closeBtn = el.querySelector("#close_nickname_set_setting_btn")
-            const nickNameEl = el.querySelector('#kano_nickname_set_phone_list')
+            const nickNameEl = el.querySelector('#hotbox_nickname_set_phone_list')
 
             if (nickNameEl) {
                 nickNameEl.value = nickname || ''
@@ -4524,7 +4524,7 @@ function main_func() {
                     //Submit
                     try {
                         const nickName = nickNameEl.value.trim()
-                        const res = await (await fetch(`${KANO_baseURL}/set_nickname`, {
+                        const res = await (await fetch(`${HOTBOX_baseURL}/set_nickname`, {
                             method: 'post',
                             body: JSON.stringify({
                                 nickname: nickName
@@ -4569,18 +4569,18 @@ function main_func() {
         forwardMethodSettingBtn.onclick = async () => {
             try {
                 // Get data
-                const { keywords, phone } = await (await fetch(`${KANO_baseURL}/sms_forward_blacklist`, {
+                const { keywords, phone } = await (await fetch(`${HOTBOX_baseURL}/sms_forward_blacklist`, {
                     method: 'GET',
                     headers: common_headers
                 })).json()
 
-                const { el, close } = createFixedToast('kano_sms_forward_rules_toast', `
+                const { el, close } = createFixedToast('hotbox_sms_forward_rules_toast', `
             <div style="pointer-events:all;width:80vw;max-width:400px">
-            <div class="title" style="margin:0" data-i18n="kano_sms_forward_rules_toast_title">${t('kano_sms_forward_rules_toast_title')}</div>
+            <div class="title" style="margin:0" data-i18n="hotbox_sms_forward_rules_toast_title">${t('hotbox_sms_forward_rules_toast_title')}</div>
             <p class="title" style="margin-top:10px" data-i18n="phone_black_list">${t('phone_black_list')}</p>
-            <textarea id="kano_sms_forward_rules_phone_list" style="width: 100%;box-sizing: border-box;min-height: 5em;" data-i18n-placeholder="phone_black_list_placeholder" placeholder="${t('phone_black_list_placeholder')}"></textarea>
+            <textarea id="hotbox_sms_forward_rules_phone_list" style="width: 100%;box-sizing: border-box;min-height: 5em;" data-i18n-placeholder="phone_black_list_placeholder" placeholder="${t('phone_black_list_placeholder')}"></textarea>
             <p class="title" style="margin-top:10px" data-i18n="keyword_black_list">${t('keyword_black_list')}</p>
-            <textarea id="kano_sms_forward_rules_keywords_list" style="width: 100%;box-sizing: border-box;min-height: 6em;" data-i18n-placeholder="keyword_black_list_placeholder" placeholder="${t('keyword_black_list_placeholder')}"></textarea>
+            <textarea id="hotbox_sms_forward_rules_keywords_list" style="width: 100%;box-sizing: border-box;min-height: 6em;" data-i18n-placeholder="keyword_black_list_placeholder" placeholder="${t('keyword_black_list_placeholder')}"></textarea>
             <div style="display:flex;gap:10px">
                 <button id="confirm_forward_method_setting_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="submit_btn">${t("submit_btn")}</button>
                 <button id="close_forward_method_setting_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="cancel_btn">${t("cancel_btn")}</button>
@@ -4589,8 +4589,8 @@ function main_func() {
             `)
                 const confirmBtn = el.querySelector("#confirm_forward_method_setting_btn")
                 const closeBtn = el.querySelector("#close_forward_method_setting_btn")
-                const phoneListEl = el.querySelector('#kano_sms_forward_rules_phone_list')
-                const keywordsListEl = el.querySelector('#kano_sms_forward_rules_keywords_list')
+                const phoneListEl = el.querySelector('#hotbox_sms_forward_rules_phone_list')
+                const keywordsListEl = el.querySelector('#hotbox_sms_forward_rules_keywords_list')
 
                 if (phoneListEl) {
                     phoneListEl.value = phone
@@ -4609,7 +4609,7 @@ function main_func() {
                             }
                             const phoneList = phoneListEl.value.trim().split('\n')
                             const keywordsList = keywordsListEl.value.trim().split('\n')
-                            const res = await (await fetch(`${KANO_baseURL}/sms_forward_blacklist`, {
+                            const res = await (await fetch(`${HOTBOX_baseURL}/sms_forward_blacklist`, {
                                 method: 'post',
                                 body: JSON.stringify({
                                     keywords: keywordsList.join('\n'),
@@ -4939,7 +4939,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             counter += 1
             if (counter >= 2) {
                 try {
-                    const res = await fetchWithTimeout(`${KANO_baseURL}/remove_task`, {
+                    const res = await fetchWithTimeout(`${HOTBOX_baseURL}/remove_task`, {
                         method: 'POST',
                         headers: {
                             ...common_headers,
@@ -4973,7 +4973,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             </strong>
         </li>`
         try {
-            const res = await (await fetchWithTimeout(`${KANO_baseURL}/list_tasks`, {
+            const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/list_tasks`, {
                 method: 'GET',
                 headers: common_headers
             })).json()
@@ -5015,7 +5015,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
 
         try {
-            const res = await fetchWithTimeout(`${KANO_baseURL}/add_task`, {
+            const res = await fetchWithTimeout(`${HOTBOX_baseURL}/add_task`, {
                 method: 'POST',
                 headers: {
                     ...common_headers,
@@ -5062,7 +5062,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             form.id.value = id
             // Get latest data
             try {
-                const res = await fetchWithTimeout(`${KANO_baseURL}/get_task?id=${id}`, {
+                const res = await fetchWithTimeout(`${HOTBOX_baseURL}/get_task?id=${id}`, {
                     headers: {
                         ...common_headers,
                         'Content-Type': 'application/json'
@@ -5094,7 +5094,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         // Action list
         const actionList = {
             "forward_device_info": {
-                "kano_do_sms_forward_action": "1"
+                "hotbox_do_sms_forward_action": "1"
             },
             "send_sms": {
                 "goformId": "SEND_SMS",
@@ -5209,11 +5209,11 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         if (action) {
             if (actionName == "send_sms") {
                 if (!action.MessageBody) return
-                const { el, close } = createFixedToast('kano_sms_body', `
+                const { el, close } = createFixedToast('hotbox_sms_body', `
                 <div style="pointer-events:all;width:80vw;max-width:300px;">
                 <div class="title" style="margin:0" data-i18n="please_input_sms_body_and_phone">${t('please_input_sms_body_and_phone')}</div>
-                <input type="text" id="KANO_SMS_PHONE_NUMBER_FORWARD" style="padding:6px;width:100%;margin:10px 0" data-i18n-placeholder="phone_number" placeholder="${t("phone_number")}" ></input>
-                <textarea data-i18n-placeholder="sms_content" placeholder="${t("sms_content")}" id="KANO_SMS_TEXT_FORWARD" style="padding:4px;width:100%;box-sizing:border-box;min-height: 10em;"></textarea>
+                <input type="text" id="HOTBOX_SMS_PHONE_NUMBER_FORWARD" style="padding:6px;width:100%;margin:10px 0" data-i18n-placeholder="phone_number" placeholder="${t("phone_number")}" ></input>
+                <textarea data-i18n-placeholder="sms_content" placeholder="${t("sms_content")}" id="HOTBOX_SMS_TEXT_FORWARD" style="padding:4px;width:100%;box-sizing:border-box;min-height: 10em;"></textarea>
                 <div style="display:flex;gap:10px">
                     <button id="close_sms_body_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="confirm_btn">${t("confirm_btn")}</button>
                     <button id="close_sms_body_toast_btn1" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="cancel_btn">${t("cancel_btn")}</button>
@@ -5222,8 +5222,8 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 `, 'red')
                 const btn = el.querySelector('#close_sms_body_toast_btn')
                 const btn2 = el.querySelector('#close_sms_body_toast_btn1')
-                const phone = el.querySelector("#KANO_SMS_PHONE_NUMBER_FORWARD")
-                const text = el.querySelector("#KANO_SMS_TEXT_FORWARD")
+                const phone = el.querySelector("#HOTBOX_SMS_PHONE_NUMBER_FORWARD")
+                const text = el.querySelector("#HOTBOX_SMS_TEXT_FORWARD")
                 const taskAction = document.querySelector("#taskAction")
 
                 if (!btn && !btn2 && !text && !phone) {
@@ -5256,7 +5256,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             }
             if (actionName == "forward_device_info") {
                 try {
-                    const { enabled } = await (await fetch(`${KANO_baseURL}/sms_forward_enabled`, {
+                    const { enabled } = await (await fetch(`${HOTBOX_baseURL}/sms_forward_enabled`, {
                         method: 'GET',
                         headers: common_headers
                     })).json()
@@ -5327,7 +5327,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 const custom_head = document.querySelector("#custom_head");
                 if (!custom_head) return;
 
-                const pluginRegex = /<!--\s*\[KANO_PLUGIN_START\]\s*(.*?)\s*-->([\s\S]*?)<!--\s*\[KANO_PLUGIN_END\]\s*\1\s*-->/g;
+                const pluginRegex = /<!--\s*\[HOTBOX_PLUGIN_START\]\s*(.*?)\s*-->([\s\S]*?)<!--\s*\[HOTBOX_PLUGIN_END\]\s*\1\s*-->/g;
 
                 let matched = false;
                 let match;
@@ -5341,7 +5341,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         (match[1].trim() || match[3].trim() || file.name).replace(/-->/g, "").trim();
                     const pluginContent = match[2].trim();
 
-                    custom_head.value += `<!-- [KANO_PLUGIN_START] ${pluginName} -->\n${pluginContent}\n<!-- [KANO_PLUGIN_END] ${pluginName} -->\n\n`;
+                    custom_head.value += `<!-- [HOTBOX_PLUGIN_START] ${pluginName} -->\n${pluginContent}\n<!-- [HOTBOX_PLUGIN_END] ${pluginName} -->\n\n`;
 
                     if (!plugins.some(el => el.name === pluginName)) {
                         plugins.push({
@@ -5362,7 +5362,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 } else {
                     // No plugin header/footer, manually wrap as one plugin
                     const pluginName = file.name;
-                    custom_head.value += `<!-- [KANO_PLUGIN_START] ${pluginName} -->\n${str}\n<!-- [KANO_PLUGIN_END] ${pluginName} -->\n\n\n\n`;
+                    custom_head.value += `<!-- [HOTBOX_PLUGIN_START] ${pluginName} -->\n${str}\n<!-- [HOTBOX_PLUGIN_END] ${pluginName} -->\n\n\n\n`;
                     if (!plugins.some(el => el.name === pluginName)) {
                         plugins.push({
                             name: pluginName,
@@ -5383,7 +5383,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     // Plugin export
     const pluginExport = async () => {
         try {
-            const { text } = await (await fetch(`${KANO_baseURL}/get_custom_head`, {
+            const { text } = await (await fetch(`${HOTBOX_baseURL}/get_custom_head`, {
                 headers: common_headers
             })).json()
             if (text) {
@@ -5453,7 +5453,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                             if (index != -1 && plugins[index]) {
                                 plugins[index].content = editSinglePlugin.value
                                 const arr = editSinglePlugin.value.split('\n')
-                                if (arr[0].includes("[kano_disabled]") && arr[arr.length - 1].includes("[kano_disabled]")) {
+                                if (arr[0].includes("[hotbox_disabled]") && arr[arr.length - 1].includes("[hotbox_disabled]")) {
                                     plugins[index].disabed = true
                                 } else {
                                     plugins[index].disabed = false
@@ -5479,10 +5479,10 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             const editSinglePlugin = document.querySelector('#editSinglePlugin')
             if (editSinglePlugin) {
                 const arr = editSinglePlugin.value.split('\n')
-                if (arr[0].includes("[kano_disabled]")) {
+                if (arr[0].includes("[hotbox_disabled]")) {
                     arr.shift()
                 }
-                if (arr[arr.length - 1].includes("[kano_disabled]")) {
+                if (arr[arr.length - 1].includes("[hotbox_disabled]")) {
                     arr.pop()
                 }
                 editSinglePlugin.value = arr.join('\n')
@@ -5494,7 +5494,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             const editSinglePlugin = document.querySelector('#editSinglePlugin')
             if (editSinglePlugin) {
                 enablePlugin(true)
-                editSinglePlugin.value = "<!-- [kano_disabled]\n" + editSinglePlugin.value + "\n[kano_disabled] -->"
+                editSinglePlugin.value = "<!-- [hotbox_disabled]\n" + editSinglePlugin.value + "\n[hotbox_disabled] -->"
                 !flag && createToast(t('disabled') + "," + t('save_to_apply'))
             }
         }
@@ -5521,7 +5521,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
         // Sync textarea content
         custom_head.value = plugins.map(item =>
-            `<!-- [KANO_PLUGIN_START] ${item.name} -->\n${item.content}\n<!-- [KANO_PLUGIN_END] ${item.name} -->\n\n\n\n`
+            `<!-- [HOTBOX_PLUGIN_START] ${item.name} -->\n${item.content}\n<!-- [HOTBOX_PLUGIN_END] ${item.name} -->\n\n\n\n`
         ).join('')
 
         // Sync plugin count
@@ -5542,21 +5542,21 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             showModal('#PluginModal')
 
             try {
-                const { text } = await (await fetch(`${KANO_baseURL}/get_custom_head`, {
+                const { text } = await (await fetch(`${HOTBOX_baseURL}/get_custom_head`, {
                     headers: common_headers
                 })).json()
                 const custom_head = document.querySelector('#custom_head')
                 custom_head.value = text || ''
 
                 // Extract plugins
-                const pluginRegex = /<!--\s*\[KANO_PLUGIN_START\]\s*(.*?)\s*-->([\s\S]*?)<!--\s*\[KANO_PLUGIN_END\]\s*\1\s*-->/g;
+                const pluginRegex = /<!--\s*\[HOTBOX_PLUGIN_START\]\s*(.*?)\s*-->([\s\S]*?)<!--\s*\[HOTBOX_PLUGIN_END\]\s*\1\s*-->/g;
 
                 plugins = []
                 let match
                 while ((match = pluginRegex.exec(text)) !== null) {
                     const name = match[1].trim()
                     const content = match[2].trim()
-                    const disabed = content.includes('[kano_disabled]')
+                    const disabed = content.includes('[hotbox_disabled]')
                     plugins.push({ name, content, disabed })
                 }
 
@@ -5633,7 +5633,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     AT_RESULT.innerHTML = ""
                     return createToast(t('toast_ADB_not_init'), 'red')
                 }
-                const res = await (await fetchWithTimeout(`${KANO_baseURL}/disable_fota`, {
+                const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/disable_fota`, {
                     method: 'get',
                     headers: common_headers
                 })).json()
@@ -5659,10 +5659,10 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             const res = await runShellWithRoot("getprop ro.boot.slot_suffix")
             let ab = res.content.includes('a') ? "A" : "B"
             createToast(`${t('your_boot_slot')}：${ab}`, '')
-            await runShellWithRoot('mkdir /data/data/com.minikano.f50_sms/files/uploads')
+            await runShellWithRoot('mkdir /data/data/com.hotbox.f50_app/files/uploads')
             const outFile = `boot_${ab.toLowerCase()}.img`
-            await runShellWithRoot(`rm -f /data/data/com.minikano.f50_sms/files/uploads/${outFile}`)
-            const command = `dd if=/dev/block/by-name/boot_${ab.toLowerCase()} of=/data/data/com.minikano.f50_sms/files/uploads/${outFile}`
+            await runShellWithRoot(`rm -f /data/data/com.hotbox.f50_app/files/uploads/${outFile}`)
+            const command = `dd if=/dev/block/by-name/boot_${ab.toLowerCase()} of=/data/data/com.hotbox.f50_app/files/uploads/${outFile}`
             let result = await runShellWithRoot(command)
             if (result.success) {
                 AD_RESULT.innerHTML = `<strong style="font-size: 12px;">${t('your_boot_slot')}：${ab}，${t('downloading')}：boot_${ab}.img...</strong>`
@@ -5749,7 +5749,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
             // Batch speed test requests and start reading immediately
             for (let i = 0; i < threadNum; i++) {
-                const testUrl = `${KANO_baseURL}/proxy/--${url}?t=${Math.random()}`;
+                const testUrl = `${HOTBOX_baseURL}/proxy/--${url}?t=${Math.random()}`;
 
                 const task = (async () => {
                     try {
@@ -5910,7 +5910,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     const installPluginFromStore = async (url, name) => {
         const { close, el } = createFixedToast('download_ing', t('download_ing'))
         try {
-            const res = await fetchWithTimeout(`${KANO_baseURL}/proxy/--${url}`, {
+            const res = await fetchWithTimeout(`${HOTBOX_baseURL}/proxy/--${url}`, {
                 method: 'GET',
             })
             if (!res.ok) {
@@ -6108,7 +6108,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         const total = document.querySelector('#plugin_store .total')
         // Load plugins
         pluginsResultRes.length = 0
-        fetchWithTimeout(`${KANO_baseURL}/plugins_store`)
+        fetchWithTimeout(`${HOTBOX_baseURL}/plugins_store`)
             .then(res => res.json())
             .then(({ res, download_url }) => {
                 const data = res.data || {}
@@ -6248,7 +6248,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         if (AT_RESULT) {
             AT_RESULT.innerHTML = t('toast_running_please_wait')
             try {
-                const res = await runShellWithRoot(`/data/data/com.minikano.f50_sms/files/imei_reader`)
+                const res = await runShellWithRoot(`/data/data/com.hotbox.f50_app/files/imei_reader`)
                 // Clear IMEI display cache
                 resetDiagImeiCache()
                 AT_RESULT.innerHTML = `<p style="font-weight:bolder;overflow:hidden" onclick="copyText(event)">${res.content.replaceAll('\n', "<br>")}</p>`
@@ -6260,7 +6260,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const getSELinuxStatus = async () => {
         try {
-            const res = await (await fetchWithTimeout(`${KANO_baseURL}/SELinux`)).json()
+            const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/SELinux`)).json()
             let result = res.selinux.toLowerCase()
             if (result !== "permissive" && result !== "disabled" && result != "0") {
                 createToast(t('not_support_firmware'), "pink", 10000);
@@ -6367,7 +6367,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const toggleLogCat = async (flag) => {
         try {
-            const { result } = await (await fetchWithTimeout(`${KANO_baseURL}/set_log_status`, {
+            const { result } = await (await fetchWithTimeout(`${HOTBOX_baseURL}/set_log_status`, {
                 method: "POST",
                 headers: common_headers,
                 body: JSON.stringify({ debug_log_enabled: flag ? true : false })
@@ -6384,7 +6384,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const toggleWakeLock = async (flag) => {
         try {
-            const { result } = await (await fetchWithTimeout(`${KANO_baseURL}/set_wakelock_status`, {
+            const { result } = await (await fetchWithTimeout(`${HOTBOX_baseURL}/set_wakelock_status`, {
                 method: "POST",
                 headers: common_headers,
                 body: JSON.stringify({ wakelock_enabled: flag ? true : false })
@@ -6420,7 +6420,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         }
         clearUppBtnCounter = 0
 
-        const res = await fetchWithTimeout(`${KANO_baseURL}/delete_all_uploads_data`, {
+        const res = await fetchWithTimeout(`${HOTBOX_baseURL}/delete_all_uploads_data`, {
             method: 'post',
             headers: common_headers
         })
@@ -6438,16 +6438,16 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 createToast(t('toast_oprate_success'), '')
                 return
             }
-            const { el, close } = createFixedToast('kano_del_appdata_success', `
+            const { el, close } = createFixedToast('hotbox_del_appdata_success', `
                 <div style="pointer-events:all;width:80vw;max-width:400px;">
                 <div class="title" style="margin:0" data-i18n="system_notice">${t('system_notice')}</div>
                 <p>${listString}</p>
                 <div style="display:flex;gap:10px">
-                    <button id="confirm_kano_del_appdata_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="close_btn">${t("close_btn")}</button>
+                    <button id="confirm_hotbox_del_appdata_toast_btn" style="width:100%;font-size:.64rem;margin-top:5px" data-i18n="close_btn">${t("close_btn")}</button>
                 </div>
                 </div>
                 `, 'red')
-            const close_btn = el.querySelector("#confirm_kano_del_appdata_toast_btn")
+            const close_btn = el.querySelector("#confirm_hotbox_del_appdata_toast_btn")
 
             if (close_btn) {
                 close_btn.onclick = () => {
@@ -7034,7 +7034,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
 
     const fetchUSBStatusList = async (el) => {
         try {
-            const res = await (await fetchWithTimeout(`${KANO_baseURL}/usb_status`, {
+            const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/usb_status`, {
                 method: "GET",
                 headers: common_headers
             })).json()
@@ -7082,14 +7082,14 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     }
 
     const handleOpenUploadFilesList = async () => {
-        let res = await runShellWithUser(`ls /data/data/com.minikano.f50_sms/files/uploads/`)
+        let res = await runShellWithUser(`ls /data/data/com.hotbox.f50_app/files/uploads/`)
         if (!res.success) return createToast(t('read_file_fail'), 'red')
         if (res.content && res.content.content && res.content.content.split("\n") && res.content.content.split("\n").length) {
-            let { el, close } = createFixedToast('kano_edit_ufi_media_file_list_message', `
+            let { el, close } = createFixedToast('hotbox_edit_ufi_media_file_list_message', `
                 <div style="pointer-events:all;width:90vw;max-width:800px;">
                     <div class="title" style="margin:0" data-i18n="file_manager">${t("file_manager")}</div>
                     <div style="margin:10px 0;display: flex;flex-direction: column;gap: 6px;max-height: 50vh;overflow: auto;font-size: .7rem;" class="inner">
-                      ${res.content.content.split('\n').map(item => (item.trim() ? `<div class="kano_uploads_file_item" data-item="${item}" style="padding: 10px 10px;background: var(--dark-tag-color);border-radius: 6px;display:flex;align-items: center;">
+                      ${res.content.content.split('\n').map(item => (item.trim() ? `<div class="hotbox_uploads_file_item" data-item="${item}" style="padding: 10px 10px;background: var(--dark-tag-color);border-radius: 6px;display:flex;align-items: center;">
                       <span onclick="copyText({target:{innerText:'/api/uploads/${item}'}})" style="flex:1;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">${item}</span>
                       <button style="margin-right:6px;padding: 0;display: flex;" onclick="downloadUrl('/api/uploads/${item}','${item}')"><svg fill="var(--dark-text-color)" stroke="currentColor"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" t="1770319174878" viewBox="0 0 1024 1024" version="1.1" p-id="1583" width="20" height="20"><path d="M896 672c-17.066667 0-32 14.933333-32 32v128c0 6.4-4.266667 10.666667-10.666667 10.666667H170.666667c-6.4 0-10.666667-4.266667-10.666667-10.666667v-128c0-17.066667-14.933333-32-32-32s-32 14.933333-32 32v128c0 40.533333 34.133333 74.666667 74.666667 74.666667h682.666666c40.533333 0 74.666667-34.133333 74.666667-74.666667v-128c0-17.066667-14.933333-32-32-32z" fill="var(--dark-text-color)" p-id="1584"/><path d="M488.533333 727.466667c6.4 6.4 14.933333 8.533333 23.466667 8.533333s17.066667-2.133333 23.466667-8.533333l213.333333-213.333334c12.8-12.8 12.8-32 0-44.8-12.8-12.8-32-12.8-44.8 0l-157.866667 157.866667V170.666667c0-17.066667-14.933333-32-32-32s-34.133333 14.933333-34.133333 32v456.533333L322.133333 469.333333c-12.8-12.8-32-12.8-44.8 0-12.8 12.8-12.8 32 0 44.8l211.2 213.333334z" fill="var(--dark-text-color)" p-id="1585"/></svg></button>
                       <button style="margin-right:6px;padding: 0;display: flex;" onclick="openLink('/api/uploads/${item}')"><svg fill="var(--dark-text-color)" stroke="currentColor"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" t="1770319810359" viewBox="0 0 1024 1024" version="1.1" p-id="3490" width="20" height="20"><path d="M942.2 486.2C847.4 286.5 704.1 186 512 186c-192.2 0-335.4 100.5-430.2 300.3-7.7 16.2-7.7 35.2 0 51.5C176.6 737.5 319.9 838 512 838c192.2 0 335.4-100.5 430.2-300.3 7.7-16.2 7.7-35 0-51.5zM512 766c-161.3 0-279.4-81.8-362.7-254C232.6 339.8 350.7 258 512 258c161.3 0 279.4 81.8 362.7 254C791.5 684.2 673.4 766 512 766z" p-id="3491" fill="var(--dark-text-color)"/><path d="M508 336c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176z m0 288c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112z" p-id="3492" fill="var(--dark-text-color)"/></svg></button>
@@ -7103,7 +7103,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                 `)
 
             // File list
-            let filesEl = document.querySelectorAll('#kano_edit_ufi_media_file_list_message .kano_uploads_file_item')
+            let filesEl = document.querySelectorAll('#hotbox_edit_ufi_media_file_list_message .hotbox_uploads_file_item')
             filesEl.forEach(el => {
                 let data = el.dataset.item
                 if (data && data.trim()) {
@@ -7124,7 +7124,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                         }
                         delCountDown = 3
                         try {
-                            const { result, error } = await (await fetchWithTimeout(`${KANO_baseURL}/delete_img`, {
+                            const { result, error } = await (await fetchWithTimeout(`${HOTBOX_baseURL}/delete_img`, {
                                 method: "POST",
                                 headers: common_headers,
                                 body: JSON.stringify({
@@ -7161,7 +7161,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
                     const handleFileChange = async (event) => {
                         let file = event.target.files[0];
                         if (!file) return
-                        let url = await uploadFileKano(file, true)
+                        let url = await uploadFileHotbox(file, true)
                         if (!url) return
                         createToast(`${url} ${t('toast_upload_success')}!`, "pink", 8000)
                         close()
@@ -7187,11 +7187,11 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
             createToast(t('toast_please_login'), 'red')
             return null
         }
-        const id = "#kano_net_info_modal"
+        const id = "#hotbox_net_info_modal"
         const res = await getNetConnInfo()
         let intervalFn = requestInterval(() => {
             getNetConnInfo().then(res => {
-                const contentEl = document.querySelector('#kano_net_info_modal .content')
+                const contentEl = document.querySelector('#hotbox_net_info_modal .content')
                 if (contentEl) {
                     contentEl.innerHTML = renderConnectStatusContent(res)
                 }
@@ -7377,7 +7377,7 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
     //     stopRefresh()
 
     //     const md = createModal({
-    //         name: "kano_pin_modal",
+    //         name: "hotbox_pin_modal",
     //         isMask: true,
     //         title: "Enter SIM PIN",
     //         maxWidth: "400px",

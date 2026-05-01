@@ -174,7 +174,7 @@
     <script>
         // Show login modal if no credentials stored (after main.js loads)
         setTimeout(function() {
-            if (!localStorage.getItem('kano_sms_token') && !localStorage.getItem('kano_sms_pwd')) {
+            if (!localStorage.getItem('hotbox_sms_token') && !localStorage.getItem('hotbox_sms_pwd')) {
                 var m = document.getElementById('tokenModal');
                 if (m && m.style.display === 'none') showModal('#tokenModal');
             }

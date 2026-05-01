@@ -44,7 +44,7 @@
 
   async function loadCurrent() {
     try {
-      var res = await fetch(KANO_baseURL + '/get_custom_head', { headers: common_headers });
+      var res = await fetch(HOTBOX_baseURL + '/get_custom_head', { headers: common_headers });
       var data = await res.json();
       codeArea.value = data.text || '';
     } catch (e) {
@@ -54,7 +54,7 @@
 
   async function savePlugin() {
     var code = codeArea.value;
-    var res = await fetch(KANO_baseURL + '/set_custom_head', {
+    var res = await fetch(HOTBOX_baseURL + '/set_custom_head', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({ text: code })
@@ -67,7 +67,7 @@
 
   async function loadStore() {
     try {
-      var res = await fetch(KANO_baseURL + '/plugins_store', { headers: common_headers });
+      var res = await fetch(HOTBOX_baseURL + '/plugins_store', { headers: common_headers });
       var data = await res.json();
 
       if (data.error) {
@@ -152,7 +152,7 @@
   // Auto-load and apply saved plugin on init (simulates prod behavior)
   (async function () {
     try {
-      var res = await fetch(KANO_baseURL + '/get_custom_head', { headers: common_headers });
+      var res = await fetch(HOTBOX_baseURL + '/get_custom_head', { headers: common_headers });
       var data = await res.json();
       if (data.text && data.text.trim()) {
         applyPlugin(data.text);

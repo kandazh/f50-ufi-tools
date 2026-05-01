@@ -327,14 +327,14 @@
       return;
     }
 
-    if (!localStorage.getItem('kano_sms_pwd')) {
+    if (!localStorage.getItem('hotbox_sms_pwd')) {
       var listEl = $id('smsPanel_inbox-list');
       if (listEl) listEl.innerHTML = '<div class="sms-empty"><span class="sms-empty-icon">🔒</span>Set SMS password to view messages</div>';
       return;
     }
 
     if (!common_headers.authorization) {
-      var token = localStorage.getItem('kano_sms_token');
+      var token = localStorage.getItem('hotbox_sms_token');
       if (token) common_headers.authorization = token;
     }
 
@@ -432,7 +432,7 @@
   if (fwdSwitchContainer) {
     fwdSwitch = createCtrlToggle(fwdSwitchContainer, function (checked) {
       var enabled = checked ? '1' : '0';
-      fetch(KANO_baseURL + '/sms_forward_enabled?enable=' + enabled, { headers: common_headers })
+      fetch(HOTBOX_baseURL + '/sms_forward_enabled?enable=' + enabled, { headers: common_headers })
         .then(function (r) { return r.json(); })
         .then(function (res) {
           if (res && res.result === 'success') {
@@ -446,7 +446,7 @@
     });
 
     // Load initial state
-    fetch(KANO_baseURL + '/sms_forward_enabled', { headers: common_headers })
+    fetch(HOTBOX_baseURL + '/sms_forward_enabled', { headers: common_headers })
       .then(function (r) { return r.json(); })
       .then(function (data) { fwdSwitch.set(data.enabled === '1'); })
       .catch(function () {});
@@ -458,7 +458,7 @@
   if (callSwitchContainer) {
     callSwitch = createCtrlToggle(callSwitchContainer, function (checked) {
       var enabled = checked ? '1' : '0';
-      fetch(KANO_baseURL + '/call_notify_enabled?enable=' + enabled, { headers: common_headers })
+      fetch(HOTBOX_baseURL + '/call_notify_enabled?enable=' + enabled, { headers: common_headers })
         .then(function (r) { return r.json(); })
         .then(function (res) {
           if (res && res.result === 'success') {
@@ -472,7 +472,7 @@
     });
 
     // Load initial state
-    fetch(KANO_baseURL + '/call_notify_enabled', { headers: common_headers })
+    fetch(HOTBOX_baseURL + '/call_notify_enabled', { headers: common_headers })
       .then(function (r) { return r.json(); })
       .then(function (data) { callSwitch.set(data.enabled === '1'); })
       .catch(function () {});
@@ -498,7 +498,7 @@
     var callFormat = (document.getElementById('fwd_call_format') || {}).value || '';
     if (!smsFormat && !callFormat) throw new Error('Enter at least one format');
 
-    var res = await fetch(KANO_baseURL + '/sms_forward_format', {
+    var res = await fetch(HOTBOX_baseURL + '/sms_forward_format', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json;charset=UTF-8' }),
       body: JSON.stringify({ sms_format: smsFormat, call_format: callFormat })
@@ -508,7 +508,7 @@
   }, { needsLogin: false });
 
   // Load saved format
-  fetch(KANO_baseURL + '/sms_forward_format', { headers: common_headers })
+  fetch(HOTBOX_baseURL + '/sms_forward_format', { headers: common_headers })
     .then(function (r) { return r.json(); })
     .then(function (data) {
       var smsInput = document.getElementById('fwd_sms_format');
@@ -534,7 +534,7 @@
     if (!password) throw new Error('Enter password');
     if (!to) throw new Error('Enter recipient email');
 
-    var res = await fetch(KANO_baseURL + '/sms_forward_mail', {
+    var res = await fetch(HOTBOX_baseURL + '/sms_forward_mail', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({ smtp_host: host, smtp_port: port, smtp_username: username, smtp_password: password, smtp_to: to, forward_dev_info: devInfo ? '1' : '0' })
@@ -548,7 +548,7 @@
     var curlText = (fd.get('curl_text') || '').trim();
     if (!curlText) throw new Error('Enter curl command');
 
-    var res = await fetch(KANO_baseURL + '/sms_forward_curl', {
+    var res = await fetch(HOTBOX_baseURL + '/sms_forward_curl', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json;charset=UTF-8' }),
       body: JSON.stringify({ curl_text: curlText })
@@ -563,7 +563,7 @@
     var devInfo = getDevInfoValue('smsForwardPanel_devinfo_switch');
     if (!number) throw new Error('Enter forward-to number');
 
-    var res = await fetch(KANO_baseURL + '/sms_forward_sms', {
+    var res = await fetch(HOTBOX_baseURL + '/sms_forward_sms', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json;charset=UTF-8' }),
       body: JSON.stringify({ sms_forward_number: number, forward_dev_info: devInfo ? '1' : '0' })
@@ -579,7 +579,7 @@
     var devInfo = getDevInfoValue('dingtalkPanel_devinfo_switch');
     if (!webhook) throw new Error('Enter webhook URL');
 
-    var res = await fetch(KANO_baseURL + '/sms_forward_dingtalk', {
+    var res = await fetch(HOTBOX_baseURL + '/sms_forward_dingtalk', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json;charset=UTF-8' }),
       body: JSON.stringify({ webhook_url: webhook, secret: secret, forward_dev_info: devInfo ? '1' : '0' })
@@ -599,7 +599,7 @@
     if (!token) throw new Error('Enter Access Token');
     if (!to) throw new Error('Enter recipient number');
 
-    var res = await fetch(KANO_baseURL + '/sms_forward_whatsapp', {
+    var res = await fetch(HOTBOX_baseURL + '/sms_forward_whatsapp', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json;charset=UTF-8' }),
       body: JSON.stringify({ wa_phone_id: phoneId, wa_token: token, wa_to: to, forward_dev_info: devInfo ? '1' : '0' })
@@ -628,7 +628,7 @@
   document.addEventListener('ctrl-panel-show', function (e) {
     if (e.detail && e.detail.tab === 'sms') {
       // Load current method and fill form
-      fetch(KANO_baseURL + '/sms_forward_method', { headers: common_headers })
+      fetch(HOTBOX_baseURL + '/sms_forward_method', { headers: common_headers })
         .then(function (r) { return r.json(); })
         .then(function (data) {
           var method = (data.sms_forward_method || 'sms').toLowerCase();
@@ -651,7 +651,7 @@
 
           // Load config for active method
           if (method === 'sms') {
-            fetch(KANO_baseURL + '/sms_forward_sms', { headers: common_headers })
+            fetch(HOTBOX_baseURL + '/sms_forward_sms', { headers: common_headers })
               .then(function (r) { return r.json(); })
               .then(function (d) {
                 var form = document.getElementById('smsForwardPanel_sms');
@@ -662,7 +662,7 @@
                 }
               }).catch(function () {});
           } else if (method === 'smtp') {
-            fetch(KANO_baseURL + '/sms_forward_mail', { headers: common_headers })
+            fetch(HOTBOX_baseURL + '/sms_forward_mail', { headers: common_headers })
               .then(function (r) { return r.json(); })
               .then(function (d) {
                 var form = document.getElementById('smsForwardPanel_smtp');
@@ -677,14 +677,14 @@
                 }
               }).catch(function () {});
           } else if (method === 'curl') {
-            fetch(KANO_baseURL + '/sms_forward_curl', { headers: common_headers })
+            fetch(HOTBOX_baseURL + '/sms_forward_curl', { headers: common_headers })
               .then(function (r) { return r.json(); })
               .then(function (d) {
                 var ta = document.querySelector('#smsForwardPanel_curl textarea[name="curl_text"]');
                 if (ta) ta.value = d.curl_text || '';
               }).catch(function () {});
           } else if (method === 'whatsapp') {
-            fetch(KANO_baseURL + '/sms_forward_whatsapp', { headers: common_headers })
+            fetch(HOTBOX_baseURL + '/sms_forward_whatsapp', { headers: common_headers })
               .then(function (r) { return r.json(); })
               .then(function (d) {
                 var form = document.getElementById('smsForwardPanel_whatsapp');
@@ -697,7 +697,7 @@
                 }
               }).catch(function () {});
           } else if (method === 'dingtalk') {
-            fetch(KANO_baseURL + '/sms_forward_dingtalk', { headers: common_headers })
+            fetch(HOTBOX_baseURL + '/sms_forward_dingtalk', { headers: common_headers })
               .then(function (r) { return r.json(); })
               .then(function (d) {
                 var form = document.getElementById('smsForwardPanel_dingtalk');
@@ -712,7 +712,7 @@
         }).catch(function () {});
 
       // Load toggle state
-      fetch(KANO_baseURL + '/sms_forward_enabled', { headers: common_headers })
+      fetch(HOTBOX_baseURL + '/sms_forward_enabled', { headers: common_headers })
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (fwdSwitch && fwdSwitch.update) fwdSwitch.update(data.enabled === '1');

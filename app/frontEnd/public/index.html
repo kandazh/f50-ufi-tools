@@ -462,7 +462,7 @@
             </div>
 
             <!-- Hidden original STATUS container — JS renders into this, observer distributes to cards -->
-            <div class="kano_function_main status-container" style="display:none;">
+            <div class="hotbox_function_main status-container" style="display:none;">
                 <div class="title" style="margin: 6px 0;">
                     <strong data-i18n="base_info">Basic Status</strong>
                     <div style="display: inline-block;" id="collapse_status_btn"></div>
@@ -2058,7 +2058,7 @@ uptime</pre>
                     </div>
                     <div class="tab-panel" data-tab="network" style="display:none">
             <!-- TTYD -->
-            <div id="TTYD" class="kano_function_main" style="display: none;width: 100%;margin-top: 10px;">
+            <div id="TTYD" class="hotbox_function_main" style="display: none;width: 100%;margin-top: 10px;">
                 <div class="title" style="margin: 6px 0 ;">
                     <strong>TTYD</strong>
                     <div style="display: inline-block;" id="collapse_ttyd_btn"></div>
@@ -2071,7 +2071,7 @@ uptime</pre>
                 </div>
             </div>
             <!-- Lock band/cell -->
-            <div class="kano_function_main band-lock-container">
+            <div class="hotbox_function_main band-lock-container">
                 <div class="title" style="margin: 6px 0 ;">
                     <strong data-i18n="lock_band_title">🔒 Lock Bands</strong>
                     <div style="display: inline-block" id="collapse_lkband_btn"></div>
@@ -2207,7 +2207,7 @@ uptime</pre>
                     </div>
                 </div>
             </div>
-            <div class="kano_function_main freq-lock-container">
+            <div class="hotbox_function_main freq-lock-container">
                 <div class="title" style="margin: 6px 0;">
                     <strong data-i18n="lock_cell_title">🔒 Lock Cell</strong>
                     <div style="display: inline-block;" id="collapse_lkcell_btn"></div>
@@ -2628,7 +2628,7 @@ uptime</pre>
                                 style="font-weight: bold;" id="data_usage_history_avg">N/A</span></span>
                     </div>
                     <div class="chart" style="padding: 0;margin: 0;box-sizing: border-box;width: 100%;height: 100px;">
-                        <canvas id="kanoDataHistoryChart"></canvas>
+                        <canvas id="hotboxDataHistoryChart"></canvas>
                     </div>
                     <div style="max-height: 250px;overflow: auto;margin-top: 0;">
                         <table class="nice-table" style="background: none;">
@@ -3838,7 +3838,7 @@ uptime</pre>
     <script>
         // Show login modal if no credentials stored (after main.js loads)
         setTimeout(function() {
-            if (!localStorage.getItem('kano_sms_token') && !localStorage.getItem('kano_sms_pwd')) {
+            if (!localStorage.getItem('hotbox_sms_token') && !localStorage.getItem('hotbox_sms_pwd')) {
                 var m = document.getElementById('tokenModal');
                 if (m && m.style.display === 'none') showModal('#tokenModal');
             }

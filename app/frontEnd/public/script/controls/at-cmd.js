@@ -46,7 +46,7 @@
 
     try {
       var slot = slotSelect ? slotSelect.value : '0';
-      var url = KANO_baseURL + '/AT?command=' + encodeURIComponent(atCmd) + '&slot=' + slot;
+      var url = HOTBOX_baseURL + '/AT?command=' + encodeURIComponent(atCmd) + '&slot=' + slot;
       var res = await fetch(url, { headers: common_headers });
       var data = await res.json();
       var result = data.result || data.output || JSON.stringify(data);

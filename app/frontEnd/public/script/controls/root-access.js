@@ -180,7 +180,7 @@
   }
 
   async function installAdvanced() {
-    var resp = await fetch(KANO_baseURL + '/smbPath?enable=1', { headers: common_headers || {} });
+    var resp = await fetch(HOTBOX_baseURL + '/smbPath?enable=1', { headers: common_headers || {} });
     var data = await resp.json();
     if (data.error) throw new Error(translateResponse(data.error));
     return translateResponse(data.result) || 'Installed';
@@ -199,7 +199,7 @@
   }
 
   async function uninstallAdvanced() {
-    var resp = await fetch(KANO_baseURL + '/smbPath?enable=0', { headers: common_headers || {} });
+    var resp = await fetch(HOTBOX_baseURL + '/smbPath?enable=0', { headers: common_headers || {} });
     var data = await resp.json();
     if (data.error) throw new Error(data.error);
     return data.result || 'Removed';

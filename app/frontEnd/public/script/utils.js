@@ -97,7 +97,7 @@ function copyText(e) {
 }
 
 // Draw signal strength bar by dBm (-113 to -51)
-function kano_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow_low = -100, config = { g: 'green', o: 'orange', r: 'red' }, suffix = '') {
+function hotbox_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow_low = -100, config = { g: 'green', o: 'orange', r: 'red' }, suffix = '') {
     if (!config) {
         config = { g: 'green', o: 'orange', r: 'red' }
     }
@@ -132,12 +132,12 @@ function kano_parseSignalBar(val, min = -125, max = -81, green_low = -90, yellow
     return bar.outerHTML
 }
 
-function kano_getSignalEmoji(strength) {
+function hotbox_getSignalEmoji(strength) {
     const signals = ["📶 ⬜⬜⬜⬜", "📶 🟨⬜⬜⬜", "📶 🟩🟨⬜⬜", "📶 🟩🟩🟨⬜", "📶 🟩🟩🟩🟨", "📶 🟩🟩🟩🟩"];
     return `${strength} ${signals[Math.max(0, Math.min(strength, 5))]}`; // Ensure input is within 0-5
 }
 
-function kano_formatTime(seconds) {
+function hotbox_formatTime(seconds) {
     if (seconds < 60) {
         return `${seconds} ${t('seconds')}`;
     } else if (seconds < 3600) {
@@ -216,7 +216,7 @@ function createToast(text, color, delay = 3000, fn = null) {
         toastEl.style.backdropFilter = 'blur(10px)'
         toastEl.style.borderRadius = '6px'
         toastEl.innerHTML = text;
-        const id = 'toastkano'
+        const id = 'toasthotbox'
         toastEl.setAttribute('class', id);
         toastContainer.appendChild(toastEl)
         setTimeout(() => {
@@ -273,7 +273,7 @@ function createFixedToast(_id, text, style = {}) {
             })
         }
         toastEl.innerHTML = text;
-        const id = 'toastkano'
+        const id = 'toasthotbox'
         toastEl.setAttribute('class', id);
         toastContainer.appendChild(toastEl)
         setTimeout(() => {
@@ -1020,10 +1020,10 @@ const fillCurl = (kind) => {
 
     }
 
-    const { el, close } = createFixedToast('kano_message', `
+    const { el, close } = createFixedToast('hotbox_message', `
                     <div style="pointer-events:all;width:80vw;max-width:300px">
                         <div class="title" style="margin:0" data-i18n="system_notice">💡 Tips</div>
-                        <div style="margin:10px 0;font-size:.64rem;max-height:300px;overflow:auto" id="kano_message_inner">${message}</div>
+                        <div style="margin:10px 0;font-size:.64rem;max-height:300px;overflow:auto" id="hotbox_message_inner">${message}</div>
                         <div style="text-align:right">
                             <button style="font-size:.64rem" id="close_message_btn" data-i18n="close_btn">${t('close_btn')}</button>
                         </div>
@@ -1090,7 +1090,7 @@ const checkBroswer = () => {
 
 const showLoginHelp = () => {
     const message = t("login_help_text").replaceAll('\n', "<br>")
-    const { el, close } = createFixedToast('kano_login_help_message', `
+    const { el, close } = createFixedToast('hotbox_login_help_message', `
                     <div style="pointer-events:all;width:80vw;max-width:600px">
                         <div class="title" style="margin:0">🔑 Login Help</div>
                         <div style="margin:10px 0;max-height:400px;overflow:auto">${message}</div>
@@ -1129,7 +1129,7 @@ function formatSpeed(bps, base = 1000 * 1000) {
 
 const checkWeakToken = async () => {
     try {
-        const res = await (await fetchWithTimeout(`${KANO_baseURL}/is_weak_token`)).json();
+        const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/is_weak_token`)).json();
         const is_weak_token = res && res.is_weak_token;
         return is_weak_token === true;
     } catch (e) {
@@ -1143,7 +1143,7 @@ const saveConfig = async (file, outputFile) => {
     try {
         const formData = new FormData();
         formData.append("file", file);
-        const res = await (await fetch(`${KANO_baseURL}/upload_img`, {
+        const res = await (await fetch(`${HOTBOX_baseURL}/upload_img`, {
             method: "POST",
             headers: common_headers,
             body: formData,
@@ -1151,13 +1151,13 @@ const saveConfig = async (file, outputFile) => {
 
         if (res.url) {
             let foundFile = await runShellWithRoot(`
-                        ls /data/data/com.minikano.f50_sms/files/${res.url}
+                        ls /data/data/com.hotbox.f50_app/files/${res.url}
                     `)
             if (!foundFile.content) {
                 throw t('toast_upload_failed')
             }
             let resShell = await runShellWithRoot(`
-                        mv /data/data/com.minikano.f50_sms/files/${res.url} ${outputFile}
+                        mv /data/data/com.hotbox.f50_app/files/${res.url} ${outputFile}
                     `)
             if (resShell.success) {
                 return true
@@ -1183,7 +1183,7 @@ const handleEditBootScriptModal = async () => {
     if (!res.success) return createToast(t('read_file_fail'), 'red')
 
     closeAdvanceToolsModal()
-    const { el, close } = createFixedToast('kano_edit_ufi_boot_sh_message', `
+    const { el, close } = createFixedToast('hotbox_edit_ufi_boot_sh_message', `
                 <div style="pointer-events:all;width:80vw;max-width:800px;">
                     <div class="title" style="margin:0" data-i18n="edit_boot_script">${t('edit_boot_script')}</div>
                     <div style="margin:10px 0" class="inner"></div>
@@ -1232,7 +1232,7 @@ function validateAlphaAndNumber(input) {
 }
 
 // File upload (100MB)
-async function uploadFileKano(file, needRename = false) {
+async function uploadFileHotbox(file, needRename = false) {
     if (file) {
         console.log(file.name);
         // Check file size
@@ -1243,11 +1243,11 @@ async function uploadFileKano(file, needRename = false) {
             let closeFn = null
             //Upload
             try {
-                const { el, close } = createFixedToast("uploading_file_kano", t('uploading'))
+                const { el, close } = createFixedToast("uploading_file_hotbox", t('uploading'))
                 closeFn = close
                 const formData = new FormData();
                 formData.append("file", file);
-                const res = await (await fetch(`${KANO_baseURL}/upload_img`, {
+                const res = await (await fetch(`${HOTBOX_baseURL}/upload_img`, {
                     method: "POST",
                     headers: common_headers,
                     body: formData,
@@ -1262,12 +1262,12 @@ async function uploadFileKano(file, needRename = false) {
                     console.log("Filename validity test:", regResult)
                     // Rename
                     if (needRename && regResult) {
-                        const res = await runShellWithUser(`mv /data/data/com.minikano.f50_sms/files/uploads/${resFileName} /data/data/com.minikano.f50_sms/files/uploads/${file.name}`)
+                        const res = await runShellWithUser(`mv /data/data/com.hotbox.f50_app/files/uploads/${resFileName} /data/data/com.hotbox.f50_app/files/uploads/${file.name}`)
                         if (!res.success) {
                             createToast(t('toast_oprate_failed'), 'red')
                             return null
                         }
-                        const res1 = await runShellWithUser(`ls /data/data/com.minikano.f50_sms/files/uploads/${file.name}`)
+                        const res1 = await runShellWithUser(`ls /data/data/com.hotbox.f50_app/files/uploads/${file.name}`)
                         if (!res1.success) {
                             createToast(t('toast_oprate_failed'), 'red')
                             return null

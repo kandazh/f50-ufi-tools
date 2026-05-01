@@ -81,7 +81,7 @@
   async function getLatestRelease() {
     try {
       var res = await runShellWithRoot(
-        '/data/data/com.minikano.f50_sms/files/curl -s -L "' + AGH_GITHUB_API + '"',
+        '/data/data/com.hotbox.f50_app/files/curl -s -L "' + AGH_GITHUB_API + '"',
         30000
       );
       if (res.success && res.content) {
@@ -161,7 +161,7 @@
 
       log('[6/8] Downloading AdGuard Home ' + release.version + '...');
       var dlRes = await runShellWithRoot(
-        '/data/data/com.minikano.f50_sms/files/curl -L "' + release.downloadUrl + '" -o "' + AGH_DOWNLOAD_PATH + '"',
+        '/data/data/com.hotbox.f50_app/files/curl -L "' + release.downloadUrl + '" -o "' + AGH_DOWNLOAD_PATH + '"',
         300000
       );
       if (!dlRes.success) { log('ERROR: Download failed'); showCtrlToast('Download failed', 'error'); return; }
@@ -272,7 +272,7 @@
 
       log('Downloading AdGuard Home ' + release.version + '...');
       var dlRes = await runShellWithRoot(
-        '/data/data/com.minikano.f50_sms/files/curl -L "' + release.downloadUrl + '" -o "' + AGH_DOWNLOAD_PATH + '"',
+        '/data/data/com.hotbox.f50_app/files/curl -L "' + release.downloadUrl + '" -o "' + AGH_DOWNLOAD_PATH + '"',
         300000
       );
       if (!dlRes.success) { log('Download failed'); showCtrlToast('Download failed', 'error'); return; }
@@ -322,7 +322,7 @@
       log('Update available: ' + installed + ' → ' + release.version);
       log('Downloading...');
       var dlRes = await runShellWithRoot(
-        '/data/data/com.minikano.f50_sms/files/curl -L "' + release.downloadUrl + '" -o "' + AGH_DOWNLOAD_PATH + '"',
+        '/data/data/com.hotbox.f50_app/files/curl -L "' + release.downloadUrl + '" -o "' + AGH_DOWNLOAD_PATH + '"',
         300000
       );
       if (!dlRes.success) { log('Download failed'); showCtrlToast('Download failed', 'error'); return; }

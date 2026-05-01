@@ -6,11 +6,11 @@ MAX_SIZE=$((4 * 1024 * 1024))  # 4MB = 4 * 1024 * 1024 bytes
 FLAG_FILE="/data/local/tmp/boot_once.flag"
 THRESHOLD=120  # uptime 120s
 
-SOCKET_DIR="/data/data/com.minikano.f50_sms/files"
-SOCKET_FILE="$SOCKET_DIR/kano_root_shell.sock"
-SOCAT_PATH="/data/data/com.minikano.f50_sms/files/socat"
-TTYD_PATH="/data/data/com.minikano.f50_sms/files/ttyd"
-LOGIN_PATH="/data/data/com.minikano.f50_sms/files/login.sh"
+SOCKET_DIR="/data/data/com.hotbox.f50_app/files"
+SOCKET_FILE="$SOCKET_DIR/hotbox_root_shell.sock"
+SOCAT_PATH="/data/data/com.hotbox.f50_app/files/socat"
+TTYD_PATH="/data/data/com.hotbox.f50_app/files/ttyd"
+LOGIN_PATH="/data/data/com.hotbox.f50_app/files/login.sh"
 BOOTUP_SCRIPT_PATH="/sdcard/ufi_tools_boot.sh"
 SCHEDULE_SCRIPT_PATH="/sdcard/ufi_tools_schedule.sh"
 
@@ -216,7 +216,7 @@ check_ttyd_running(){
       # fallback to ps -ef if pgrep fails
       if ! ps -ef | grep "ttyd --writable --port 1146 $LOGIN_PATH" | grep -v grep > /dev/null; then
           echo "[$(date)] start ttyd..." >> "$LOG_FILE"
-          export PATH="/data/data/com.minikano.f50_sms/files:/data/data/com.termux/files/usr/bin:$PATH"
+          export PATH="/data/data/com.hotbox.f50_app/files:/data/data/com.termux/files/usr/bin:$PATH"
           "$TTYD_PATH" --writable --port 1146 "$LOGIN_PATH" &
       fi
   fi
@@ -241,8 +241,8 @@ check_socat_running(){
 
 keep_ufi_running(){
     BOOTUP_NEED_OPEN_ACTIVITY="${1:-0}"
-    PKG=com.minikano.f50_sms
-    ACT=com.minikano.f50_sms.MainActivity
+    PKG=com.hotbox.f50_app
+    ACT=com.hotbox.f50_app.MainActivity
     if [ "$BOOTUP_NEED_OPEN_ACTIVITY" -eq 1 ] 2>/dev/null; then
       echo "[`date`] BOOTUP! DO WAKE UP!!!" >> "$LOG_FILE"
       am start -n "$PKG/$ACT" --ez silent true >/dev/null 2>&1 || true
@@ -265,23 +265,23 @@ lock_smb_conf(){
 }
 
 permission_keep(){
-    pm grant com.minikano.f50_sms android.permission.READ_SMS >/dev/null 2>&1 || true
-    pm grant com.minikano.f50_sms android.permission.RECEIVE_SMS >/dev/null 2>&1 || true
-    pm grant com.minikano.f50_sms android.permission.SEND_SMS >/dev/null 2>&1 || true
-    pm grant com.minikano.f50_sms android.permission.READ_EXTERNAL_STORAGE >/dev/null 2>&1 || true
-    pm grant com.minikano.f50_sms android.permission.WRITE_EXTERNAL_STORAGE >/dev/null 2>&1 || true
-    pm grant com.minikano.f50_sms android.permission.READ_PHONE_STATE >/dev/null 2>&1 || true
-    pm grant com.minikano.f50_sms android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
+    pm grant com.hotbox.f50_app android.permission.READ_SMS >/dev/null 2>&1 || true
+    pm grant com.hotbox.f50_app android.permission.RECEIVE_SMS >/dev/null 2>&1 || true
+    pm grant com.hotbox.f50_app android.permission.SEND_SMS >/dev/null 2>&1 || true
+    pm grant com.hotbox.f50_app android.permission.READ_EXTERNAL_STORAGE >/dev/null 2>&1 || true
+    pm grant com.hotbox.f50_app android.permission.WRITE_EXTERNAL_STORAGE >/dev/null 2>&1 || true
+    pm grant com.hotbox.f50_app android.permission.READ_PHONE_STATE >/dev/null 2>&1 || true
+    pm grant com.hotbox.f50_app android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
 
-    appops set com.minikano.f50_sms GET_USAGE_STATS allow >/dev/null 2>&1 || true
-    appops set com.minikano.f50_sms android:get_usage_stats allow >/dev/null 2>&1 || true
-    appops set com.minikano.f50_sms POST_NOTIFICATION allow >/dev/null 2>&1 || true
-    appops set com.minikano.f50_sms AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore >/dev/null 2>&1 || true
-    _uid=$(dumpsys package com.minikano.f50_sms 2>/dev/null | grep -m1 userId= | cut -d= -f2)
+    appops set com.hotbox.f50_app GET_USAGE_STATS allow >/dev/null 2>&1 || true
+    appops set com.hotbox.f50_app android:get_usage_stats allow >/dev/null 2>&1 || true
+    appops set com.hotbox.f50_app POST_NOTIFICATION allow >/dev/null 2>&1 || true
+    appops set com.hotbox.f50_app AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore >/dev/null 2>&1 || true
+    _uid=$(dumpsys package com.hotbox.f50_app 2>/dev/null | grep -m1 userId= | cut -d= -f2)
     [ -n "$_uid" ] && appops set --uid "$_uid" AUTO_REVOKE_PERMISSIONS_IF_UNUSED ignore >/dev/null 2>&1 || true
-    settings put secure enabled_notification_listeners com.minikano.f50_sms/com.minikano.f50_sms.MyListenerService >/dev/null 2>&1 || true
-    dumpsys deviceidle whitelist +com.minikano.f50_sms >/dev/null 2>&1 || true
-    cmd app_hibernation set-state com.minikano.f50_sms false >/dev/null 2>&1 || true
+    settings put secure enabled_notification_listeners com.hotbox.f50_app/com.hotbox.f50_app.MyListenerService >/dev/null 2>&1 || true
+    dumpsys deviceidle whitelist +com.hotbox.f50_app >/dev/null 2>&1 || true
+    cmd app_hibernation set-state com.hotbox.f50_app false >/dev/null 2>&1 || true
 
     echo "[`date`] permission_keep done!" >> "$LOG_FILE"
 }

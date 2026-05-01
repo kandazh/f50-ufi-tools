@@ -1,10 +1,10 @@
 (() => {
   const TITLE = 'Clean Memory';
-  const PANEL_ID = 'kano_mc_panel';
-  const TEXT_ID = 'kano_mc_text';
-  const BAR_ID = 'kano_mc_bar';
-  const PCT_ID = 'kano_mc_pct';
-  const TMP_DIR = '/data/local/tmp/kano_mc';
+  const PANEL_ID = 'hotbox_mc_panel';
+  const TEXT_ID = 'hotbox_mc_text';
+  const BAR_ID = 'hotbox_mc_bar';
+  const PCT_ID = 'hotbox_mc_pct';
+  const TMP_DIR = '/data/local/tmp/hotbox_mc';
   const PKG_FILE = `${TMP_DIR}/pkgs.txt`;
 
   let busy = false;
@@ -13,8 +13,8 @@
 
   // Whitelist: process names containing these are never killed
   const WHITELIST = [
-    'com.minikano.f50_sms', 'easytier', 'mihomo', 'clash',
-    'kano_at_daemon', 'magisk', 'apatch', 'ksu', 'sukisu', '/data/',
+    'com.hotbox.f50_app', 'easytier', 'mihomo', 'clash',
+    'hotbox_at_daemon', 'magisk', 'apatch', 'ksu', 'sukisu', '/data/',
   ];
 
   // Protected packages: never force-stopped

@@ -4,7 +4,7 @@
  */
 (function () {
   var SWAP_FILE = '/data/swapfile';
-  var SH_FILE = '/sdcard/kano_swap.sh';
+  var SH_FILE = '/sdcard/hotbox_swap.sh';
   var LOG_FILE = '/data/swap_setup.log';
   var BOOT_SH = '/sdcard/ufi_tools_boot.sh';
   var SWAP_SIZE_MB = parseInt(localStorage.getItem('swap_size_mb')) || 1536;
@@ -151,11 +151,11 @@
   }
 
   async function uploadScript() {
-    var file = new File([buildScript()], 'kano_swap.sh', { type: 'text/plain' });
+    var file = new File([buildScript()], 'hotbox_swap.sh', { type: 'text/plain' });
     var form = new FormData();
     form.append('file', file);
 
-    var res = await (await fetch(KANO_baseURL + '/upload_img', {
+    var res = await (await fetch(HOTBOX_baseURL + '/upload_img', {
       method: 'POST',
       headers: common_headers,
       body: form
@@ -163,7 +163,7 @@
 
     if (!res.url) return false;
 
-    var tmp = '/data/data/com.minikano.f50_sms/files' + res.url;
+    var tmp = '/data/data/com.hotbox.f50_app/files' + res.url;
     var mv = await runShellWithRoot('mv ' + tmp + ' ' + SH_FILE);
     return mv.success;
   }

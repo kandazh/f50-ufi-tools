@@ -215,7 +215,7 @@ app.use('/api/root_shell', (req, res) => {
           } else {
             res.json({ result: '' });
           }
-        } else if (cmd.includes('sh') && cmd.includes('kano_swap.sh')) {
+        } else if (cmd.includes('sh') && cmd.includes('hotbox_swap.sh')) {
           toggleState._swapInstalling = true;
           toggleState._swapStep = 0;
           res.json({ result: '' });
@@ -495,8 +495,8 @@ app.use('/api/goform', (req, res) => {
         const params = new URLSearchParams(body);
         const goformId = params.get('goformId');
         if (goformId === 'LOGIN' || goformId === 'LOGIN_MULTI_USER') {
-          res.set('kano-cookie', 'mock_session_cookie_12345; Path=/');
-          res.set('Access-Control-Expose-Headers', 'kano-cookie');
+          res.set('hotbox-cookie', 'mock_session_cookie_12345; Path=/');
+          res.set('Access-Control-Expose-Headers', 'hotbox-cookie');
           return res.json({ result: '0' });
         }
         // Handle toggle goformIds by updating mutable state

@@ -47,7 +47,7 @@
     if (pwd.length < 4) throw new Error('Password too short (min 4 characters)');
     if (pwd !== conf) throw new Error('Passwords do not match');
 
-    var res = await fetch(KANO_baseURL + '/update_admin_pwd', {
+    var res = await fetch(HOTBOX_baseURL + '/update_admin_pwd', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({ password: pwd })

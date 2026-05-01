@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const secretKey = "minikano_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd"
+const secretKey = "hotbox_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd"
 
 func sha256Hex(data []byte) string {
 	sum := sha256.Sum256(data)
@@ -30,9 +30,9 @@ func hmacMD5(data []byte, key []byte) []byte {
 	return h.Sum(nil) // 16 bytes
 }
 
-// Generate kano-sign
-func makeKanoSign(methodUpper, urlPath string, tsMillis string) string {
-	rawData := "minikano" + methodUpper + urlPath + tsMillis
+// Generate hotbox-sign
+func makeHotboxSign(methodUpper, urlPath string, tsMillis string) string {
+	rawData := "hotbox" + methodUpper + urlPath + tsMillis
 
 	// HMAC-MD5 -> 16 bytes
 	h := hmacMD5([]byte(rawData), []byte(secretKey))
@@ -112,7 +112,7 @@ func main() {
 	flag.IntVar(&timeout, "t", 10, "Timeout in seconds (default 15)")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `ufi_req - MiniKano signed request tool
+		fmt.Fprintf(os.Stderr, `ufi_req - MiniHotbox signed request tool
 
 Usage:
   ufi_req -host 192.168.1.1 -pass 123456 -X POST -e /api/xxx -d '{"command":"ls"}'
@@ -144,7 +144,7 @@ Parameters:
 	}
 
 	ts := fmt.Sprintf("%d", time.Now().UnixMilli())
-	sign := makeKanoSign(m, urlPath, ts)
+	sign := makeHotboxSign(m, urlPath, ts)
 	auth := sha256Hex([]byte(password))
 
 	var body io.Reader
@@ -159,8 +159,8 @@ Parameters:
 	}
 
 	// Required headers
-	req.Header.Set("kano-t", ts)
-	req.Header.Set("kano-sign", sign)
+	req.Header.Set("hotbox-t", ts)
+	req.Header.Set("hotbox-sign", sign)
 	req.Header.Set("Authorization", auth)
 
 	// JSON convention: default to JSON whenever there is a body (can be changed to POST only)

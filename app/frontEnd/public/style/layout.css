@@ -23,7 +23,7 @@
   gap: 12px;
 }
 
-.kano_function_main {
+.hotbox_function_main {
   width: 100%;
   box-sizing: border-box;
   background: var(--glass-bg);
@@ -35,7 +35,7 @@
   transition: border-color 0.3s var(--ease-out);
 }
 
-.kano_function_main:hover {
+.hotbox_function_main:hover {
   border-color: var(--border-hover);
 }
 
@@ -779,7 +779,7 @@
     width: 14px;
     height: 14px;
   }
-  .kano_function_main {
+  .hotbox_function_main {
     padding: 10px 10px;
     border-radius: var(--radius);
   }

@@ -3,7 +3,7 @@ const AVAILABLE_LANGS = {
 };
 
 const DEFAULT_LANG = "en";
-const LANG_STORAGE_KEY = "kano_lang";
+const LANG_STORAGE_KEY = "hotbox_lang";
 let currentLang = DEFAULT_LANG;
 let translations = {};
 

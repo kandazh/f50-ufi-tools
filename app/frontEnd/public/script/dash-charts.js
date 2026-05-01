@@ -5,7 +5,7 @@
    ========================================================== */
 (() => {
     const HISTORY = 40;
-    const _baseURL = (typeof KANO_baseURL !== 'undefined') ? KANO_baseURL : '/api';
+    const _baseURL = (typeof HOTBOX_baseURL !== 'undefined') ? HOTBOX_baseURL : '/api';
 
     // Color palette
     const colors = {

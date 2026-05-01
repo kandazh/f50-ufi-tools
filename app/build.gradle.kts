@@ -48,7 +48,7 @@ tasks.register<Delete>("deleteDumpSymsFromApk") {
 }
 
 android {
-    namespace = "com.minikano.f50_sms"
+    namespace = "com.hotbox.f50_app"
     compileSdk = 35
 
     signingConfigs {
@@ -64,7 +64,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.minikano.f50_sms"
+        applicationId = "com.hotbox.f50_app"
         minSdk = 26
         targetSdk = 33
         // Dynamically generate versionCode in yyyyMMdd format

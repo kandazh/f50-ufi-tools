@@ -9,7 +9,7 @@
 The signature mechanism serves the following purposes:
 
 - Prevents request forgery (e.g., cross-site, replay attacks)
-- Server can verify whether `kano-sign` is valid and matches `kano-t`
+- Server can verify whether `hotbox-sign` is valid and matches `hotbox-t`
 - Simple "authentication + tamper-proof" approach
 
 ### 1. **Adding Request Headers**
@@ -18,8 +18,8 @@ Each request automatically appends two custom request headers:
 
 | Header Key  | Description                             |
 | ----------- | -------------------------------- |
-| `kano-t`    | Current timestamp (milliseconds, `Date.now()`) |
-| `kano-sign` | Signature string for request validation   |
+| `hotbox-t`    | Current timestamp (milliseconds, `Date.now()`) |
+| `hotbox-sign` | Signature string for request validation   |
 | `Authorization` | SHA256 hash of the password (lowercase)   |
 
 ------
@@ -29,7 +29,7 @@ Each request automatically appends two custom request headers:
 The core signature formula is:
 
 ```
-kano-sign = SHA256( SHA256(part1) + SHA256(part2) )
+hotbox-sign = SHA256( SHA256(part1) + SHA256(part2) )
 ```
 
 Steps are as follows:
@@ -37,7 +37,7 @@ Steps are as follows:
 #### (1) Construct raw data:
 
 ```js
-rawData = "minikano" + HTTP_METHOD + URL_PATH + timestamp
+rawData = "hotbox" + HTTP_METHOD + URL_PATH + timestamp
 ```
 
 - `HTTP_METHOD`：Request method, e.g., `GET` / `POST` (uppercase)
@@ -53,7 +53,7 @@ hmac = HMAC_MD5(rawData, secretKey)
 - Fixed secret key:
 
   ```js
-  "minikano_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd"
+  "hotbox_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd"
   ```
 
 #### (3) Split the HMAC value into two halves:
@@ -95,14 +95,14 @@ Internal processing flow:
 - Construct signature raw data:
 
   ```
-  minikanoPOST/api/user1718438543772
+  hotboxPOST/api/user1718438543772
   ```
 
 - Generate signature using the above algorithm and add request headers:
 
 ```http
-kano-t: 1718438543772
-kano-sign: <calculated SHA256 hash>
+hotbox-t: 1718438543772
+hotbox-sign: <calculated SHA256 hash>
 ```
 
 **JSCode reference:[https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/app/frontEnd/public/script/requests.js](https://github.com/kanoqwq/UFI-TOOLS/blob/http-server-version/app/frontEnd/public/script/requests.js)**
@@ -188,7 +188,7 @@ Request body (e.g., POST JSON) will be forwarded as-is to the target address.
 **Notes:**
 
 1. This endpoint also requires auth verification
-2. To avoid conflicts between UFI-TOOLS authToken and forwarded headers, proxy auth can use `kano-authorization` to carry the token (see table below)
+2. To avoid conflicts between UFI-TOOLS authToken and forwarded headers, proxy auth can use `hotbox-authorization` to carry the token (see table below)
 3. To prevent internal network services from being exposed externally, the reverse proxy blocks internal address access by default
 4. This endpoint has a fixed 30-second timeout; when exceeded, output is truncated and incomplete data is returned.
 
@@ -197,12 +197,12 @@ Request body (e.g., POST JSON) will be forwarded as-is to the target address.
 #### Customizable Request Headers (auto-forwarded):
 
 - By default, **standard safe request headers** (such as `Accept`, `User-Agent`) are automatically forwarded.
-- To manually inject sensitive headers (such as `Authorization`), use the **`kano-` prefix**:
+- To manually inject sensitive headers (such as `Authorization`), use the **`hotbox-` prefix**:
 
 | Custom Header Name         | Actually Forwarded As      |
 | -------------------- | --------------- |
-| `kano-Authorization` | `Authorization` |
-| `kano-Cookie`        | `Cookie`        |
+| `hotbox-Authorization` | `Authorization` |
+| `hotbox-Cookie`        | `Cookie`        |
 
 ------
 
@@ -218,7 +218,7 @@ Request body (e.g., POST JSON) will be forwarded as-is to the target address.
 ```http
 POST /api/proxy/--http://192.168.1.1/goform/login
 Content-Type: application/json
-kano-Authorization: Bearer abc123
+hotbox-Authorization: Bearer abc123
 
 { "username": "admin", "password": "123456" }
 ```
@@ -350,6 +350,6 @@ The `otaModule` is a complete OTA (Over-The-Air) update module built with Ktor w
 - **Supported Methods**：Supports GET, POST, PUT, OPTIONS method forwarding.
 - **Request Body Forwarding**：POST and PUT request bodies are read and written to the proxy request.
 - **Response Header Handling**：
-  - **Renames the `Set-Cookie` header returned by the target server to `kano-cookie` and forwards it back to the client.**
+  - **Renames the `Set-Cookie` header returned by the target server to `hotbox-cookie` and forwards it back to the client.**
   - Automatically adds CORS response headers to allow cross-origin requests.
 - **Error Handling**：Catches all exceptions, returns 500 error with exception info.

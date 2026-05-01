@@ -4,7 +4,7 @@
  */
 (function () {
   var userIp = '';
-  var HOSTNAME_STORAGE_KEY = 'kano_hostname_overrides';
+  var HOSTNAME_STORAGE_KEY = 'hotbox_hostname_overrides';
 
   function getHostnameOverrides() {
     try { return JSON.parse(localStorage.getItem(HOSTNAME_STORAGE_KEY)) || {}; } catch (e) { return {}; }

@@ -149,7 +149,7 @@
   }
 
   function shellExec(command, timeout) {
-    return fetch(KANO_baseURL + '/root_shell', {
+    return fetch(HOTBOX_baseURL + '/root_shell', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, common_headers),
       body: JSON.stringify({ command: command, timeout: timeout || 60000 })

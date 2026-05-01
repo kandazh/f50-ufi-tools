@@ -177,7 +177,7 @@
       var count = 0;
       function doPing() {
         var start = performance.now();
-        fetch(KANO_baseURL + '/speedtest?ckSize=0&cors=1&_t=' + Date.now(), { cache: 'no-store' })
+        fetch(HOTBOX_baseURL + '/speedtest?ckSize=0&cors=1&_t=' + Date.now(), { cache: 'no-store' })
           .then(function () {
             pings.push(performance.now() - start);
             count++;
@@ -202,7 +202,7 @@
 
       function runOne() {
         if (done) return;
-        fetch(KANO_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now(), { cache: 'no-store' })
+        fetch(HOTBOX_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now(), { cache: 'no-store' })
           .then(function (res) {
             if (!res.ok) { if (!done) { done = true; resolve(-1); } return; }
             var reader = res.body.getReader();
@@ -248,7 +248,7 @@
 
       function runOne() {
         if (done) return;
-        fetch(KANO_baseURL + '/speedtest_upload?_t=' + Date.now(), { method: 'POST', body: new Blob([data]) })
+        fetch(HOTBOX_baseURL + '/speedtest_upload?_t=' + Date.now(), { method: 'POST', body: new Blob([data]) })
           .then(function (res) {
             if (done) return;
             if (!res.ok) { done = true; resolve(-1); return; }
