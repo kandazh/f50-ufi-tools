@@ -1,13 +1,10 @@
+# IDE
+.idea/
 *.iml
+.vscode/
+
+# Gradle
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
 /build
 /captures
 .externalNativeBuild
@@ -16,21 +13,32 @@ local.properties
 app/.cxx
 app/build
 app/release
-app/src/main/assets/node_modules
-app/src/main/assets/lang/
-app/src/main/assets/lang/**
-app/src/main/assets/script/
-app/src/main/assets/script/**
-app/src/main/assets/style/
-app/src/main/assets/style/**
-app/src/main/assets/index.html
-app/src/main/assets/manifest.json
-app/src/main/assets/service-worker.js
-app/src/main/assets/node_modules/*/**
-app/src/main/assets/dictionary.json
-app/frontEnd/node_modules/*/**
-app/frontEnd/node_modules/*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log
+
+# Keys
 release.keystore
 *.keystore
 *.jks
+
+# APK artifacts
 apk-download/
+apk-latest/
+
+# Frontend build artifacts
+app/frontEnd/node_modules/
+app/frontEnd/package-lock.json
+app/src/main/assets/node_modules/
+app/src/main/assets/lang/
+app/src/main/assets/script/
+app/src/main/assets/style/
+app/src/main/assets/index.html
+app/src/main/assets/manifest.json
+app/src/main/assets/service-worker.js
+app/src/main/assets/dictionary.json
