@@ -18,7 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 class ShellHotbox {
     companion object {
-        const val PREFS_NAME = "kano_ZTE_store"
+        const val PREFS_NAME = "Hotbox_ZTE_store"
 
         fun runShellCommand(command: String?, escaped: Boolean = false): String? {
             val output = StringBuilder()

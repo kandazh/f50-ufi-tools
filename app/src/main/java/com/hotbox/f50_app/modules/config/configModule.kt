@@ -19,7 +19,7 @@ import com.hotbox.f50_app.utils.HotboxUtils
 
 fun Route.configModule(context: Context) {
     val TAG = "[$BASE_TAG]_configModule"
-    val PREFS_NAME = "kano_ZTE_store"
+    val PREFS_NAME = "Hotbox_ZTE_store"
     val PREF_LOGIN_TOKEN = "login_token"
 
     //Check if default token

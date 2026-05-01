@@ -425,7 +425,7 @@ class HotboxUtils {
             userTouched: Boolean = false,
             onIpChanged: ((String) -> Unit)? = null
         ) {
-            val prefs = context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             val ip_add = prefs.getString("gateway_ip", null)
             val need_auto_ip = prefs.getString("auto_ip_enabled", true.toString())
             val currentIp = IPManager.getHotspotGatewayIp("8080")
@@ -474,7 +474,7 @@ class HotboxUtils {
             return try {
                 runBlocking(Dispatchers.IO) {
                     val sharedPrefs =
-                        context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                        context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
                     val ADB_IP =
                         sharedPrefs.getString("gateway_ip", "")?.substringBefore(":")
                             ?: throw Exception("No ADMIN_IP")
@@ -794,7 +794,7 @@ class HotboxUtils {
                 }
             }
         }
-        private val PREFS_NAME = "kano_ZTE_store"
+        private val PREFS_NAME = "Hotbox_ZTE_store"
         private val PREF_GATEWAY_IP = "gateway_ip"
         private val PREF_LOGIN_TOKEN = "login_token"
         private val PREF_TOKEN_ENABLED = "login_token_enabled"
@@ -844,7 +844,7 @@ class HotboxUtils {
                try {
                     runBlocking(Dispatchers.IO) {
                         val sharedPrefs =
-                            context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                            context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
                         val ADB_IP =
                             sharedPrefs.getString("gateway_ip", "")?.substringBefore(":")
                         val req = HotboxGoformRequest("http://$ADB_IP:8080")
@@ -988,7 +988,7 @@ class HotboxUtils {
         fun forwardBatteryStatusMessage(context: Context,smsContent: SmsInfo) {
             try {
                 val sharedPrefs =
-                    context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                    context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
                 val sms_forward_method = sharedPrefs.getString("hotbox_sms_forward_method", "") ?: ""
                 when (sms_forward_method) {
                     "SMTP" -> {

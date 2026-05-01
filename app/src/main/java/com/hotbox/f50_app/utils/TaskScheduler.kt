@@ -22,9 +22,9 @@ object TaskSchedulerManager {
     var sharedPrefs: SharedPreferences? = null
 
     fun init(context: Context) {
-        sharedPrefs = context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+        sharedPrefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
         if (scheduler == null) {
-            scheduler = TaskScheduler(context.applicationContext, perfName = "kano_ZTE_store")
+            scheduler = TaskScheduler(context.applicationContext, perfName = "Hotbox_ZTE_store")
             scheduler!!.restoreTasks()
             scheduler!!.start()
             scheduler!!.reschedule()
@@ -56,7 +56,7 @@ data class ScheduledTask(
 class TaskScheduler(
     private val context: Context,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-    private val perfName: String = "kano_ZTE_store"
+    private val perfName: String = "Hotbox_ZTE_store"
 ) {
     private val prefs: SharedPreferences by lazy {
         context.getSharedPreferences(perfName, Context.MODE_PRIVATE)
@@ -224,7 +224,7 @@ class TaskScheduler(
         if (TaskSchedulerManager.sharedPrefs == null) return
         val ADB_IP = TaskSchedulerManager.sharedPrefs!!.getString("gateway_ip", "")?.substringBefore(":").orEmpty()
         val ADMIN_PWD = TaskSchedulerManager.sharedPrefs!!.getString("ADMIN_PWD", "Wa@9w+YWRtaW4=") ?: "Wa@9w+YWRtaW4="
-        val PREFS_NAME = "kano_ZTE_store"
+        val PREFS_NAME = "Hotbox_ZTE_store"
         val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         val jsonStr = prefs.getString("hotbox_scheduled_tasks", null) ?: return

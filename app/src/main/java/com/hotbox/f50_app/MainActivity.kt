@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
         const val REQUEST_CODE_SMS = 1919810
     }
     private val port = 2333
-    private val PREFS_NAME = "kano_ZTE_store"
+    private val PREFS_NAME = "Hotbox_ZTE_store"
     private val PREF_GATEWAY_IP = "gateway_ip"
     private val PREF_LOGIN_TOKEN = "login_token"
     private val PREF_TOKEN_ENABLED = "login_token_enabled"
@@ -353,7 +353,7 @@ fun MainContent(
     isSilentStart: Boolean
 ) {
     val sharedPrefs = remember {
-        context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+        context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
     }
 
     val isServerRunning by serverStatusLiveData.observeAsState(false)

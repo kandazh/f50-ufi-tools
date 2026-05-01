@@ -11,7 +11,7 @@ object UniqueDeviceIDManager {
     private var cachedUUID: String? = null
     private lateinit var uuidFile: File
     private var initialized = false
-    private val PREFS_NAME = "kano_ZTE_store"
+    private val PREFS_NAME = "Hotbox_ZTE_store"
 
     /**
      * Must call this method to initialize first, pass Context,

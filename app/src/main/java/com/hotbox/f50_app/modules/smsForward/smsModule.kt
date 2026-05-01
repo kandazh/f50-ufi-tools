@@ -23,7 +23,7 @@ fun Route.smsModule(context: Context) {
     //Get SMS forward method
     get("/api/sms_forward_method") {
         val sharedPrefs =
-            context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+            context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
         val sms_forward_method = sharedPrefs.getString("hotbox_sms_forward_method", "") ?: ""
         val json = """
         {
@@ -54,7 +54,7 @@ fun Route.smsModule(context: Context) {
             }
 
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             sharedPrefs.edit(commit = true) {
                 putString("hotbox_sms_forward_method", "SMTP")
                 putString("hotbox_smtp_host", smtpHost)
@@ -91,7 +91,7 @@ fun Route.smsModule(context: Context) {
     //Read SMTP config
     get("/api/sms_forward_mail") {
         val sharedPrefs =
-            context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+            context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
         val smtpHost = sharedPrefs.getString("hotbox_smtp_host", "") ?: ""
         val smtpPort = sharedPrefs.getString("hotbox_smtp_port", "") ?: ""
         val smtpTo = sharedPrefs.getString("hotbox_smtp_to", "") ?: ""
@@ -130,7 +130,7 @@ fun Route.smsModule(context: Context) {
 
             // Store to SharedPreferences
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             sharedPrefs.edit(commit = true) {
                 putString("hotbox_sms_forward_method", "CURL")
                 putString("hotbox_sms_curl", originalCurl)
@@ -163,7 +163,7 @@ fun Route.smsModule(context: Context) {
     //Read SMS forward CURL config
     get("/api/sms_forward_curl") {
         val sharedPrefs =
-            context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+            context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
 
         val curlText = sharedPrefs.getString("hotbox_sms_curl", "") ?: ""
 
@@ -184,7 +184,7 @@ fun Route.smsModule(context: Context) {
             HotboxLog.d(TAG, "SMS forward enable parameter: $enable")
 
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             sharedPrefs.edit(commit = true) {
                 putString("hotbox_sms_forward_enabled", enable)
             }
@@ -210,7 +210,7 @@ fun Route.smsModule(context: Context) {
     get("/api/sms_forward_enabled") {
         try {
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             val str = sharedPrefs.getString("hotbox_sms_forward_enabled", "0") ?: "0"
 
             call.response.headers.append("Access-Control-Allow-Origin", "*")
@@ -238,7 +238,7 @@ fun Route.smsModule(context: Context) {
             HotboxLog.d(TAG, "SMS forward enable parameter: $enable")
 
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             sharedPrefs.edit(commit = true) {
                 putString("hotbox_power_status_forward_enabled", enable)
             }
@@ -264,7 +264,7 @@ fun Route.smsModule(context: Context) {
     get("/api/power_status_forward_enabled") {
         try {
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             val str = sharedPrefs.getString("hotbox_power_status_forward_enabled", "0") ?: "0"
 
             call.response.headers.append("Access-Control-Allow-Origin", "*")
@@ -302,7 +302,7 @@ fun Route.smsModule(context: Context) {
             }
 
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             sharedPrefs.edit(commit = true) {
                 putString("hotbox_sms_forward_blacklist_phone", phone)
                 putString("hotbox_sms_forward_blacklist_keywords", keywords)
@@ -329,7 +329,7 @@ fun Route.smsModule(context: Context) {
     get("/api/sms_forward_blacklist") {
         try {
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             val keywords = sharedPrefs.getString("hotbox_sms_forward_blacklist_keywords", "") ?: ""
             val phone = sharedPrefs.getString("hotbox_sms_forward_blacklist_phone", "") ?: ""
 
@@ -371,7 +371,7 @@ fun Route.smsModule(context: Context) {
 
             // Store to SharedPreferences
             val sharedPrefs =
-                context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             sharedPrefs.edit(commit = true) {
                 putString("hotbox_sms_forward_method", "DINGTALK")
                 putString("hotbox_dingtalk_webhook", webhookUrl)
@@ -406,7 +406,7 @@ fun Route.smsModule(context: Context) {
     //Read SMS forward DingTalk config
     get("/api/sms_forward_dingtalk") {
         val sharedPrefs =
-            context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+            context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
 
         val webhookUrl = sharedPrefs.getString("hotbox_dingtalk_webhook", "") ?: ""
         val secret = sharedPrefs.getString("hotbox_dingtalk_secret", "") ?: ""

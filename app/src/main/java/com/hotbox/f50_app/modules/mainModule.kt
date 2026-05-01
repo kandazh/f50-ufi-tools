@@ -23,7 +23,7 @@ import io.ktor.server.routing.routing
 
 
 const val BASE_TAG = "UFI_TOOLS_LOG"
-const val PREFS_NAME = "kano_ZTE_store"
+const val PREFS_NAME = "Hotbox_ZTE_store"
 
 fun Application.mainModule(context: Context, proxyServerIp: String) {
     install(DefaultHeaders)

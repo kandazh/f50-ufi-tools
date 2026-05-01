@@ -43,7 +43,7 @@ object AppMeta {
     var isDefaultOrWeakToken = false
         private set
 
-    private const val PREFS_NAME = "kano_ZTE_store"
+    private const val PREFS_NAME = "Hotbox_ZTE_store"
     private const val GLOBAL_SERVER_URL_KEY = "GLOBAL_SERVER_URL"
     private val PREF_ISDEBUG = "hotbox_is_debug"
     private val PREF_WAKELOCK = "wakeLock"

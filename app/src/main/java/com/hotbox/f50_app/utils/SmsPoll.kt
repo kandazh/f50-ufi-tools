@@ -22,7 +22,7 @@ object SmsPoll {
     private var lastSms: SmsInfo? = null
 
     //store
-    private val PREFS_NAME = "kano_ZTE_store"
+    private val PREFS_NAME = "Hotbox_ZTE_store"
     private val TAG = "UFI_TOOLS_LOG_SmsPool"
 
     fun checkNewSmsAndSend(context: Context) {

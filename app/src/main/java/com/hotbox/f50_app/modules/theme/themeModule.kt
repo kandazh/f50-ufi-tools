@@ -297,7 +297,7 @@ fun Route.themeModule(context: Context) {
                 val jsonStore = jsonFull.encodeToString(config)
 
                 val sharedPref =
-                    context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+                    context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
                 sharedPref.edit(commit = true) {
                     putString("hotbox_theme", jsonStore)
                 }
@@ -324,7 +324,7 @@ fun Route.themeModule(context: Context) {
     //Read theme
     get("/api/get_theme") {
         try {
-            val sharedPref = context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+            val sharedPref = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             val hotbox_theme = sharedPref.getString("hotbox_theme", null)
             val json = try {
                 hotbox_theme?.let { JSONObject(it) }

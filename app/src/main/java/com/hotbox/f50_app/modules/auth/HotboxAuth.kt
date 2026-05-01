@@ -10,7 +10,7 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 
 object HotboxAuth {
-    val PREFS_NAME = "kano_ZTE_store"
+    val PREFS_NAME = "Hotbox_ZTE_store"
     val PREF_LOGIN_TOKEN = "login_token"
     val PREF_TOKEN_ENABLED = "login_token_enabled"
     val REQUEST_SECRET_KEY = "hotbox_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd"

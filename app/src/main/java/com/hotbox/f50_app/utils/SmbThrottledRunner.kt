@@ -15,7 +15,7 @@ import java.io.File
 object SmbThrottledRunner {
     private val running = AtomicBoolean(false)
     private val PREF_GATEWAY_IP = "gateway_ip"
-    private val PREFS_NAME = "kano_ZTE_store"
+    private val PREFS_NAME = "Hotbox_ZTE_store"
 
     fun runOnceInThread(context: Context) {
         if (running.get()) {

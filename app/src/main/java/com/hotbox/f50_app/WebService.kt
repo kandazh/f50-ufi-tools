@@ -53,7 +53,7 @@ class WebService : Service() {
         //Detect IP changes, adapt to user IP subnet changes
         HotboxUtils.adaptIPChange(applicationContext)
 
-        val prefs = getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
         val needWakeLock = prefs.getString("wakeLock", "lock") ?: "lock"
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         if(needWakeLock != "lock") {
@@ -79,7 +79,7 @@ class WebService : Service() {
     private val serverLock = Any()
 
     private fun startWebServer() {
-        val prefs = getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
         Thread {
             synchronized(serverLock) {
                 if (webServer != null) {

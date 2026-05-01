@@ -121,7 +121,7 @@ class ADBService : Service() {
     }
 
     private fun forwardMessage(message:String,title:String){
-        val sharedPrefs = getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+        val sharedPrefs = getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
         val isEnabledPowerStatusForward =
             (sharedPrefs.getString("hotbox_power_status_forward_enabled", "0") ?: "0") == "1"
         val isSMSForwardEnabled = sharedPrefs.getString("hotbox_sms_forward_enabled", "0") == "1"
@@ -158,7 +158,7 @@ class ADBService : Service() {
 
     private val runnableSMS = object : Runnable {
         override fun run() {
-            val sharedPrefs = getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+            val sharedPrefs = getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             if (sharedPrefs.getString("hotbox_sms_forward_enabled", "0") == "1") {
                 try {
                     SmsPoll.checkNewSmsAndSend(applicationContext)
