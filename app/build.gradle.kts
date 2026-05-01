@@ -101,6 +101,7 @@ android {
                 "META-INF/NOTICE.md",
                 "META-INF/NOTICE",
                 "META-INF/INDEX.LIST",
+                "META-INF/io.netty.versions.properties",
                 "dump_syms/**",
                 "assets/script_orignal/**",
                 "assets/dictionary.json",
