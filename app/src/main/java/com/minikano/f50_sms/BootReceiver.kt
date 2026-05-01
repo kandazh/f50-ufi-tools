@@ -13,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.system.exitProcess
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -24,41 +23,41 @@ class BootReceiver : BroadcastReceiver() {
             AppMeta.init(context)
             UniqueDeviceIDManager.init(context)
 
-            //check
-            val isNotUFI = DeviceModelChecker.checkIsNotUFI(context)
-            if (isNotUFI){
-                Log.d("UFI_TOOLS_LOG", "Device is not UFI/MIFI, terminating")
-                exitProcess(-999)
-            }
+            // Run all checks in background, then start services only if device is valid
+            CoroutineScope(Dispatchers.IO).launch {
+                //check
+                val isNotUFI = DeviceModelChecker.checkIsNotUFI(context)
+                if (isNotUFI){
+                    Log.d("UFI_TOOLS_LOG", "Device is not UFI/MIFI, terminating")
+                    return@launch
+                }
 
-            // Start coroutine to call suspend function
-            CoroutineScope(Dispatchers.Default).launch {
                 UniqueDeviceIDManager.init(context)
                 val isUnSupportDevice = DeviceModelChecker.checkBlackList(context)
                 Log.d("UFI_TOOLS_LOG", "Blocklist check result: $isUnSupportDevice")
 
-                withContext(Dispatchers.Main) {
-                    if (isUnSupportDevice) {
-                        // Handle unsupported device logic
-                        Log.d("UFI_TOOLS_LOG", "Unsupported device detected, terminating")
-                        exitProcess(-999)
-                    }
+                if (isUnSupportDevice) {
+                    Log.d("UFI_TOOLS_LOG", "Unsupported device detected, not starting services")
+                    return@launch
                 }
+
+                // Device is valid — start services on main thread
+                withContext(Dispatchers.Main) {
+                    val startIntent = Intent(context, WebService::class.java)
+                    startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startForegroundService(startIntent)
+                    Log.d("UFI_TOOLS_LOG", "Starting WebService")
+
+                    val startIntent_ADB = Intent(context, ADBService::class.java)
+                    startIntent_ADB.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startForegroundService(startIntent_ADB)
+                    Log.d("UFI_TOOLS_LOG", "Starting ADBService")
+                }
+
+                //Activate network ADB etc.
+                ShellKano.runADB(context)
+                Log.d("UFI_TOOLS_LOG", "Activate network ADB")
             }
-
-            val startIntent = Intent(context, WebService::class.java)
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startForegroundService(startIntent)
-            Log.d("UFI_TOOLS_LOG", "Starting WebService")
-
-            val startIntent_ADB = Intent(context, ADBService::class.java)
-            startIntent_ADB.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startForegroundService(startIntent_ADB)
-            Log.d("UFI_TOOLS_LOG", "Starting ADBService")
-
-            //Activate network ADB etc.
-            ShellKano.runADB(context)
-            Log.d("UFI_TOOLS_LOG", "Activate network ADB")
         }
     }
 }

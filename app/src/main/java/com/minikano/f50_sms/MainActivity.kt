@@ -43,7 +43,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import com.minikano.f50_sms.configs.AppMeta
 import com.minikano.f50_sms.utils.DeviceModelChecker
 import com.minikano.f50_sms.utils.KanoLog
@@ -54,7 +53,6 @@ import com.minikano.f50_sms.utils.WakeLock
 import com.minikano.f50_sms.utils.getBooleanCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.system.exitProcess
 import androidx.core.content.edit
@@ -97,46 +95,107 @@ class MainActivity : ComponentActivity() {
         //First launch init SharedPreferences
         KanoUtils.initSharedPerfs(context)
 
-        // Use coroutine async call here
-        lifecycleScope.launch {
-            UniqueDeviceIDManager.init(applicationContext)
+        // Call setContent DIRECTLY in onCreate (not inside a coroutine) to ensure
+        // LocalLifecycleOwner is properly provided by ComponentActivity.
+        setContent {
+            // Screen state: "loading", "not_ufi", "unsupported", "main"
+            var screenState by remember { mutableStateOf("loading") }
 
-            setContent {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+            // Run async checks via LaunchedEffect (safe Compose-aware coroutine)
+            LaunchedEffect(Unit) {
+                UniqueDeviceIDManager.init(applicationContext)
 
-                        CircularProgressIndicator()
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text("Loading data...", fontSize = 16.sp)
-                    }
+                val isNotUFI = withContext(Dispatchers.IO) { DeviceModelChecker.checkIsNotUFI(applicationContext) }
+                if (isNotUFI) {
+                    Toast.makeText(applicationContext, "This app can only be used on portable WiFi devices. For phones, download the phone version. Exiting...", Toast.LENGTH_LONG).show()
+                    screenState = "not_ufi"
+                    delay(4600)
+                    (context as? MainActivity)?.finishAffinity()
+                    return@LaunchedEffect
                 }
+
+                val isUnSupportDevice = withContext(Dispatchers.IO) { DeviceModelChecker.checkBlackList(applicationContext) }
+                if (isUnSupportDevice) {
+                    Toast.makeText(applicationContext, "This device is not supported, exiting...", Toast.LENGTH_LONG).show()
+                    screenState = "unsupported"
+                    delay(4600)
+                    (context as? MainActivity)?.finishAffinity()
+                    return@LaunchedEffect
+                }
+
+                // Device is valid — set up the main UI
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                requestNotificationPermissionIfNeeded()
+
+                val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (!powerManager.isIgnoringBatteryOptimizations(context.packageName)) {
+                    val batteryIntent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    batteryIntent.data = Uri.parse("package:${context.packageName}")
+                    context.startActivity(batteryIntent)
+                }
+
+                if (!hasUsageAccessPermission(context)) {
+                    val usageIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                    usageIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(usageIntent)
+                }
+
+                KanoUtils.adaptIPChange(context)
+
+                if (!isServiceRunning(WebService::class.java)) {
+                    startForegroundService(Intent(context, WebService::class.java))
+                }
+                if (!isServiceRunning(ADBService::class.java)) {
+                    startForegroundService(Intent(context, ADBService::class.java))
+                }
+
+                registerReceiver(
+                    serverStatusReceiver, IntentFilter(SERVER_INTENT),
+                    Context.RECEIVER_EXPORTED
+                )
+
+                val sf = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                AppMeta.setIsEnableLog(context, sf.getBooleanCompat(PREF_ISDEBUG, false))
+
+                runADB()
+
+                if (isSilentStart) {
+                    Toast.makeText(context, "UFI-TOOLSSilent start complete", Toast.LENGTH_SHORT).show()
+                    moveTaskToBack(true)
+                }
+
+                screenState = "main"
             }
 
-            val isNotUFI = withContext(Dispatchers.IO) { DeviceModelChecker.checkIsNotUFI(applicationContext) }
-
-            if (isNotUFI) {
-                Toast.makeText(applicationContext, "This app can only be used on portable WiFi devices. For phones, download the phone version. Exiting...", Toast.LENGTH_LONG).show()
-                setContent {
+            when (screenState) {
+                "loading" -> {
                     Card(
-                        shape = RoundedCornerShape(16.dp), // rounded corners
-                        elevation = CardDefaults.cardElevation(8.dp), // Shadow
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp) // Margin
+                            .padding(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("Loading data...", fontSize = 16.sp)
+                        }
+                    }
+                }
+                "not_ufi" -> {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
                     ) {
                         Column(
                             modifier = Modifier
@@ -151,21 +210,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                delay(4600)
-                exitProcess(-114514)
-            }
-
-            val isUnSupportDevice = withContext(Dispatchers.IO) { DeviceModelChecker.checkBlackList(applicationContext) }
-
-            if (isUnSupportDevice) {
-                Toast.makeText(applicationContext, "This device is not supported, exiting...", Toast.LENGTH_LONG).show()
-                setContent {
+                "unsupported" -> {
                     Card(
-                        shape = RoundedCornerShape(16.dp), // rounded corners
-                        elevation = CardDefaults.cardElevation(8.dp), // Shadow
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp) // Margin
+                            .padding(16.dp)
                     ) {
                         Column(
                             modifier = Modifier
@@ -184,228 +235,16 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                delay(4600)
-                exitProcess(-114514)
-            } else {
-                // Keep screen on
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-                requestNotificationPermissionIfNeeded()
-
-                // Ignore battery optimization permission
-                val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-                if (!powerManager.isIgnoringBatteryOptimizations(context.packageName)) {
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                    intent.data = Uri.parse("package:${context.packageName}")
-                    context.startActivity(intent)
-                }
-
-                //Usage access permission
-                if (!hasUsageAccessPermission(context)) {
-                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(intent)
-                }
-
-                val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-
-                //Check IP changes on each startup to adapt to user IP subnet changes
-                KanoUtils.adaptIPChange(context)
-
-                //Prevent duplicate service startup
-                if (!isServiceRunning(WebService::class.java)) {
-                    startForegroundService(Intent(context, WebService::class.java))
-                }
-                if (!isServiceRunning(ADBService::class.java)) {
-                    startForegroundService(Intent(context, ADBService::class.java))
-                }
-
-                // Register broadcast
-                registerReceiver(
-                    serverStatusReceiver, IntentFilter(SERVER_INTENT),
-                    Context.RECEIVER_EXPORTED
-                )
-
-                val sf = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                AppMeta.setIsEnableLog(context,sf.getBooleanCompat(PREF_ISDEBUG,false))
-
-                setContent {
-                    val context = this@MainActivity
-
-                    val sharedPrefs = remember {
-                        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                "main" -> {
+                    val versionName = remember {
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName
                     }
-
-                    val isServerRunning by serverStatusLiveData.observeAsState(false)
-                    var gatewayIp by remember {
-                        mutableStateOf(
-                            sharedPrefs.getString(
-                                PREF_GATEWAY_IP,
-                                "192.168.0.1:8080"
-                            ) ?: "192.168.0.1:8080"
-                        )
-                    }
-
-                    var loginToken by remember {
-                        mutableStateOf(
-                            sharedPrefs.getString(
-                                PREF_LOGIN_TOKEN,
-                                "admin"
-                            ) ?: "admin"
-                        )
-                    }
-
-                    var loginTokenInput by remember {
-                        mutableStateOf(
-                            ""
-                        )
-                    }
-
-                    var isTokenEnabled by remember {
-                        mutableStateOf(
-                            sharedPrefs.getString(
-                                PREF_TOKEN_ENABLED,
-                                true.toString()
-                            ) ?: true.toString()
-                        )
-                    }
-                    var isAutoIpEnabled by remember {
-                        mutableStateOf(
-                            sharedPrefs.getString(
-                                PREF_AUTO_IP_ENABLED,
-                                true.toString()
-                            ) ?: true.toString()
-                        )
-                    }
-
-                    var isDebugLog by remember {
-                        mutableStateOf(
-                            sharedPrefs.getBooleanCompat(
-                                PREF_ISDEBUG,
-                                false
-                            )
-                        )
-                    }
-
-                    var wakeLock by remember {
-                        mutableStateOf(
-                            sharedPrefs.getString(
-                                PREF_WAKELOCK,
-                                "lock"
-                            ) ?: "lock"
-                        )
-                    }
-
-                    if (isServerRunning) {
-                        ServerUI(
-                            serverAddress = "https://${gatewayIp.substringBefore(":")}:$port",
-                            gatewayIp,
-                            versionName = versionName ?: "unknown",
-                            onStopServer = {
-                                sendBroadcast(Intent(UI_INTENT).putExtra("status", false))
-                                Toast.makeText(context, "Stoping...", Toast.LENGTH_SHORT).show()
-                                gatewayIp = sharedPrefs.getString(
-                                            PREF_GATEWAY_IP,
-                                            "192.168.0.1:8080"
-                                        ) ?: "192.168.0.1:8080"
-
-                                loginToken = sharedPrefs.getString(
-                                            PREF_LOGIN_TOKEN,
-                                            "admin"
-                                        ) ?: "admin"
-
-                                isTokenEnabled = sharedPrefs.getString(
-                                            PREF_TOKEN_ENABLED,
-                                            true.toString()
-                                        ) ?: true.toString()
-
-                                isAutoIpEnabled = sharedPrefs.getString(
-                                            PREF_AUTO_IP_ENABLED,
-                                            true.toString()
-                                        ) ?: true.toString()
-
-                                isDebugLog = sharedPrefs.getBooleanCompat(
-                                        PREF_ISDEBUG,
-                                        false)
-
-                                wakeLock  = sharedPrefs.getString(
-                                    PREF_WAKELOCK,
-                                    "lock"
-                                ) ?: "lock"
-
-                                KanoLog.d("UFI_TOOLS_LOG", "user touched stop btn")
-                            }
-                        )
-                    } else {
-                        InputUI(
-                            gatewayIp = gatewayIp,
-                            onGatewayIpChange = { gatewayIp = it },
-                            loginToken = loginTokenInput,
-                            versionName = versionName ?: "unknown",
-                            onLoginTokenChange = {
-                                loginTokenInput = it.ifBlank {
-                                    ""
-                                }
-                            },
-                            isTokenEnabled = isTokenEnabled == true.toString(),
-                            isAutoCheckIp = isAutoIpEnabled == true.toString(),
-                            isDebug = isDebugLog == true,
-                            isWkLock = wakeLock == "lock",
-                            onTokenEnableChange = { isTokenEnabled = it.toString() },
-                            onAutoCheckIpChange = {
-                                isAutoIpEnabled = it.toString()
-                                if (it.toString() == true.toString()) {
-                                    KanoUtils.adaptIPChange(context, true) { newIp ->
-                                        gatewayIp = newIp // Update Compose state variable, UI updates immediately
-                                    }
-                                }
-                            },
-                            onDebugChange = {
-                                AppMeta.setIsEnableLog(sharedPrefs,it)
-                                isDebugLog = it
-                            },
-                            onIsWkLockChange = {
-                                wakeLock = if(it){
-                                    "lock"
-                                } else{
-                                    "unlock"
-                                }
-                            },
-                            onConfirm = {
-                                // Save and restart server
-
-                                if(!loginTokenInput.isBlank()){
-                                    sharedPrefs.edit(commit = true) {
-                                        putString(PREF_LOGIN_TOKEN,KanoUtils.sha256Hex(loginTokenInput.ifBlank { "admin" }) )
-                                        updateIsDefaultOrWeakToken(context,KanoUtils.isWeakToken(loginTokenInput.ifBlank { "admin" }))
-                                    }
-                                }
-
-                                sharedPrefs.edit(commit = true) {
-                                    putString(PREF_GATEWAY_IP, gatewayIp)
-                                    putString(PREF_TOKEN_ENABLED, isTokenEnabled)
-                                    putString(PREF_AUTO_IP_ENABLED, isAutoIpEnabled)
-                                    putString(PREF_WAKELOCK, wakeLock)
-                                }
-                                //Update wake lock
-                                if(wakeLock != "lock"){
-                                    WakeLock.releaseWakeLock()
-                                } else {
-                                    WakeLock.execWakeLock(getSystemService(Context.POWER_SERVICE) as PowerManager)
-                                }
-                                sendBroadcast(Intent(UI_INTENT).putExtra("status", true))
-                                KanoLog.d("UFI_TOOLS_LOG", "user touched start btn")
-                                runADB()
-                            }
-                        )
-                    }
-                }
-
-                runADB()
-
-                if(isSilentStart) {
-                    Toast.makeText(context, "UFI-TOOLSSilent start complete", Toast.LENGTH_SHORT).show()
-                    moveTaskToBack(true);
+                    MainContent(
+                        context = context,
+                        versionName = versionName ?: "unknown",
+                        serverStatusLiveData = serverStatusLiveData,
+                        isSilentStart = isSilentStart
+                    )
                 }
             }
         }
@@ -459,7 +298,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun runADB() {
+    fun runADB() {
         //Network ADB
         //adb setprop service.adb.tcp.port 5555
         Thread {
@@ -503,6 +342,122 @@ class MainActivity : ComponentActivity() {
             }
         }
         return false
+    }
+}
+
+@Composable
+fun MainContent(
+    context: MainActivity,
+    versionName: String,
+    serverStatusLiveData: MutableLiveData<Boolean>,
+    isSilentStart: Boolean
+) {
+    val sharedPrefs = remember {
+        context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
+    }
+
+    val isServerRunning by serverStatusLiveData.observeAsState(false)
+    var gatewayIp by remember {
+        mutableStateOf(
+            sharedPrefs.getString("gateway_ip", "192.168.0.1:8080") ?: "192.168.0.1:8080"
+        )
+    }
+
+    var loginToken by remember {
+        mutableStateOf(
+            sharedPrefs.getString("login_token", "admin") ?: "admin"
+        )
+    }
+
+    var loginTokenInput by remember { mutableStateOf("") }
+
+    var isTokenEnabled by remember {
+        mutableStateOf(
+            sharedPrefs.getString("login_token_enabled", true.toString()) ?: true.toString()
+        )
+    }
+    var isAutoIpEnabled by remember {
+        mutableStateOf(
+            sharedPrefs.getString("auto_ip_enabled", true.toString()) ?: true.toString()
+        )
+    }
+
+    var isDebugLog by remember {
+        mutableStateOf(sharedPrefs.getBooleanCompat("kano_is_debug", false))
+    }
+
+    var wakeLock by remember {
+        mutableStateOf(sharedPrefs.getString("wakeLock", "lock") ?: "lock")
+    }
+
+    if (isServerRunning) {
+        ServerUI(
+            serverAddress = "https://${gatewayIp.substringBefore(":")}:2333",
+            gatewayIp,
+            versionName = versionName,
+            onStopServer = {
+                context.sendBroadcast(Intent("com.minikano.f50_sms.UI_STATUS_CHANGED").putExtra("status", false))
+                Toast.makeText(context, "Stoping...", Toast.LENGTH_SHORT).show()
+                gatewayIp = sharedPrefs.getString("gateway_ip", "192.168.0.1:8080") ?: "192.168.0.1:8080"
+                loginToken = sharedPrefs.getString("login_token", "admin") ?: "admin"
+                isTokenEnabled = sharedPrefs.getString("login_token_enabled", true.toString()) ?: true.toString()
+                isAutoIpEnabled = sharedPrefs.getString("auto_ip_enabled", true.toString()) ?: true.toString()
+                isDebugLog = sharedPrefs.getBooleanCompat("kano_is_debug", false)
+                wakeLock = sharedPrefs.getString("wakeLock", "lock") ?: "lock"
+                KanoLog.d("UFI_TOOLS_LOG", "user touched stop btn")
+            }
+        )
+    } else {
+        InputUI(
+            gatewayIp = gatewayIp,
+            onGatewayIpChange = { gatewayIp = it },
+            loginToken = loginTokenInput,
+            versionName = versionName,
+            onLoginTokenChange = { loginTokenInput = it.ifBlank { "" } },
+            isTokenEnabled = isTokenEnabled == true.toString(),
+            isAutoCheckIp = isAutoIpEnabled == true.toString(),
+            isDebug = isDebugLog == true,
+            isWkLock = wakeLock == "lock",
+            onTokenEnableChange = { isTokenEnabled = it.toString() },
+            onAutoCheckIpChange = {
+                isAutoIpEnabled = it.toString()
+                if (it.toString() == true.toString()) {
+                    KanoUtils.adaptIPChange(context, true) { newIp ->
+                        gatewayIp = newIp
+                    }
+                }
+            },
+            onDebugChange = {
+                AppMeta.setIsEnableLog(sharedPrefs, it)
+                isDebugLog = it
+            },
+            onIsWkLockChange = {
+                wakeLock = if (it) "lock" else "unlock"
+            },
+            onConfirm = {
+                if (loginTokenInput.isNotBlank()) {
+                    sharedPrefs.edit(commit = true) {
+                        putString("login_token", KanoUtils.sha256Hex(loginTokenInput.ifBlank { "admin" }))
+                        AppMeta.updateIsDefaultOrWeakToken(context, KanoUtils.isWeakToken(loginTokenInput.ifBlank { "admin" }))
+                    }
+                }
+
+                sharedPrefs.edit(commit = true) {
+                    putString("gateway_ip", gatewayIp)
+                    putString("login_token_enabled", isTokenEnabled)
+                    putString("auto_ip_enabled", isAutoIpEnabled)
+                    putString("wakeLock", wakeLock)
+                }
+                if (wakeLock != "lock") {
+                    WakeLock.releaseWakeLock()
+                } else {
+                    WakeLock.execWakeLock(context.getSystemService(Context.POWER_SERVICE) as PowerManager)
+                }
+                context.sendBroadcast(Intent("com.minikano.f50_sms.UI_STATUS_CHANGED").putExtra("status", true))
+                KanoLog.d("UFI_TOOLS_LOG", "user touched start btn")
+                context.runADB()
+            }
+        )
     }
 }
 

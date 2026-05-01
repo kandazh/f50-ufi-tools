@@ -13,11 +13,10 @@ ktorServerNetty = "2.3.9"
 ktorServerCore = "2.3.9"
 ktorServerDefaultHeaders = "2.3.9"
 lifecycleRuntimeKtx = "2.6.2"
-activityCompose = "1.8.0"
+activityCompose = "1.9.0"
 composeBom = "2024.04.01"
 appcompat = "1.7.0"
 okhttp = "4.12.0"
-firebaseCrashlyticsBuildtools = "3.0.3"
 
 [libraries]
 android-activation = { module = "com.sun.mail:android-activation", version.ref = "androidMail" }
@@ -45,7 +44,6 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktorS
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktorServerCore" }
 ktor-server-default-headers = { module = "io.ktor:ktor-server-default-headers", version.ref = "ktorServerDefaultHeaders" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
-firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
