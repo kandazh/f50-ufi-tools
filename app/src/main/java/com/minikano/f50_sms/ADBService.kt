@@ -34,7 +34,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class ADBService : Service() {
-    private lateinit var runnable: Runnable
     private lateinit var handlerThread: HandlerThread
     private lateinit var handler: Handler
     private val adbExecutor = Executors.newSingleThreadExecutor()
@@ -42,7 +41,7 @@ class ADBService : Service() {
     private var disableFOTATimes = 3
 
     private  val TAG = "UFI_TOOLS_LOG_ADBService"
-    private lateinit var batteryReceiver: BatteryReceiver
+    private var batteryReceiver: BatteryReceiver? = null
 
     companion object {
         @Volatile
@@ -322,8 +321,12 @@ class ADBService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         handlerThread.quitSafely()
-        handler.removeCallbacks(runnable)
-        unregisterReceiver(batteryReceiver)
+        handler.removeCallbacksAndMessages(null)
+        adbExecutor.shutdownNow()
+        iperfExecutor.shutdownNow()
+        batteryReceiver?.let {
+            try { unregisterReceiver(it) } catch (_: Exception) {}
+        }
         TaskSchedulerManager.scheduler?.stop()
     }
 

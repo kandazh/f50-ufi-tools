@@ -10,12 +10,15 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.BatteryManager
+import android.os.Handler
+import android.os.Looper
 import android.os.StatFs
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import com.minikano.f50_sms.ADBService.Companion.isExecutingDisabledFOTA
 import com.minikano.f50_sms.modules.deviceInfo.MyStorageInfo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import java.io.File
@@ -431,23 +434,29 @@ class KanoUtils {
                 KanoLog.d("UFI_TOOLS_LOG", "Auto-detect IP gateway: $currentIp")
                 if (currentIp == null) {
                     KanoLog.d("UFI_TOOLS_LOG", "Auto-detect IP gateway failed")
-                    Toast.makeText(context, "Auto-detect IP gateway failed...", Toast.LENGTH_SHORT).show()
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(context, "Auto-detect IP gateway failed...", Toast.LENGTH_SHORT).show()
+                    }
                     return
                 }
                 if ((currentIp != ip_add) || userTouched) {
                     if (userTouched) {
                         KanoLog.d("UFI_TOOLS_LOG", "User clicked, auto-detect IP gateway")
-                        Toast.makeText(context, "Auto-detect IP gateway~", Toast.LENGTH_SHORT).show()
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(context, "Auto-detect IP gateway~", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
                         KanoLog.d(
                             "UFI_TOOLS_LOG",
                             "Local IP gateway change detected, auto-changing to: $currentIp"
                         )
-                        Toast.makeText(
-                            context,
-                            "Local IP gateway change detected, auto-changing to: $currentIp",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(
+                                context,
+                                "Local IP gateway change detected, auto-changing to: $currentIp",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                     prefs.edit(commit = true) { putString("gateway_ip", currentIp) }
                     if (currentIp != null) {
@@ -463,7 +472,7 @@ class KanoUtils {
 
         private fun isADBEnabled(context: Context): Boolean {
             return try {
-                runBlocking {
+                runBlocking(Dispatchers.IO) {
                     val sharedPrefs =
                         context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
                     val ADB_IP =
@@ -833,7 +842,7 @@ class KanoUtils {
             val now = System.currentTimeMillis()
             if (now - lastMonthlyFlowUpdate > 10_000) { // Update every 10 seconds
                try {
-                    runBlocking {
+                    runBlocking(Dispatchers.IO) {
                         val sharedPrefs =
                             context.getSharedPreferences("kano_ZTE_store", Context.MODE_PRIVATE)
                         val ADB_IP =
@@ -863,7 +872,7 @@ class KanoUtils {
         fun buildStatusSmsMsg(text:String,context: Context,TAG:String): String {
             if(text.isBlank()) return text
             var replacedCurl = text
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 try {
                     val templates = listOf<String>(
                         "{{cpu-usage}}" ,

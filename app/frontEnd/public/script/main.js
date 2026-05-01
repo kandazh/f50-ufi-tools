@@ -4791,7 +4791,7 @@ function main_func() {
             if (res.result == 'success') {
                 createToast(t('toast_set_success_reboot'), 'green')
                 setTimeout(() => {
-                    let newURL = 'https://' + data.lanIp + ':2333'
+                    let newURL = window.location.protocol + '//' + data.lanIp + ':2333'
                     window.location.href = newURL
                 }, 30000);
             } else {

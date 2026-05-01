@@ -4,6 +4,7 @@ import android.content.Context
 import com.minikano.f50_sms.modules.mainModule
 import com.minikano.f50_sms.utils.KanoLog
 import io.ktor.server.engine.applicationEngineEnvironment
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
@@ -16,25 +17,45 @@ class KanoWebServer(private val context: Context, port: Int, private val proxySe
         private val running = AtomicBoolean(false)
         private const val KEYSTORE_PASSWORD = "changeit"
         private const val KEY_ALIAS = "ufi-tools"
+        private const val TAG = "UFI_TOOLS_LOG"
     }
 
     private val server = run {
-        val keyStore = KeyStore.getInstance("PKCS12").apply {
-            context.assets.open("certs/ssl.p12").use { stream ->
-                load(stream, KEYSTORE_PASSWORD.toCharArray())
-            }
-        }
-
         val environment = applicationEngineEnvironment {
-            sslConnector(
-                keyStore = keyStore,
-                keyAlias = KEY_ALIAS,
-                keyStorePassword = { KEYSTORE_PASSWORD.toCharArray() },
-                privateKeyPassword = { KEYSTORE_PASSWORD.toCharArray() }
-            ) {
-                this.port = port
-                host = "0.0.0.0"
+            // Try loading SSL keystore
+            var sslLoaded = false
+            try {
+                val keyStore = KeyStore.getInstance("PKCS12").apply {
+                    context.assets.open("certs/ssl.p12").use { stream ->
+                        load(stream, KEYSTORE_PASSWORD.toCharArray())
+                    }
+                }
+                // Use first available alias (Windows exports use thumbprint as alias)
+                val alias = keyStore.aliases().toList().firstOrNull { keyStore.isKeyEntry(it) }
+                    ?: KEY_ALIAS
+                sslConnector(
+                    keyStore = keyStore,
+                    keyAlias = alias,
+                    keyStorePassword = { KEYSTORE_PASSWORD.toCharArray() },
+                    privateKeyPassword = { KEYSTORE_PASSWORD.toCharArray() }
+                ) {
+                    this.port = port
+                    host = "0.0.0.0"
+                }
+                sslLoaded = true
+                KanoLog.d(TAG, "SSL keystore loaded successfully, alias=$alias")
+            } catch (e: Exception) {
+                KanoLog.e(TAG, "SSL keystore failed: ${e.message}, falling back to HTTP")
             }
+
+            // Fallback to plain HTTP if SSL failed
+            if (!sslLoaded) {
+                connector {
+                    this.port = port
+                    host = "0.0.0.0"
+                }
+            }
+
             module {
                 mainModule(context, proxyServerIp)
             }

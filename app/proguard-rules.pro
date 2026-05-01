@@ -78,6 +78,18 @@
 # -------- junixsocket annotations --------
 -dontwarn com.kohlschutter.annotations.compiletime.SuppressFBWarnings
 -dontwarn com.kohlschutter.annotations.compiletime.ExcludeFromCodeCoverageGeneratedReport
+
+# -------- Jetpack Compose --------
+-keep class androidx.compose.** { *; }
+-dontwarn androidx.compose.**
+
+# -------- AndroidX Lifecycle (critical for LocalLifecycleOwner) --------
+-keep class androidx.lifecycle.** { *; }
+-dontwarn androidx.lifecycle.**
+
+# -------- Activity Compose (provides LocalLifecycleOwner to setContent) --------
+-keep class androidx.activity.compose.** { *; }
+-keep class androidx.activity.ComponentActivity { *; }
 -dontwarn org.eclipse.jdt.annotation.NonNullByDefault
 -dontwarn java.rmi.server.RemoteServer
 

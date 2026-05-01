@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
@@ -50,7 +49,6 @@ class WebService : Service() {
         AppMeta.init(this)
         // Call once to initialize when Application or Activity starts:
         UniqueDeviceIDManager.init(this)
-        startForegroundNotification()
 
         //Detect IP changes, adapt to user IP subnet changes
         KanoUtils.adaptIPChange(applicationContext)
@@ -68,6 +66,8 @@ class WebService : Service() {
 
         // Register broadcast receiver
         registerReceiver(statusReceiver, IntentFilter(UI_INTENT), Context.RECEIVER_EXPORTED)
+
+        // Single startForeground call with one notification
         startForeground(114514, createNotification())
 
         allowAutoReStart = true
@@ -83,23 +83,23 @@ class WebService : Service() {
         Thread {
             synchronized(serverLock) {
                 if (webServer != null) {
-                    sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", true))
+                    sendBroadcast(Intent(SERVER_INTENT).putExtra("status", true))
                     return@synchronized
                 }
 
                 val currentIp = prefs.getString("gateway_ip", "0.0.0.0:8080") ?: "0.0.0.0:8080"
                 allowAutoStart = true
                 try {
-                    Log.d("UFI_TOOLS_LOG", "Starting web service, binding to: https://0.0.0.0:$port")
+                    Log.d("UFI_TOOLS_LOG", "Starting web service, binding to: 0.0.0.0:$port")
                     val server = KanoWebServer(applicationContext, 2333, currentIp)
                     server.start()
                     webServer = server
-                    sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", true))
-                    Log.d("UFI_TOOLS_LOG", "Service started successfully, address: https://0.0.0.0:$port")
+                    sendBroadcast(Intent(SERVER_INTENT).putExtra("status", true))
+                    Log.d("UFI_TOOLS_LOG", "Service started successfully, address: 0.0.0.0:$port")
                 } catch (fallbackEx: Exception) {
                     webServer = null
                     Log.e("UFI_TOOLS_LOG", "Service start failed: ${fallbackEx.message}")
-                    sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
+                    sendBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
                 }
             }
         }.start()
@@ -112,14 +112,14 @@ class WebService : Service() {
                 allowAutoReStart = false
 
                 val server = webServer ?: run {
-                    sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
+                    sendBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
                     return@synchronized
                 }
 
                 try {
                     server.stop()
                     webServer = null
-                    sendStickyBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
+                    sendBroadcast(Intent(SERVER_INTENT).putExtra("status", false))
                     Log.d("UFI_TOOLS_LOG", "Web server stopped")
                 } catch (e: Exception) {
                     Log.e("UFI_TOOLS_LOG", "Failed to stop service: ${e.message}", e)
@@ -151,22 +151,4 @@ class WebService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
-
-    private fun startForegroundNotification() {
-        val channelId = "running_service"
-        val channelName = "Server status"
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val chan =
-                NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(chan)
-        }
-
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground).setOngoing(true).build()
-
-        startForeground(1, notification)
-        Log.d("UFI_TOOLS_LOG", "Notification established")
-    }
 }

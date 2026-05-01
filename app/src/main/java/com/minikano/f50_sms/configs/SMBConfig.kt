@@ -6,8 +6,11 @@ import java.io.File
 import java.io.IOException
 
 object SMBConfig {
-    fun writeConfig(context: Context,command:String = "/system/bin/sh /data/data/com.minikano.f50_sms/files/samba_exec.sh"): String? {
-        val model = Build.MODEL
+    private val ALLOWED_COMMAND = "/system/bin/sh /data/data/com.minikano.f50_sms/files/samba_exec.sh"
+
+    fun writeConfig(context: Context): String? {
+        // Sanitize model name: only allow alphanumeric, space, dash, underscore
+        val model = Build.MODEL.replace(Regex("[^a-zA-Z0-9 _\\-]"), "_")
         val fileName = "smb.conf"
         val presetString = """[global]
     workgroup = SAMBA
@@ -16,7 +19,7 @@ object SMBConfig {
     security = user
     passdb backend = smbpasswd:/data/samba/etc/smbpasswd
     map to guest = bad user
-    root preexec = $command
+    root preexec = $ALLOWED_COMMAND
 
 [$model]
     comment = Android Server
