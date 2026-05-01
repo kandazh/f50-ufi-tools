@@ -23,6 +23,29 @@ start_adguardhome() {
     fi
   fi
 
+  # Ensure default routes exist (ZTE firmware may drop them)
+  if ! ip route show default 2>/dev/null | grep -q "default"; then
+    local wan_iface
+    wan_iface=$(ip link show 2>/dev/null | awk -F: '/sipa_eth[0-9]+.*UP/{gsub(/ /,"",$2); print $2; exit}')
+    local clat_iface
+    clat_iface=$(ip link show 2>/dev/null | awk -F: '/v4-sipa_eth[0-9]+.*UP/{gsub(/ /,"",$2); print $2; exit}')
+    if [ -n "$clat_iface" ]; then
+      ip route add default dev "$clat_iface" 2>/dev/null
+      log "Restored IPv4 default route via $clat_iface"
+    fi
+    if [ -n "$wan_iface" ]; then
+      ip -6 route add default dev "$wan_iface" 2>/dev/null
+      log "Restored IPv6 default route via $wan_iface"
+    fi
+  elif ! ip -6 route show default 2>/dev/null | grep -q "default"; then
+    local wan_iface
+    wan_iface=$(ip link show 2>/dev/null | awk -F: '/sipa_eth[0-9]+.*UP/{gsub(/ /,"",$2); print $2; exit}')
+    if [ -n "$wan_iface" ]; then
+      ip -6 route add default dev "$wan_iface" 2>/dev/null
+      log "Restored IPv6 default route via $wan_iface"
+    fi
+  fi
+
   # Check if binary exists
   if [ ! -f "$BIN_DIR/AdGuardHome" ]; then
     log "AdGuardHome binary not found at $BIN_DIR/AdGuardHome"
