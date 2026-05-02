@@ -342,6 +342,7 @@ app.use('/api/connInfo', (req, res) => {
 app.use('/api/version_info', (req, res) => {
   res.json({
     app_ver: '4.0.0',
+    build_timestamp: new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata', hour12: false }).slice(0, 16),
     model: 'F50',
     nickname: 'F50',
     wa_inner_version: 'MU300_ZYV1.0.0B13'

@@ -56,6 +56,15 @@ class HotboxWebServer(private val context: Context, port: Int, private val proxy
                 }
             }
 
+            // Also add plain HTTP connector so http:// always works
+            if (sslLoaded) {
+                connector {
+                    this.port = port + 1
+                    host = "0.0.0.0"
+                }
+                HotboxLog.d(TAG, "HTTP also available on port ${port + 1}")
+            }
+
             module {
                 mainModule(context, proxyServerIp)
             }

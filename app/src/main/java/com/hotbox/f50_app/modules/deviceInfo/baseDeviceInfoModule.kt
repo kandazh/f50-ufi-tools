@@ -141,6 +141,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
             {
                 "app_ver": "${AppMeta.versionName}",
                 "app_ver_code": "${AppMeta.versionCode}",
+                "build_timestamp": "${AppMeta.buildTimestamp}",
                 "model": "${AppMeta.model}",
                 "battery": "$batteryLevel",
                 "daily_data": $dailyData,
@@ -283,6 +284,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
             {
                 "app_ver": "${AppMeta.versionName}",
                 "app_ver_code": "${AppMeta.versionCode}",
+                "build_timestamp": "${AppMeta.buildTimestamp}",
                 "model":"${AppMeta.model}",
                 "nickname":"${AppMeta.nickName}",
                 "accept_terms":${AppMeta.isReadUseTerms}

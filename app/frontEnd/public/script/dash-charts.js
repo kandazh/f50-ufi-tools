@@ -954,10 +954,10 @@
                             '<rect x="18" y="10" width="2" height="4" rx="0.5" fill="currentColor" stroke="none" opacity="0.4"/>' +
                         '</svg>' +
                         '<span class="device-badge-name">' + displayName + '</span>' +
-                        '<span class="device-badge-ver">v' + (j.app_ver || '') + '</span>' +
+                        '<span class="device-badge-ver">v' + (j.app_ver || '') + (j.build_timestamp ? ' (' + j.build_timestamp + ')' : '') + '</span>' +
                     '</span>';
                 var titleEl = document.getElementById('TITLE');
-                if (titleEl) titleEl.innerHTML = '[' + displayName + '] v' + (j.app_ver || '');
+                if (titleEl) titleEl.innerHTML = '[' + displayName + '] v' + (j.app_ver || '') + (j.build_timestamp ? ' (' + j.build_timestamp + ')' : '');
             }
         } catch (e) { /* silent */ }
     })();

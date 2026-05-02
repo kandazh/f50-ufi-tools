@@ -1,6 +1,7 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.TimeZone
 
 plugins {
     alias(libs.plugins.android.application)
@@ -71,6 +72,7 @@ android {
         versionCode = SimpleDateFormat("yyyyMMdd").format(Date()).toInt()
         versionName = "4.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "BUILD_TIMESTAMP", "\"${SimpleDateFormat("yyyy-MM-dd HH:mm").apply { timeZone = TimeZone.getTimeZone("Asia/Kolkata") }.format(Date())}\"")
     }
 
     buildTypes {
@@ -92,6 +94,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {

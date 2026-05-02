@@ -3086,7 +3086,7 @@ function main_func() {
     // title
     const loadTitle = async () => {
         try {
-            const { app_ver, model, nickname } = await (await fetch(`${HOTBOX_baseURL}/version_info`, { headers: common_headers })).json()
+            const { app_ver, build_timestamp, model, nickname } = await (await fetch(`${HOTBOX_baseURL}/version_info`, { headers: common_headers })).json()
             const displayName = (model == nickname || !nickname) ? model : `${model} (${nickname})`;
             MODEL.style.display = 'none';
             document.querySelector('#MAIN_TITLE').innerHTML =
@@ -3104,9 +3104,9 @@ function main_func() {
                         `<rect x="18" y="10" width="2" height="4" rx="0.5" fill="currentColor" stroke="none" opacity="0.4"/>` +
                     `</svg>` +
                     `<span class="device-badge-name">${displayName}</span>` +
-                    `<span class="device-badge-ver">v${app_ver}</span>` +
+                    `<span class="device-badge-ver">v${app_ver}` + (build_timestamp ? ` (${build_timestamp})` : '') + `</span>` +
                 `</span>`;
-            document.querySelector('#TITLE').innerHTML = `[${displayName}] v${app_ver}`
+            document.querySelector('#TITLE').innerHTML = `[${displayName}] v${app_ver}` + (build_timestamp ? ` (${build_timestamp})` : '')
         } catch {/* not found, ignore */ }
     }
     loadTitle()

@@ -20,6 +20,9 @@ object AppMeta {
 
     var versionCode: Int = 0
         private set
+
+    var buildTimestamp: String = "unknown"
+        private set
     var model: String = Build.MODEL
         private set
 
@@ -117,6 +120,7 @@ object AppMeta {
 
             val pkgInfo = context.applicationContext.packageManager.getPackageInfo(context.packageName, 0)
             versionName = pkgInfo.versionName.toString()
+            buildTimestamp = com.hotbox.f50_app.BuildConfig.BUILD_TIMESTAMP
 
             @Suppress("DEPRECATION")
             versionCode = pkgInfo.versionCode
