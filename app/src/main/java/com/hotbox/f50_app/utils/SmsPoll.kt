@@ -309,7 +309,16 @@ object SmsPoll {
                 )
             }
 
-            val body = "SMS from ${sms_data.address}\nTime: $smsTime\n${sms_data.body}$statusText"
+            // Use user-defined format template, or fallback
+            val smsFormat = sharedPrefs.getString("hotbox_sms_format", "") ?: ""
+            val body = if (smsFormat.isNotEmpty()) {
+                smsFormat
+                    .replace("{{from}}", sms_data.address)
+                    .replace("{{time}}", smsTime)
+                    .replace("{{body}}", sms_data.body) + statusText
+            } else {
+                "SMS from ${sms_data.address}\nTime: $smsTime\n${sms_data.body}$statusText"
+            }
 
             sendSmsViaGoform(body, forwardNumber, ADB_IP, ADMIN_PWD)
         } catch (e: Exception) {
@@ -341,7 +350,15 @@ object SmsPoll {
                 .withZone(ZoneId.systemDefault())
             val timeStr = formatter.format(Instant.ofEpochMilli(callTime))
 
-            val body = "Call from $callerNumber\nTime: $timeStr"
+            // Use user-defined call format template, or fallback
+            val callFormat = sharedPrefs.getString("hotbox_call_format", "") ?: ""
+            val body = if (callFormat.isNotEmpty()) {
+                callFormat
+                    .replace("{{from}}", callerNumber)
+                    .replace("{{time}}", timeStr)
+            } else {
+                "Call from $callerNumber\nTime: $timeStr"
+            }
 
             sendSmsViaGoform(body, forwardNumber, ADB_IP, ADMIN_PWD)
         } catch (e: Exception) {

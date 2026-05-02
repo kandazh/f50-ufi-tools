@@ -1217,6 +1217,62 @@ function main_func() {
                         if (elUl)  elUl.textContent  = '--';
                     }
                 }
+
+                // Update Current Cell box (progress bar style)
+                const ccBand = document.getElementById('cc-band');
+                const ccFreq = document.getElementById('cc-freq');
+                if (ccBand) ccBand.textContent = band;
+                if (ccFreq) ccFreq.textContent = freq;
+
+                const ccRsrp = document.getElementById('cc-rsrp');
+                const ccSinr = document.getElementById('cc-sinr');
+                const ccRsrq = document.getElementById('cc-rsrq');
+                const ccRsrpFill = document.getElementById('cc-rsrp-fill');
+                const ccSinrFill = document.getElementById('cc-sinr-fill');
+                const ccRsrqFill = document.getElementById('cc-rsrq-fill');
+
+                const rsrpVal = res.lte_rsrp != null ? parseFloat(res.lte_rsrp) : null;
+                const sinrVal = res.Nr_snr != null ? parseFloat(res.Nr_snr) : (res.Lte_snr != null ? parseFloat(res.Lte_snr) : null);
+                const rsrqVal = res.lte_rsrq != null ? parseFloat(res.lte_rsrq) : null;
+
+                // RSRP: -125 to -81 dBm range
+                if (ccRsrp) ccRsrp.textContent = rsrpVal != null ? rsrpVal + ' dBm' : '--';
+                if (ccRsrpFill) {
+                    const rsrpPct = rsrpVal != null ? Math.min(100, Math.max(0, ((rsrpVal + 125) / 44) * 100)) : 0;
+                    ccRsrpFill.style.width = rsrpPct + '%';
+                    ccRsrpFill.classList.remove('level-strong','level-medium','level-weak');
+                    if (rsrpVal != null) ccRsrpFill.classList.add(rsrpVal >= -90 ? 'level-strong' : rsrpVal >= -100 ? 'level-medium' : 'level-weak');
+                }
+
+                // SINR: -10 to 13 dB range
+                if (ccSinr) ccSinr.textContent = sinrVal != null ? sinrVal + ' dB' : '--';
+                if (ccSinrFill) {
+                    const sinrPct = sinrVal != null ? Math.min(100, Math.max(0, ((sinrVal + 10) / 23) * 100)) : 0;
+                    ccSinrFill.style.width = sinrPct + '%';
+                    ccSinrFill.classList.remove('level-strong','level-medium','level-weak');
+                    if (sinrVal != null) ccSinrFill.classList.add(sinrVal >= 13 ? 'level-strong' : sinrVal > 0 ? 'level-medium' : 'level-weak');
+                }
+
+                // RSRQ: -20 to -3 dB range
+                if (ccRsrq) ccRsrq.textContent = rsrqVal != null ? rsrqVal + ' dB' : '--';
+                if (ccRsrqFill) {
+                    const rsrqPct = rsrqVal != null ? Math.min(100, Math.max(0, ((rsrqVal + 20) / 17) * 100)) : 0;
+                    ccRsrqFill.style.width = rsrqPct + '%';
+                    ccRsrqFill.classList.remove('level-strong','level-medium','level-weak');
+                    if (rsrqVal != null) ccRsrqFill.classList.add(rsrqVal >= -7 ? 'level-strong' : rsrqVal >= -12 ? 'level-medium' : 'level-weak');
+                }
+
+                // RSSI: -110 to -25 dBm range
+                const ccRssi = document.getElementById('cc-rssi');
+                const ccRssiFill = document.getElementById('cc-rssi-fill');
+                const rssiVal = res.lte_rssi != null ? parseFloat(res.lte_rssi) : null;
+                if (ccRssi) ccRssi.textContent = rssiVal != null ? rssiVal + ' dBm' : '--';
+                if (ccRssiFill) {
+                    const rssiPct = rssiVal != null ? Math.min(100, Math.max(0, ((rssiVal + 110) / 85) * 100)) : 0;
+                    ccRssiFill.style.width = rssiPct + '%';
+                    ccRssiFill.classList.remove('level-strong','level-medium','level-weak');
+                    if (rssiVal != null) ccRssiFill.classList.add(rssiVal >= -65 ? 'level-strong' : rssiVal >= -85 ? 'level-medium' : 'level-weak');
+                }
             }
 
             // Update row 5 cards (Battery, Data Usage, Storage)
