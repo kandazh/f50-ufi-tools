@@ -1,6 +1,7 @@
 /**
  * Band Lock Panel — Lock/unlock LTE & NR bands
  * Chip-based UI for band selection.
+ * API: goformId LTE_BAND_LOCK / NR_BAND_LOCK, then REBOOT_DEVICE
  */
 (function () {
   var panel = document.querySelector('[data-ctrl-panel="band_lock"]');
@@ -40,13 +41,14 @@
 
   var currentFilter = 'all';
 
-  // Build chip grid
+  // Build chip grid — always renders ALL chips, uses CSS to filter visibility
   function buildChips() {
     var html = '';
-    var types = currentFilter === 'all' ? ['4G', '5G'] : [currentFilter];
-    types.forEach(function (type) {
-      html += '<div class="band-group-label">' + (type === '4G' ? '4G LTE' : '5G NR') + '</div>';
-      html += '<div class="band-chip-grid">';
+    ['4G', '5G'].forEach(function (type) {
+      var hidden = currentFilter !== 'all' && currentFilter !== type;
+      html += '<div class="band-group-label"' + (hidden ? ' style="display:none"' : '') + ' data-group="' + type + '">' +
+        (type === '4G' ? '4G LTE' : '5G NR') + '</div>';
+      html += '<div class="band-chip-grid"' + (hidden ? ' style="display:none"' : '') + ' data-group="' + type + '">';
       BANDS[type].forEach(function (b) {
         html += '<div class="band-chip" data-type="' + type + '" data-band="' + b.band + '">' +
           '<span class="band-chip-name">' + b.name + '</span>' +
@@ -57,6 +59,17 @@
     });
     chipContainer.innerHTML = html;
     bindChipClicks();
+    updateCount();
+  }
+
+  // Apply filter visibility without rebuilding chips (preserves selection state)
+  function applyFilter() {
+    ['4G', '5G'].forEach(function (type) {
+      var hidden = currentFilter !== 'all' && currentFilter !== type;
+      chipContainer.querySelectorAll('[data-group="' + type + '"]').forEach(function (el) {
+        el.style.display = hidden ? 'none' : '';
+      });
+    });
     updateCount();
   }
 
@@ -76,28 +89,31 @@
     countEl.textContent = selected + '/' + total + ' locked';
   }
 
-  // Select / Clear all
+  // Select / Clear all (only affects visible chips)
   if (selectAllBtn) {
     selectAllBtn.addEventListener('click', function () {
-      chipContainer.querySelectorAll('.band-chip').forEach(function (c) { c.classList.add('selected'); });
+      chipContainer.querySelectorAll('.band-chip').forEach(function (c) {
+        if (c.offsetParent !== null) c.classList.add('selected');
+      });
       updateCount();
     });
   }
   if (clearAllBtn) {
     clearAllBtn.addEventListener('click', function () {
-      chipContainer.querySelectorAll('.band-chip').forEach(function (c) { c.classList.remove('selected'); });
+      chipContainer.querySelectorAll('.band-chip').forEach(function (c) {
+        if (c.offsetParent !== null) c.classList.remove('selected');
+      });
       updateCount();
     });
   }
 
-  // Filter buttons
+  // Filter buttons — toggle visibility without destroying DOM
   filterBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
       filterBtns.forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       currentFilter = btn.dataset.bandFilter;
-      buildChips();
-      loadLockedBands();
+      applyFilter();
     });
   });
 
@@ -106,12 +122,8 @@
     statusEl.textContent = 'Loading...';
     statusEl.style.color = '#94a3b8';
     try {
-      if (typeof initRequestData === 'function' && !(await initRequestData())) {
-        statusEl.textContent = 'Not connected';
-        statusEl.style.color = '#f87171';
-        return;
-      }
-      var res = await getData(new URLSearchParams({ cmd: 'lte_band_lock,nr_band_lock' }));
+      var params = new URLSearchParams({ cmd: 'lte_band_lock,nr_band_lock', multi_data: '1' });
+      var res = await getData(params);
       if (!res) {
         statusEl.textContent = 'No data';
         statusEl.style.color = '#f87171';
@@ -122,13 +134,13 @@
 
       if (res['lte_band_lock']) {
         res['lte_band_lock'].split(',').forEach(function (band) {
-          var chip = chipContainer.querySelector('.band-chip[data-type="4G"][data-band="' + band + '"]');
+          var chip = chipContainer.querySelector('.band-chip[data-type="4G"][data-band="' + band.trim() + '"]');
           if (chip) chip.classList.add('selected');
         });
       }
       if (res['nr_band_lock']) {
         res['nr_band_lock'].split(',').forEach(function (band) {
-          var chip = chipContainer.querySelector('.band-chip[data-type="5G"][data-band="' + band + '"]');
+          var chip = chipContainer.querySelector('.band-chip[data-type="5G"][data-band="' + band.trim() + '"]');
           if (chip) chip.classList.add('selected');
         });
       }
@@ -141,7 +153,7 @@
     }
   }
 
-  // Lock selected bands
+  // Lock selected bands (always sends BOTH 4G and 5G from all chips in DOM)
   async function applyBandLock() {
     var lteBands = [];
     var nrBands = [];
@@ -160,17 +172,27 @@
         showCtrlToast('Login failed', 'error');
         return;
       }
-      var results = await Promise.all([
-        (await postData(cookie, { goformId: 'LTE_BAND_LOCK', lte_band_lock: lteBands.join(',') })).json(),
-        (await postData(cookie, { goformId: 'NR_BAND_LOCK', nr_band_lock: nrBands.join(',') })).json()
-      ]);
-      if (results[0].result === 'success' || results[1].result === 'success') {
-        showCtrlToast('Bands locked successfully! Restarting network...');
-        if (typeof networkStackSwitch === 'function') {
-          await networkStackSwitch(false);
-          await new Promise(function (r) { setTimeout(r, 300); });
-          await networkStackSwitch(true);
-        }
+      // Send LTE band lock
+      var lteRes = await (await postData(cookie, {
+        goformId: 'LTE_BAND_LOCK',
+        lte_band_lock: lteBands.join(',')
+      })).json();
+
+      // Send NR band lock
+      var nrRes = await (await postData(cookie, {
+        goformId: 'NR_BAND_LOCK',
+        nr_band_lock: nrBands.join(',')
+      })).json();
+
+      var lteOk = lteRes && lteRes.result === 'success';
+      var nrOk = nrRes && nrRes.result === 'success';
+
+      if (lteOk || nrOk) {
+        showCtrlToast('Bands locked! Device will restart to apply changes.');
+        // Reboot device like the real firmware does after band lock
+        try {
+          await postData(cookie, { goformId: 'REBOOT_DEVICE' });
+        } catch (e) { /* reboot may drop connection */ }
       } else {
         showCtrlToast('Failed to lock bands', 'error');
       }
@@ -179,11 +201,12 @@
     } finally {
       lockBtn.disabled = false;
       lockBtn.textContent = 'Apply';
-      loadLockedBands();
+      // Reload after a short delay (device may be rebooting)
+      setTimeout(function () { loadLockedBands(); }, 2000);
     }
   }
 
-  // Unlock all bands
+  // Unlock all bands — select all chips then apply
   async function unlockAllBands() {
     chipContainer.querySelectorAll('.band-chip').forEach(function (c) { c.classList.add('selected'); });
     updateCount();

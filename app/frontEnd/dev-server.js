@@ -129,6 +129,9 @@ const toggleState = {
   },
   // LAN settings
   lan_ipaddr: '192.168.0.1',
+  // Band lock state
+  lte_band_lock: '1,3,5,8,34,38,39,40,41',
+  nr_band_lock: '1,5,8,28,41,78',
   lan_netmask: '255.255.255.0',
   dhcpEnabled: '1',
   dhcpStart: '192.168.0.100',
@@ -690,6 +693,20 @@ app.use('/api/goform', (req, res) => {
           if (mac && hostname) toggleState.hostname_overrides[mac] = hostname;
           console.log('EDIT_HOSTNAME:', mac, '->', hostname);
         }
+        if (goformId === 'LTE_BAND_LOCK') {
+          toggleState.lte_band_lock = params.get('lte_band_lock') || '';
+          console.log('LTE_BAND_LOCK:', toggleState.lte_band_lock);
+          return res.json({ result: 'success' });
+        }
+        if (goformId === 'NR_BAND_LOCK') {
+          toggleState.nr_band_lock = params.get('nr_band_lock') || '';
+          console.log('NR_BAND_LOCK:', toggleState.nr_band_lock);
+          return res.json({ result: 'success' });
+        }
+        if (goformId === 'REBOOT_DEVICE') {
+          console.log('[MOCK] REBOOT_DEVICE requested (no actual reboot in dev)');
+          return res.json({ result: 'success' });
+        }
         if (goformId === 'APN_PROC_EX') {
           var apnMode = params.get('apn_mode');
           if (apnMode) toggleState.apn_mode = apnMode;
@@ -968,6 +985,9 @@ app.use('/api/goform', (req, res) => {
     Lte_pci: '258',
     Lte_cell_id: '22A801',
     Lte_ca_status: 'on',
+    // Band lock
+    lte_band_lock: toggleState.lte_band_lock,
+    nr_band_lock: toggleState.nr_band_lock,
     network_type: 'LTE_CA',
     network_provider: 'Vi India',
     network_information: 'Vi India',
