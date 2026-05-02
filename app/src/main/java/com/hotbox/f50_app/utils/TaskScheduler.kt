@@ -271,6 +271,16 @@ class TaskScheduler(
                                         ), context, true
                                     )
                                 }
+
+                                "SMS" -> {
+                                    SmsPoll.forwardBySms(
+                                        SmsInfo(
+                                            saved.id,
+                                            saved.id,
+                                            System.currentTimeMillis()
+                                        ), context
+                                    )
+                                }
                             }
                         }
                     } else {

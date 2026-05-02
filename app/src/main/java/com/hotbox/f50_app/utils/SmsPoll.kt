@@ -76,6 +76,9 @@ object SmsPoll {
                 "DINGTALK" -> {
                     forwardSmsByDingTalk(lastSms, context)
                 }
+                "SMS" -> {
+                    forwardBySms(lastSms, context)
+                }
             }
         } else {
             HotboxLog.d(
@@ -269,6 +272,66 @@ object SmsPoll {
             .joinToString("\n")
         val dingTalkClient = HotboxDingTalk(webhookUrl, secret)
         dingTalkClient.sendMessage(messageContent)
+    }
+
+    //Forward via SMS (ZTE goform API)
+    fun forwardBySms(sms_data: SmsInfo?, context: Context) {
+        if (sms_data == null) return
+        val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        val forwardNumber = sharedPrefs.getString("hotbox_sms_forward_number", null)
+        if (forwardNumber.isNullOrEmpty()) {
+            HotboxLog.e(TAG, "SMS forward config error: hotbox_sms_forward_number is empty")
+            return
+        }
+
+        val ADB_IP = sharedPrefs.getString("gateway_ip", "")?.substringBefore(":") ?: ""
+        if (ADB_IP.isEmpty()) {
+            HotboxLog.e(TAG, "SMS forward error: gateway_ip is empty")
+            return
+        }
+
+        val ADMIN_PWD = sharedPrefs.getString("ADMIN_PWD", "Wa@9w+YWRtaW4=") ?: "Wa@9w+YWRtaW4="
+
+        HotboxLog.d(TAG, "Starting SMS forwarding... (SMS to $forwardNumber)")
+        try {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                .withZone(ZoneId.systemDefault())
+            val smsTime = formatter.format(Instant.ofEpochMilli(sms_data.timestamp))
+
+            val shouldForwardDeviceInfo = sharedPrefs.getString("hotbox_sms_forward_device_info", "0") ?: "0"
+            var statusText = ""
+            if (shouldForwardDeviceInfo == "1") {
+                statusText = buildStatusSmsMsg(
+                    "Daily:{{daily-flow}} Monthly:{{monthly-flow-count}} Battery:{{battery-level}}",
+                    context, TAG
+                )
+            }
+
+            val body = "From:${sms_data.address} Time:$smsTime\n${sms_data.body}" +
+                    if (statusText.isNotEmpty()) "\n$statusText" else ""
+
+            // Encode to UTF-16BE hex (GSM encoding for ZTE)
+            val encodedBody = body.toByteArray(Charsets.UTF_16BE).joinToString("") { "%02X".format(it) }
+
+            runBlocking {
+                val req = HotboxGoformRequest("http://$ADB_IP:8080")
+                val cookie = req.login(ADMIN_PWD)
+                if (cookie != null) {
+                    val result = req.postData(cookie, mapOf(
+                        "goformId" to "SEND_SMS",
+                        "Number" to forwardNumber,
+                        "MessageBody" to encodedBody
+                    ))
+                    req.logout(cookie)
+                    HotboxLog.d(TAG, "SMS forward result: $result")
+                } else {
+                    HotboxLog.e(TAG, "SMS forward error: login failed")
+                }
+            }
+        } catch (e: Exception) {
+            HotboxLog.e(TAG, "SMS forward (forwardBySms) error: ", e)
+        }
     }
 
     fun getLatestSms(context: Context): SmsInfo? {

@@ -15,7 +15,14 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLEncoder
+import java.util.concurrent.TimeUnit
 
 fun Route.pluginsModule(context: Context) {
     val TAG = "[$BASE_TAG]_pluginsModule"
@@ -100,6 +107,66 @@ fun Route.pluginsModule(context: Context) {
                 call.response.headers.append("Access-Control-Allow-Origin", "*")
                 call.respondText(
                     """{"error":"Request error"}""",
+                    ContentType.Application.Json,
+                    HttpStatusCode.InternalServerError
+                )
+            }
+        }
+
+        // Translate texts via Google Translate
+        post("/api/translate") {
+            try {
+                val body = call.receiveText()
+                val json = JSONObject(body)
+                val textsArr = json.getJSONArray("texts")
+                val sl = json.optString("sl", "auto")
+                val tl = json.optString("tl", "en")
+
+                val results = JSONArray()
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
+                    .build()
+
+                for (i in 0 until textsArr.length()) {
+                    val text = textsArr.getString(i)
+                    try {
+                        val encoded = withContext(Dispatchers.IO) {
+                            URLEncoder.encode(text, "UTF-8")
+                        }
+                        val url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=$sl&tl=$tl&dt=t&q=$encoded"
+                        val req = Request.Builder().url(url)
+                            .addHeader("User-Agent", "Mozilla/5.0")
+                            .build()
+                        val response = withContext(Dispatchers.IO) { client.newCall(req).execute() }
+                        val respBody = response.body?.string() ?: "[]"
+                        response.close()
+
+                        // Google returns nested array: [[["translated","original",...],...],...] 
+                        val arr = JSONArray(respBody)
+                        val sentences = arr.optJSONArray(0)
+                        val sb = StringBuilder()
+                        if (sentences != null) {
+                            for (j in 0 until sentences.length()) {
+                                val seg = sentences.optJSONArray(j)
+                                if (seg != null && seg.length() > 0) {
+                                    sb.append(seg.optString(0, ""))
+                                }
+                            }
+                        }
+                        results.put(sb.toString().ifEmpty { text })
+                    } catch (e: Exception) {
+                        results.put(text)
+                    }
+                }
+
+                call.response.headers.append("Access-Control-Allow-Origin", "*")
+                call.respondText(results.toString(), ContentType.Application.Json, HttpStatusCode.OK)
+            } catch (e: Exception) {
+                HotboxLog.d(TAG, "Translate error: ${e.message}")
+                call.response.headers.append("Access-Control-Allow-Origin", "*")
+                call.respondText(
+                    """{"error":"Translate error: ${e.message}"}""",
                     ContentType.Application.Json,
                     HttpStatusCode.InternalServerError
                 )

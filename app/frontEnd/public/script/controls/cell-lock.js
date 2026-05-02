@@ -40,10 +40,18 @@
     '</tr></thead><tbody>';
   var TABLE_FOOT = '</tbody></table>';
 
-  // Find matching neighbor for a locked cell
+  // Find matching cell for a locked cell (check neighbors + current cell from UFI_DATA)
   function findNeighborMatch(pci, earfcn) {
     for (var i = 0; i < lastNeighborData.length; i++) {
       if (lastNeighborData[i].pci == pci && lastNeighborData[i].earfcn == earfcn) return lastNeighborData[i];
+    }
+    // Fall back to current cell from main status poll
+    var d = window.UFI_DATA || {};
+    if (d.Lte_pci == pci && d.Lte_fcn == earfcn) {
+      return { band: 'B' + (d.Lte_bands || '?'), pci: d.Lte_pci, earfcn: d.Lte_fcn, rsrp: d.lte_rsrp, sinr: d.Lte_snr, rsrq: d.lte_rsrq };
+    }
+    if (d.Nr_pci == pci && d.Nr_fcn == earfcn) {
+      return { band: 'N' + (d.Nr_bands || '?'), pci: d.Nr_pci, earfcn: d.Nr_fcn, rsrp: d.Z5g_rsrp, sinr: d.Nr_snr, rsrq: d.nr_rsrq };
     }
     return null;
   }

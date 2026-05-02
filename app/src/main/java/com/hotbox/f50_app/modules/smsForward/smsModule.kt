@@ -424,4 +424,100 @@ fun Route.smsModule(context: Context) {
         call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
     }
 
+    // Save message format (SMS + Call templates)
+    post("/api/sms_forward_format") {
+        try {
+            val body = call.receiveText()
+            val json = JSONObject(body)
+            val smsFormat = json.optString("sms_format", "").trim()
+            val callFormat = json.optString("call_format", "").trim()
+
+            val sharedPrefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
+            sharedPrefs.edit(commit = true) {
+                putString("hotbox_sms_format", smsFormat)
+                putString("hotbox_call_format", callFormat)
+            }
+
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText("""{"result":"success"}""", ContentType.Application.Json, HttpStatusCode.OK)
+        } catch (e: Exception) {
+            HotboxLog.d(TAG, "Format save error: ${e.message}")
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText("""{"error":"${e.message}"}""", ContentType.Application.Json, HttpStatusCode.InternalServerError)
+        }
+    }
+
+    // Read message format
+    get("/api/sms_forward_format") {
+        val sharedPrefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
+        val smsFormat = sharedPrefs.getString("hotbox_sms_format", "") ?: ""
+        val callFormat = sharedPrefs.getString("hotbox_call_format", "") ?: ""
+        val json = JSONObject(mapOf("sms_format" to smsFormat, "call_format" to callFormat)).toString()
+        call.response.headers.append("Access-Control-Allow-Origin", "*")
+        call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
+    }
+
+    // Save SMS forward params - SMS method
+    post("/api/sms_forward_sms") {
+        try {
+            val body = call.receiveText()
+            val json = JSONObject(body)
+            val number = json.optString("sms_forward_number", "").trim()
+            val devInfo = json.optString("forward_dev_info", "0").trim()
+
+            if (number.isEmpty()) throw Exception("Missing forward number")
+
+            val sharedPrefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
+            sharedPrefs.edit(commit = true) {
+                putString("hotbox_sms_forward_method", "SMS")
+                putString("hotbox_sms_forward_number", number)
+                putString("hotbox_sms_forward_device_info", devInfo)
+            }
+
+            HotboxLog.d(TAG, "SMS forward config saved: $number")
+
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText("""{"result":"success"}""", ContentType.Application.Json, HttpStatusCode.OK)
+        } catch (e: Exception) {
+            HotboxLog.d(TAG, "SMS forward config error: ${e.message}")
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText("""{"error":"${e.message}"}""", ContentType.Application.Json, HttpStatusCode.InternalServerError)
+        }
+    }
+
+    // Read SMS forward SMS config
+    get("/api/sms_forward_sms") {
+        val sharedPrefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
+        val number = sharedPrefs.getString("hotbox_sms_forward_number", "") ?: ""
+        val devInfo = sharedPrefs.getString("hotbox_sms_forward_device_info", "0") ?: "0"
+        val json = JSONObject(mapOf("sms_forward_number" to number, "forward_dev_info" to devInfo)).toString()
+        call.response.headers.append("Access-Control-Allow-Origin", "*")
+        call.respondText(json, ContentType.Application.Json, HttpStatusCode.OK)
+    }
+
+    // Call notification toggle
+    post("/api/call_notify_enabled") {
+        try {
+            val enable = call.request.queryParameters["enable"] ?: throw Exception("Missing enable parameter")
+            val sharedPrefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
+            sharedPrefs.edit(commit = true) {
+                putString("hotbox_call_notify_enabled", enable)
+            }
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText("""{"result":"success"}""", ContentType.Application.Json, HttpStatusCode.OK)
+        } catch (e: Exception) {
+            HotboxLog.d(TAG, "Call notify error: ${e.message}")
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText("""{"error":"${e.message}"}""", ContentType.Application.Json, HttpStatusCode.InternalServerError)
+        }
+    }
+
+    // Read call notification status
+    get("/api/call_notify_enabled") {
+        val sharedPrefs = context.getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
+        val enabled = sharedPrefs.getString("hotbox_call_notify_enabled", "0") ?: "0"
+        call.response.headers.append("Access-Control-Allow-Origin", "*")
+        call.respondText("""{"enabled":"$enabled"}""", ContentType.Application.Json, HttpStatusCode.OK)
+    }
+
 }

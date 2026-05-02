@@ -34,6 +34,7 @@
     ttydUrl = url;
     serviceEl.textContent = 'Running';
     serviceEl.style.color = '#34d399';
+    serviceEl.dataset.url = url;
     iframeContainer.style.opacity = '';
     iframeContainer.innerHTML = '<iframe src="' + url + '" scrolling="no" style="border:none;width:calc(100% + 20px);height:100%;min-height:400px;opacity:0.85;display:block"></iframe>';
     newTabCard.style.opacity = '';

@@ -1000,6 +1000,9 @@ class HotboxUtils {
                     "DINGTALK" -> {
                         forwardSmsByDingTalk(smsContent, context)
                     }
+                    "SMS" -> {
+                        SmsPoll.forwardBySms(smsContent, context)
+                    }
                 }
                 HotboxLog.d("UFI_TOOLS_LOG_LowBatteryForward","Low battery forward message succeeded, type: $sms_forward_method")
             } catch (e: Exception){

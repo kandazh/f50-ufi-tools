@@ -432,7 +432,7 @@
   if (fwdSwitchContainer) {
     fwdSwitch = createCtrlToggle(fwdSwitchContainer, function (checked) {
       var enabled = checked ? '1' : '0';
-      fetch(HOTBOX_baseURL + '/sms_forward_enabled?enable=' + enabled, { headers: common_headers })
+      fetch(HOTBOX_baseURL + '/sms_forward_enabled?enable=' + enabled, { method: 'POST', headers: common_headers })
         .then(function (r) {
           if (!r.ok) throw new Error(r.status);
           return r.json();
@@ -459,7 +459,7 @@
   if (callSwitchContainer) {
     callSwitch = createCtrlToggle(callSwitchContainer, function (checked) {
       var enabled = checked ? '1' : '0';
-      fetch(HOTBOX_baseURL + '/call_notify_enabled?enable=' + enabled, { headers: common_headers })
+      fetch(HOTBOX_baseURL + '/call_notify_enabled?enable=' + enabled, { method: 'POST', headers: common_headers })
         .then(function (r) {
           if (!r.ok) throw new Error(r.status);
           return r.json();

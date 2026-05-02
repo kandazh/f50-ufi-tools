@@ -151,21 +151,6 @@
 
   var pluginListEl = document.getElementById('plugin_installed_list');
 
-  // Toggle for Installed Plugins section
-  var installedHeader = document.getElementById('plugin_installed_header');
-  if (installedHeader && pluginListEl) {
-    installedHeader.addEventListener('click', function () {
-      var arrow = installedHeader.querySelector('.plugin-group-arrow');
-      if (pluginListEl.style.display === 'none') {
-        pluginListEl.style.display = '';
-        if (arrow) arrow.style.transform = '';
-      } else {
-        pluginListEl.style.display = 'none';
-        if (arrow) arrow.style.transform = 'rotate(-90deg)';
-      }
-    });
-  }
-
   function renderInstalledPlugins(code) {
     if (!pluginListEl) return;
     var plugins = parsePlugins(code || '');
@@ -279,21 +264,32 @@
     var pluginName = (nameInput.value || '').trim();
     var saved = await getSavedCode();
 
-    if (!pluginName) {
+    // Check if code is already fully wrapped in plugin markers
+    var alreadyWrapped = /^\/\/ \[Plugin: .+?\]\n[\s\S]*\/\/ \[\/Plugin: .+?\]$/.test(code);
+
+    if (!pluginName && !alreadyWrapped) {
       // Auto-generate name: Custom 1, Custom 2, etc.
       var n = 1;
       while (saved.indexOf('// [Plugin: Custom ' + n + ']') !== -1) n++;
       pluginName = 'Custom ' + n;
     }
 
-    // Wrap with markers if not already wrapped with this name
-    var escName = pluginName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    if (!code.match(new RegExp('^// \\[Plugin: ' + escName + '\\]'))) {
-      code = '// [Plugin: ' + pluginName + ']\n' + code + '\n// [/Plugin: ' + pluginName + ']';
+    if (!alreadyWrapped && pluginName) {
+      // Wrap with markers if not already wrapped with this name
+      var escName = pluginName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (!code.match(new RegExp('^// \\[Plugin: ' + escName + '\\]'))) {
+        code = '// [Plugin: ' + pluginName + ']\n' + code + '\n// [/Plugin: ' + pluginName + ']';
+      }
     }
 
     // Remove old version of same plugin if exists, then append
-    saved = saved.replace(new RegExp('\\n?\\n?\\/\\/ \\[Plugin: ' + escName + '\\]\\n[\\s\\S]*?\\/\\/ \\[\\/Plugin: ' + escName + '\\]', 'g'), '').trim();
+    var plugins = parsePlugins(code);
+    plugins.forEach(function (p) {
+      if (p.marked) {
+        var esc = p.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        saved = saved.replace(new RegExp('\\n?\\n?\\/\\/ \\[Plugin: ' + esc + '\\]\\n[\\s\\S]*?\\/\\/ \\[\\/Plugin: ' + esc + '\\]', 'g'), '').trim();
+      }
+    });
     codeArea.value = saved + (saved ? '\n\n' : '') + code;
 
     applyPlugin(codeArea.value);
@@ -313,6 +309,7 @@
   document.addEventListener('ctrl-panel-show', async function (e) {
     if (e.detail && e.detail.tab === 'plugin') {
       await loadCurrent();
+      try { applyPlugin(codeArea.value); } catch (err) {}
       renderInstalledPlugins(codeArea.value);
       loadStore();
     }
