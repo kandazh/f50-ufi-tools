@@ -2616,6 +2616,69 @@ textarea:focus {
   margin-top: 2px;
 }
 
+/* --- Cell Lock --- */
+.cell-lock-empty {
+  font-size: 12px;
+  color: rgba(148,163,184,0.5);
+  text-align: center;
+  padding: 12px 0;
+}
+[data-ctrl-panel="cell_lock"] .signal_bar {
+  width: 80px;
+}
+.cell-lock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cell-lock-form-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.cell-lock-rat-group {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.cell-lock-rat-btn {
+  background: transparent;
+  border: none;
+  color: rgba(148,163,184,0.6);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 18px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cell-lock-rat-btn.active {
+  background: rgba(56,189,248,0.15);
+  color: #38bdf8;
+}
+.cell-lock-rat-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.04);
+  color: #cbd5e1;
+}
+.cell-lock-input {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: #e2e8f0;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.cell-lock-input:focus {
+  border-color: rgba(56,189,248,0.4);
+}
+.cell-lock-input::placeholder {
+  color: rgba(148,163,184,0.35);
+}
+
 /* --- Card / Box --- */
 
 .box {

@@ -214,6 +214,7 @@
     <script src="/script/controls/adguard-home.js"></script>
     <script src="/script/controls/ttyd.js"></script>
     <script src="/script/controls/band-lock.js"></script>
+    <script src="/script/controls/cell-lock.js"></script>
     <script src="/script/memory-cleaner.js"></script>
 </body>
 

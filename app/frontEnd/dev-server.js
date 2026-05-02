@@ -132,6 +132,21 @@ const toggleState = {
   // Band lock state
   lte_band_lock: '1,3,5,8,34,38,39,40,41',
   nr_band_lock: '1,5,8,28,41,78',
+  // Cell lock state
+  locked_cell_info: [
+    { rat: '12', pci: '258', earfcn: '38950' }
+  ],
+  current_cell_info: [
+    { band: 'B40', fcn: '38950', pci: '258', rsrp: '-98', sinr: '13', rsrq: '-12' },
+    { band: 'B3', fcn: '1300', pci: '312', rsrp: '-105', sinr: '8', rsrq: '-11' }
+  ],
+  neighbor_cell_info: [
+    { band: 'B40', earfcn: '38950', pci: '258', rsrp: '-98', rsrq: '-11', sinr: '14' },
+    { band: 'B3',  earfcn: '1300',  pci: '312', rsrp: '-107', rsrq: '-13', sinr: '5' },
+    { band: 'B1',  earfcn: '100',   pci: '45',  rsrp: '-112', rsrq: '-15', sinr: '2' },
+    { band: 'N78', earfcn: '627264', pci: '501', rsrp: '-95', rsrq: '-10', sinr: '18' },
+    { band: 'N41', earfcn: '504990', pci: '912', rsrp: '-101', rsrq: '-12', sinr: '11' },
+  ],
   lan_netmask: '255.255.255.0',
   dhcpEnabled: '1',
   dhcpStart: '192.168.0.100',
@@ -707,6 +722,19 @@ app.use('/api/goform', (req, res) => {
           console.log('[MOCK] REBOOT_DEVICE requested (no actual reboot in dev)');
           return res.json({ result: 'success' });
         }
+        if (goformId === 'CELL_LOCK') {
+          var cellPci = params.get('pci') || '';
+          var cellEarfcn = params.get('earfcn') || '';
+          var cellRat = params.get('rat') || '12';
+          toggleState.locked_cell_info.push({ rat: cellRat, pci: cellPci, earfcn: cellEarfcn });
+          console.log('CELL_LOCK:', cellRat === '12' ? '4G' : '5G', 'PCI=' + cellPci, 'EARFCN=' + cellEarfcn);
+          return res.json({ result: 'success' });
+        }
+        if (goformId === 'UNLOCK_ALL_CELL') {
+          toggleState.locked_cell_info = [];
+          console.log('UNLOCK_ALL_CELL');
+          return res.json({ result: 'success' });
+        }
         if (goformId === 'APN_PROC_EX') {
           var apnMode = params.get('apn_mode');
           if (apnMode) toggleState.apn_mode = apnMode;
@@ -928,6 +956,14 @@ app.use('/api/goform', (req, res) => {
       AclMode: toggleState.AclMode || '2',
       user_ip_addr: '192.168.0.64'
     });
+  }
+  // Cell lock data
+  if (cmd.includes('neighbor_cell_info') || cmd.includes('locked_cell_info') || cmd.includes('current_cell_info')) {
+    var cellResp = {};
+    if (cmd.includes('locked_cell_info')) cellResp.locked_cell_info = toggleState.locked_cell_info;
+    if (cmd.includes('neighbor_cell_info')) cellResp.neighbor_cell_info = toggleState.neighbor_cell_info;
+    if (cmd.includes('current_cell_info')) cellResp.current_cell_info = toggleState.current_cell_info;
+    return res.json(cellResp);
   }
   const jitter = (base, range) => (base + (Math.random() - 0.5) * range).toFixed(0);
   const rx = Math.floor(Math.random() * 50000);

@@ -28,7 +28,7 @@
                         <button class="ctrl-nav-btn" data-ctrl-tab="changepwd"><span class="ctrl-nav-icon">🔑</span><span>Change Password</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot"><span class="ctrl-nav-icon">🔄</span><span>Scheduling</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="band_lock"><span class="ctrl-nav-icon">📡</span><span>Band Lock</span></button>
-
+                        <button class="ctrl-nav-btn" data-ctrl-tab="cell_lock"><span class="ctrl-nav-icon">🔒</span><span>Cell Lock</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="advanced"><span class="ctrl-nav-icon">⚙️</span><span>Advanced</span></button>
                     </div>
                 </div>
@@ -1543,9 +1543,89 @@ uptime</pre>
                         </div>
                     </div>
 
+                    <!-- Cell Lock Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="cell_lock" style="display:none">
+                        <div class="ctrl-panel-title">Cell Lock</div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="11" rx="2"/><path d="M12 3a4 4 0 0 0-4 4v4h8V7a4 4 0 0 0-4-4z"/><circle cx="12" cy="17" r="1.5"/></svg></span> Status</div>
+                            <p class="plugin-desc">Lock to a specific cell tower by PCI &amp; EARFCN. Wrong values may cause signal loss.</p>
+                            <div class="swap-status-cards">
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="5" y="11" width="14" height="11" rx="2"/><path d="M12 3a4 4 0 0 0-4 4v4h8V7a4 4 0 0 0-4-4z"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Locked Cells</span>
+                                        <span class="data-mgmt-card-value" id="cell_lock_count">0</span>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M12 20V10"/><path d="M10 20h4"/><path d="M10 10h4l-2-8-2 8z"/><path d="M5 16a9 9 0 0 1 0-8"/><path d="M19 8a9 9 0 0 1 0 8"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Neighbors</span>
+                                        <span class="data-mgmt-card-value" id="cell_lock_neighbor_count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Locked Cells -->
+                        <div class="ctrl-section" id="cell_lock_locked_section">
+                            <div class="ctrl-section-title" style="font-size:12px;opacity:0.7;margin-bottom:6px"><span class="ctrl-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11V7a3 3 0 0 1 6 0v4"/><rect x="5" y="11" width="14" height="11" rx="2"/></svg></span> Locked Cells</div>
+                            <div id="cell_lock_locked_list" style="overflow-x:auto">
+                                <div class="cell-lock-empty">No locked cells</div>
+                            </div>
+                        </div>
+
+                        <!-- Current Cell -->
+                        <div class="ctrl-section" id="cell_lock_current_section">
+                            <div class="ctrl-section-title" style="font-size:12px;opacity:0.7;margin-bottom:6px"><span class="ctrl-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></span> Current Cell</div>
+                            <div id="cell_lock_current_card" style="overflow-x:auto">
+                                <div class="cell-lock-empty">No cell connected</div>
+                            </div>
+                        </div>
+
+                        <!-- Neighbor Cells -->
+                        <div class="ctrl-section" id="cell_lock_neighbor_section">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                                <div class="ctrl-section-title" style="font-size:12px;opacity:0.7;margin:0"><span class="ctrl-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M10 20h4"/><path d="M10 10h4l-2-8-2 8z"/><path d="M5 16a9 9 0 0 1 0-8"/><path d="M19 8a9 9 0 0 1 0 8"/></svg></span> Neighbor Cells</div>
+                                <button type="button" class="band-filter-btn" id="cell_lock_refresh_btn" style="font-size:11px;padding:3px 10px">Stop Refresh</button>
+                            </div>
+                            <div id="cell_lock_neighbor_list" style="overflow-x:auto">
+                                <div class="cell-lock-empty">Loading...</div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Lock Form -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title" style="font-size:12px;opacity:0.7;margin-bottom:6px"><span class="ctrl-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span> Manual Lock</div>
+                            <div class="cell-lock-form">
+                                <div class="cell-lock-form-row">
+                                    <div class="cell-lock-rat-group">
+                                        <button type="button" class="cell-lock-rat-btn active" data-rat="12">4G</button>
+                                        <button type="button" class="cell-lock-rat-btn" data-rat="16">5G</button>
+                                    </div>
+                                </div>
+                                <div class="cell-lock-form-row">
+                                    <input type="text" class="cell-lock-input" id="cell_lock_pci" placeholder="PCI" autocomplete="off">
+                                    <input type="text" class="cell-lock-input" id="cell_lock_earfcn" placeholder="EARFCN" autocomplete="off">
+                                </div>
+                                <div class="ctrl-actions" style="gap:8px;flex-wrap:wrap">
+                                    <button type="button" class="ctrl-submit-btn" id="cell_lock_submit_btn" style="padding:7px 16px;font-size:12px">Lock Cell</button>
+                                    <button type="button" class="ctrl-submit-btn" id="cell_lock_unlock_all_btn" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.3);color:#fbbf24;padding:7px 16px;font-size:12px">Unlock All Cells</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Plugin Panel -->
-                    <div class="ctrl-panel" data-ctrl-panel="plugin" style="display:none">
-                        <div class="ctrl-panel-title">Plugins</div>
+                    <div class="ctrl-panel" data-ctrl-panel="plugin" id="plugin_panel" style="display:none">
+                        <div class="ctrl-panel-title" style="display:flex;align-items:center;justify-content:space-between">
+                            <span>Plugins</span>
+                            <span id="plugin_translate_el"></span>
+                        </div>
                         <!-- Accordion: Plugin Actions -->
                         <div class="sched-accordion-item open" id="plugin_acc_actions">
                             <button type="button" class="sched-accordion-header">
@@ -1559,6 +1639,20 @@ uptime</pre>
                                 </div>
                             </div>
                         </div>
+                        <!-- Accordion: Installed Plugins -->
+                        <div class="sched-accordion-item open" id="plugin_acc_installed">
+                            <button type="button" class="sched-accordion-header" id="plugin_installed_header">
+                                <span><span class="ctrl-section-icon">📦</span> Installed Plugins</span>
+                                <span class="sched-accordion-arrow">▾</span>
+                            </button>
+                            <div class="sched-accordion-body">
+                                <div class="ctrl-section">
+                                    <div id="plugin_installed_list">
+                                        <div class="sched-empty">No plugins installed</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Accordion: Custom Plugin Code -->
                         <div class="sched-accordion-item" id="plugin_acc_code">
                             <button type="button" class="sched-accordion-header">
@@ -1568,6 +1662,9 @@ uptime</pre>
                             <div class="sched-accordion-body">
                                 <div class="ctrl-section">
                                     <p class="plugin-desc">Inject custom JavaScript that runs on the device. Plugins are stored persistently and execute on page load.</p>
+                                    <div class="cell-lock-form-row" style="margin-bottom:8px">
+                                        <input type="text" class="cell-lock-input" id="plugin_name_input" placeholder="Plugin name (optional)" autocomplete="off">
+                                    </div>
                                     <textarea class="plugin-editor" id="plugin_code" rows="12" spellcheck="false" placeholder="// Enter your plugin JavaScript code here..."></textarea>
                                 </div>
                                 <div class="ctrl-actions" style="gap:10px;margin-bottom:16px">
