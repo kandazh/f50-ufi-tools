@@ -990,6 +990,32 @@
                             <span>Root Access</span>
                             <span class="ctrl-adv-title-warn">⚠️ Advanced users only</span>
                         </div>
+                        <!-- ADB Toggles box -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🔌</span> ADB Controls</div>
+                            <div class="ctrl-adv-root-card">
+                                <div class="ctrl-adv-toggle-row" id="ADV_USB_DEBUG_ROW">
+                                    <span class="ctrl-adv-indicator" id="ADV_USB_DEBUG_INDICATOR"></span>
+                                    <span class="ctrl-adv-toggle-label">USB Debugging</span>
+                                    <div id="ADV_USB_DEBUG_TOGGLE"></div>
+                                </div>
+                                <div class="ctrl-adv-toggle-row" id="ADV_NET_ADB_ROW" style="border-top:1px solid rgba(148,163,184,0.08)">
+                                    <span class="ctrl-adv-indicator" id="ADV_NET_ADB_INDICATOR"></span>
+                                    <span class="ctrl-adv-toggle-label">Network ADB</span>
+                                    <div id="ADV_NET_ADB_TOGGLE"></div>
+                                </div>
+                                <details class="ctrl-adv-log-box" id="ADV_ADB_LOG_BOX">
+                                    <summary class="ctrl-adv-log-summary">Log</summary>
+                                    <div class="ctrl-adv-log-content" id="ADV_ADB_RESULT"></div>
+                                </details>
+                            </div>
+                            <div class="ctrl-adv-info-desc" style="margin-top:12px; display:flex; align-items:flex-start; gap:8px;">
+                                <span style="font-size:20px; line-height:1;">💡</span>
+                                <span>
+                                    Enable USB Debugging first, then Network ADB. Both are required before enabling Root Access.
+                                </span>
+                            </div>
+                        </div>
                         <!-- Root Access box -->
                         <div class="ctrl-section">
                             <div class="ctrl-section-title"><span class="ctrl-section-icon">🔓</span> Root Access</div>
@@ -998,6 +1024,11 @@
                                     <span class="ctrl-adv-indicator" id="ADV_INDICATOR"></span>
                                     <span class="ctrl-adv-toggle-label">Root Access</span>
                                     <div id="ADV_ROOT_TOGGLE"></div>
+                                </div>
+                                <div class="ctrl-adv-toggle-row" id="ADV_UNINSTALL_ROW" style="border-top:1px solid rgba(148,163,184,0.08)">
+                                    <span style="font-size:14px; opacity:0.7;">🗑️</span>
+                                    <span class="ctrl-adv-toggle-label" style="flex:1; font-size:12px; opacity:0.8;">Remove &amp; Uninstall</span>
+                                    <button type="button" class="ctrl-adv-card-btn" id="ADV_UNINSTALL_ROOT_BTN" style="padding:4px 12px; font-size:11px; margin:0; min-width:auto; color:#f87171; border:1px solid rgba(248,113,113,0.3); border-radius:6px; background:rgba(248,113,113,0.06);">Remove</button>
                                 </div>
                                 <details class="ctrl-adv-log-box" id="ADV_LOG_BOX">
                                     <summary class="ctrl-adv-log-summary">Log</summary>
@@ -1398,6 +1429,7 @@ uptime</pre>
                                     <div class="speedtest-gauge-center">
                                         <div class="speedtest-speed-value" id="cell_speedtest_speed">0.00</div>
                                         <div class="speedtest-speed-meta">
+                                            <span class="speedtest-phase-icon" id="cell_speedtest_phase_icon"></span>
                                             <span class="speedtest-speed-unit" id="cell_speedtest_unit">MB/s</span>
                                         </div>
                                         <div class="speedtest-phase-label" id="cell_speedtest_status">Ready to test</div>
@@ -3860,6 +3892,7 @@ uptime</pre>
     <script src="/script/controls/quick-shell.js"></script>
     <script src="/script/controls/advanced.js"></script>
     <script src="/script/controls/sms-panel.js"></script>
+    <script src="/script/controls/speedtest-gauge.js"></script>
     <script src="/script/controls/speedtest.js"></script>
     <script src="/script/controls/cell-speedtest.js"></script>
     <script src="/script/controls/at-cmd.js"></script>

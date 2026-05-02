@@ -131,7 +131,7 @@
       var steps = [
         { label: 'Enabling Samba service...', fn: enableSamba },
         { label: 'Installing advanced tools...', fn: installAdvanced },
-        { label: 'Verifying configuration (may take up to 15s)...', fn: verifyAdvanced }
+        { label: 'Verifying configuration (may take up to 2 min)...', fn: verifyAdvanced }
       ];
       var allOk = true;
       for (var i = 0; i < steps.length; i++) {
@@ -212,15 +212,15 @@
   }
 
   async function verifyAdvanced() {
-    // Samba hook needs time to take effect — retry up to 5 times with 3s delays
-    for (var attempt = 1; attempt <= 5; attempt++) {
+    // Samba hook needs time to take effect — retry up to 40 times with 3s delays (~2 min)
+    for (var attempt = 1; attempt <= 40; attempt++) {
       var res = await checkAdvancedFunc();
-      if (res) return 'Verified: root shell active';
-      if (attempt < 5) {
+      if (res) return 'Verified: root shell active (attempt ' + attempt + ')';
+      if (attempt < 40) {
         await new Promise(function (r) { setTimeout(r, 3000); });
       }
     }
-    throw new Error('Verification failed — advanced not detected after retries. Try again in 1-2 minutes.');
+    throw new Error('Verification failed — advanced not detected after 2 minutes. Try rebooting the device.');
   }
 
   async function uninstallAdvanced() {

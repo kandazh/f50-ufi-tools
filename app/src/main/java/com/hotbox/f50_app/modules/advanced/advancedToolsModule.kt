@@ -63,6 +63,24 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
             var jsonResult = """{"result":"Execution successful<br>Execution successful!"}"""
 
             if (enabled == "1") {
+                // Remove immutable flag first (may fail if no root yet, but needed for re-enable)
+                val unlockCmd = "chattr -i /data/samba/etc/smb.conf 2>/dev/null; chmod 777 /data/samba/etc/smb.conf 2>/dev/null"
+                sendShellCmd(unlockCmd, 3)
+                if(adbIsReady) {
+                    ShellHotbox.runShellCommand("${outFileAdb.absolutePath} -s localhost shell $unlockCmd", context = context)
+                }
+
+                // Also try unlocking via root shell socket if it exists from a previous session
+                val socketPath = File(context.filesDir, "hotbox_root_shell.sock")
+                if (socketPath.exists()) {
+                    try {
+                        RootShell.sendCommandToSocket(unlockCmd, socketPath.absolutePath, 5000)
+                        HotboxLog.d(TAG, "Unlocked smb.conf via existing root shell")
+                    } catch (e: Exception) {
+                        HotboxLog.d(TAG, "Root shell unlock attempt failed: ${e.message}")
+                    }
+                }
+
                 val cmdShell =
                     "cat $smbPath > /data/samba/etc/smb.conf"
                 val cmdAdb =
@@ -78,7 +96,9 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                 HotboxLog.d(TAG, "Shell enable advanced mode result, success: ${resultShell.done} content: ${resultShell.content}")
                 HotboxLog.d(TAG, "ADB enable advanced mode result$resultAdb")
 
-                val queryShell = "grep 'samba_exec.sh' /data/samba/etc/smb.conf"
+                // Verify the config contains the CORRECT app path, not just 'samba_exec.sh'
+                val expectedPath = context.packageName
+                val queryShell = "grep '$expectedPath' /data/samba/etc/smb.conf"
                 val sambaResult =  sendShellCmd(queryShell,3)
                 var sambaAdbResult:String? = null
 
@@ -97,8 +117,31 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                     }
                 }
 
-                val queryShellIsDone = sambaResult.done && sambaResult.content.contains("samba_exec.sh")
-                val queryAdbIsDone = sambaAdbResult != null && sambaAdbResult.contains("samba_exec.sh")
+                var queryShellIsDone = sambaResult.done && sambaResult.content.contains(expectedPath)
+                var queryAdbIsDone = sambaAdbResult != null && sambaAdbResult.contains(expectedPath)
+
+                if(!queryShellIsDone && !queryAdbIsDone){
+                    // Config write failed — likely immutable. Try renaming the directory to bypass it.
+                    HotboxLog.d(TAG, "Config write failed, attempting directory rename fallback...")
+                    val resetCmd = "mv /data/samba/etc /data/samba/etc.bak 2>/dev/null; " +
+                        "mkdir /data/samba/etc 2>/dev/null; " +
+                        "chmod 777 /data/samba/etc 2>/dev/null; " +
+                        "cat $smbPath > /data/samba/etc/smb.conf 2>/dev/null; " +
+                        "cp /data/samba/etc.bak/smbpasswd /data/samba/etc/smbpasswd 2>/dev/null"
+                    sendShellCmd(resetCmd, 5)
+                    if(adbIsReady) {
+                        ShellHotbox.runShellCommand("${outFileAdb.absolutePath} -s localhost shell $resetCmd", context = context)
+                    }
+
+                    // Re-verify after fallback
+                    val recheck = sendShellCmd("grep '$expectedPath' /data/samba/etc/smb.conf", 3)
+                    var recheckAdb: String? = null
+                    if(adbIsReady) {
+                        recheckAdb = ShellHotbox.runShellCommand("${outFileAdb.absolutePath} -s localhost shell grep '$expectedPath' /data/samba/etc/smb.conf", context = context)
+                    }
+                    queryShellIsDone = recheck.done && recheck.content.contains(expectedPath)
+                    queryAdbIsDone = recheckAdb != null && recheckAdb.contains(expectedPath)
+                }
 
                 if(!queryShellIsDone && !queryAdbIsDone){
                     if(adbIsReady){

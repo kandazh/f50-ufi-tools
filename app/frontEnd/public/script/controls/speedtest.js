@@ -1,6 +1,7 @@
 /**
- * Speed Test — Speedtest.com-style local speed test with circular gauge.
+ * Speed Test � Local speed test with circular gauge.
  * Also handles the mode toggle between Local and Cellular.
+ * Uses SpeedGauge shared module for gauge logic.
  */
 (function () {
   // Mode toggle logic
@@ -14,7 +15,7 @@
       modeButtons.forEach(function (b) { b.classList.toggle('active', b === btn); });
       if (localPanel) localPanel.style.display = mode === 'local' ? '' : 'none';
       if (cellularPanel) cellularPanel.style.display = mode === 'cellular' ? '' : 'none';
-      if (mode === 'local') setTimeout(initGauge, 0);
+      if (mode === 'local') setTimeout(function() { gauge.initGauge(); }, 0);
     });
   });
 
@@ -24,9 +25,6 @@
   var unitEl = document.getElementById('speedtest_unit');
   var phaseEl = document.getElementById('speedtest_phase');
   var phaseIcon = document.getElementById('speedtest_phase_icon');
-  var needleEl = document.getElementById('speedtest_needle');
-  var arcBg = document.getElementById('speedtest_arc_bg');
-  var arcFill = document.getElementById('speedtest_arc_fill');
   var resultsEl = document.getElementById('speedtest_results');
   var downloadEl = document.getElementById('speedtest_download');
   var uploadEl = document.getElementById('speedtest_upload');
@@ -35,135 +33,25 @@
   var downloadCard = document.getElementById('speedtest_download_card');
   var uploadCard = document.getElementById('speedtest_upload_card');
   var ckSizeSelect = document.getElementById('speedtest_cksize');
-  var gaugeArea = document.querySelector('.speedtest-gauge-area');
 
   if (!goBtn) return;
 
-  // Gauge geometry — arc from 225° to -45° (270° sweep), like speedtest.com
-  var CX = 150, CY = 150, R = 115;
-  var START_ANGLE = 225; // degrees, bottom-left
-  var END_ANGLE = -45;   // degrees, bottom-right (clockwise)
-  var SWEEP = 270;       // total degrees
-
-  // Scale labels (logarithmic like speedtest.com)
-  var SCALE_VALUES = [0, 5, 10, 50, 100, 250, 500, 750, 1000];
-
-  function degToRad(d) { return d * Math.PI / 180; }
-
-  function polarToXY(angle, radius) {
-    var rad = degToRad(angle);
-    return { x: CX + radius * Math.cos(rad), y: CY - radius * Math.sin(rad) };
-  }
-
-  // Map Mbps value to angle (logarithmic)
-  function mbpsToAngle(mbps) {
-    if (mbps <= 0) return START_ANGLE;
-    var fraction = Math.log10(mbps + 1) / Math.log10(1001);
-    return START_ANGLE - fraction * SWEEP;
-  }
-
-  // Build arc path from startAngle to endAngle
-  function arcPath(startAng, endAng, radius) {
-    var s = polarToXY(startAng, radius);
-    var e = polarToXY(endAng, radius);
-    var sweep = startAng - endAng;
-    var largeArc = sweep > 180 ? 1 : 0;
-    return 'M' + s.x.toFixed(1) + ',' + s.y.toFixed(1) +
-           ' A' + radius + ',' + radius + ' 0 ' + largeArc + ' 1 ' +
-           e.x.toFixed(1) + ',' + e.y.toFixed(1);
-  }
-
-  // Initialize gauge
-  function initGauge() {
-    // Draw background arc
-    if (arcBg) arcBg.setAttribute('d', arcPath(START_ANGLE, END_ANGLE, R));
-    // Set fill arc to empty
-    if (arcFill) arcFill.setAttribute('d', 'M0,0');
-    // Draw scale labels
-    var labelsG = document.querySelector('#speedtest_local_panel .speedtest-scale-labels');
-    if (labelsG) {
-      labelsG.innerHTML = '';
-      SCALE_VALUES.forEach(function(val) {
-        var angle = mbpsToAngle(val);
-        var pos = polarToXY(angle, R + 22);
-        var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', pos.x.toFixed(1));
-        text.setAttribute('y', pos.y.toFixed(1));
-        text.setAttribute('dy', '0.35em');
-        text.textContent = val;
-        labelsG.appendChild(text);
-      });
-    }
-    // Set needle to 0
-    setNeedle(0);
-  }
-
-  function setNeedle(mbps) {
-    if (!needleEl) return;
-    var angle = mbpsToAngle(mbps);
-    // Needle is drawn pointing UP (12 o'clock). SVG rotate is clockwise.
-    // Math angle to SVG rotation: svgAngle = 90 - mathAngle
-    var svgAngle = 90 - angle;
-    needleEl.style.transform = 'rotate(' + svgAngle + 'deg)';
-  }
-
-  function setArcFill(mbps) {
-    if (!arcFill) return;
-    var endAngle = mbpsToAngle(mbps);
-    if (mbps <= 0) {
-      arcFill.setAttribute('d', 'M0,0');
-      return;
-    }
-    arcFill.setAttribute('d', arcPath(START_ANGLE, endAngle, R));
-  }
-
-  // Animate gauge smoothly from current value down to 0
-  function animateGaugeDown(fromMbps, duration) {
-    return new Promise(function(resolve) {
-      var start = performance.now();
-      var dur = duration || 800;
-      function step(now) {
-        var t = Math.min((now - start) / dur, 1);
-        var ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
-        var val = fromMbps * (1 - ease);
-        setNeedle(val);
-        setArcFill(val);
-        if (speedEl) speedEl.textContent = val >= 1 ? formatMbps(val) : '0.00';
-        if (t < 1) {
-          requestAnimationFrame(step);
-        } else {
-          setNeedle(0);
-          setArcFill(0);
-          if (speedEl) speedEl.textContent = '0.00';
-          resolve();
-        }
-      }
-      requestAnimationFrame(step);
-    });
-  }
-
-  // Start in idle state
-  if (gaugeArea) gaugeArea.classList.add('idle');
-  initGauge();
+  // Create gauge instance using shared module
+  var gauge = SpeedGauge.create({
+    needleEl: document.getElementById('speedtest_needle'),
+    arcBg: document.getElementById('speedtest_arc_bg'),
+    arcFill: document.getElementById('speedtest_arc_fill'),
+    speedEl: speedEl,
+    unitEl: unitEl,
+    gaugeArea: document.querySelector('.speedtest-gauge-area'),
+    scaleLabelsSelector: '#speedtest_local_panel .speedtest-scale-labels'
+  });
 
   var running = false;
   var TEST_DURATION_MS = 8000;
 
-  function toMbps(MBps) { return MBps * 8; }
-
-  function formatMbps(mbps) {
-    if (mbps >= 100) return mbps.toFixed(0);
-    if (mbps >= 10) return mbps.toFixed(1);
-    return mbps.toFixed(2);
-  }
-
-  function setSpeed(MBps) {
-    var mbps = toMbps(MBps);
-    if (speedEl) speedEl.textContent = formatMbps(mbps);
-    if (unitEl) unitEl.textContent = 'Mbps';
-    setNeedle(mbps);
-    setArcFill(mbps);
-  }
+  var formatMbps = SpeedGauge.formatMbps;
+  var toMbps = SpeedGauge.toMbps;
 
   function setPhase(text, icon) {
     if (phaseEl) phaseEl.textContent = text;
@@ -193,23 +81,35 @@
     });
   }
 
-  // Download test — continuous fetch for TEST_DURATION_MS
+  // Download test � continuous fetch for TEST_DURATION_MS
   function measureDownload(ckSize, onProgress) {
     return new Promise(function (resolve) {
       var totalLoaded = 0;
       var startTime = performance.now();
       var done = false;
+      var controller = new AbortController();
+      var activeReaders = [];
+
+      function cleanup() {
+        controller.abort();
+        activeReaders.forEach(function (r) { try { r.cancel(); } catch(e) {} });
+        activeReaders = [];
+      }
 
       function runOne() {
         if (done) return;
-        fetch(HOTBOX_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now(), { cache: 'no-store' })
+        fetch(HOTBOX_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now(), { cache: 'no-store', signal: controller.signal })
           .then(function (res) {
-            if (!res.ok) { if (!done) { done = true; resolve(-1); } return; }
+            if (done) return;
+            if (!res.ok) { if (!done) { done = true; cleanup(); resolve(-1); } return; }
             var reader = res.body.getReader();
+            activeReaders.push(reader);
             function pump() {
               return reader.read().then(function (result) {
-                if (done) return;
+                if (done) { reader.cancel(); return; }
                 if (result.done) {
+                  var idx = activeReaders.indexOf(reader);
+                  if (idx >= 0) activeReaders.splice(idx, 1);
                   if ((performance.now() - startTime) < TEST_DURATION_MS) { runOne(); }
                   else { finish(); }
                   return;
@@ -217,9 +117,9 @@
                 totalLoaded += result.value.length;
                 var elapsed = (performance.now() - startTime) / 1000;
                 if (elapsed > 0) { onProgress(totalLoaded / (elapsed * 1048576)); }
-                if ((performance.now() - startTime) >= TEST_DURATION_MS) { reader.cancel(); finish(); return; }
+                if ((performance.now() - startTime) >= TEST_DURATION_MS) { finish(); return; }
                 return pump();
-              });
+              }).catch(function () {});
             }
             pump();
           })
@@ -229,6 +129,7 @@
       function finish() {
         if (done) return;
         done = true;
+        cleanup();
         var elapsed = (performance.now() - startTime) / 1000;
         resolve(totalLoaded / (elapsed * 1048576));
       }
@@ -237,32 +138,39 @@
     });
   }
 
-  // Upload test — continuous POST for TEST_DURATION_MS
+  // Upload test � continuous POST for TEST_DURATION_MS
   function measureUpload(sizeMB, onProgress) {
     return new Promise(function (resolve) {
       var totalUploaded = 0;
       var startTime = performance.now();
       var done = false;
-      var data = new ArrayBuffer(sizeMB * 1024 * 1024);
+      var controller = new AbortController();
       var chunkBytes = sizeMB * 1024 * 1024;
+
+      function cleanup() {
+        controller.abort();
+      }
 
       function runOne() {
         if (done) return;
-        fetch(HOTBOX_baseURL + '/speedtest_upload?_t=' + Date.now(), { method: 'POST', body: new Blob([data]) })
+        var data = new ArrayBuffer(chunkBytes);
+        fetch(HOTBOX_baseURL + '/speedtest_upload?_t=' + Date.now(), { method: 'POST', body: new Blob([data]), signal: controller.signal })
           .then(function (res) {
             if (done) return;
-            if (!res.ok) { done = true; resolve(-1); return; }
-            totalUploaded += chunkBytes;
-            var elapsed = (performance.now() - startTime) / 1000;
-            onProgress(totalUploaded / (elapsed * 1048576));
-            if ((performance.now() - startTime) >= TEST_DURATION_MS) { done = true; resolve(totalUploaded / (elapsed * 1048576)); }
-            else { runOne(); }
+            return res.text().then(function () {
+              if (done) return;
+              totalUploaded += chunkBytes;
+              var elapsed = (performance.now() - startTime) / 1000;
+              onProgress(totalUploaded / (elapsed * 1048576));
+              if ((performance.now() - startTime) >= TEST_DURATION_MS) { done = true; cleanup(); resolve(totalUploaded / (elapsed * 1048576)); }
+              else { runOne(); }
+            });
           })
           .catch(function () { if (!done) { done = true; resolve(-1); } });
       }
 
-      // 3 parallel streams
-      runOne(); runOne(); runOne();
+      // 2 parallel streams
+      runOne(); runOne();
     });
   }
 
@@ -274,9 +182,7 @@
 
     // Hide GO button, show gauge
     goBtn.classList.add('hidden');
-    if (gaugeArea) gaugeArea.classList.remove('idle');
-    setNeedle(0);
-    setArcFill(0);
+    gauge.activate();
 
     // Reset result cards
     [pingCard, downloadCard, uploadCard].forEach(function(c) { if(c) c.classList.remove('active'); });
@@ -298,14 +204,14 @@
     await new Promise(function(r) { setTimeout(r, 1500); });
 
     // --- Phase 2: Download ---
-    setPhase('DOWNLOAD', '⬇');
-    setSpeed(0);
+    setPhase('DOWNLOAD', '\u2B07');
+    gauge.setSpeed(0);
     if (pingCard) pingCard.classList.remove('active');
     if (downloadCard) downloadCard.classList.add('active');
     if (downloadEl) downloadEl.textContent = '...';
 
     var download = await measureDownload(ckSize, function(MBps) {
-      setSpeed(MBps);
+      gauge.setSpeed(MBps);
       if (downloadEl) downloadEl.textContent = formatMbps(toMbps(MBps)) + ' Mbps';
     });
 
@@ -314,31 +220,30 @@
     if (downloadCard) downloadCard.classList.add('active');
 
     // --- Animate gauge down & pause ---
-    await animateGaugeDown(dlMbps > 0 ? dlMbps : 0, 800);
+    await gauge.animateGaugeDown(dlMbps > 0 ? dlMbps : 0, 800);
     await new Promise(function(r) { setTimeout(r, 2000); });
 
     // --- Phase 3: Upload ---
-    setPhase('UPLOAD', '⬆');
-    setSpeed(0);
+    setPhase('UPLOAD', '\u2B06');
+    gauge.setSpeed(0);
     if (downloadCard) downloadCard.classList.remove('active');
     if (uploadCard) uploadCard.classList.add('active');
     if (uploadEl) uploadEl.textContent = '...';
 
     var upload = await measureUpload(4, function(MBps) {
-      setSpeed(MBps);
+      gauge.setSpeed(MBps);
       if (uploadEl) uploadEl.textContent = formatMbps(toMbps(MBps)) + ' Mbps';
     });
 
     var ulMbps = upload > 0 ? toMbps(upload) : -1;
     if (uploadEl) uploadEl.textContent = ulMbps > 0 ? formatMbps(ulMbps) + ' Mbps' : 'Error';
 
+    // --- Animate gauge down after upload ---
+    await gauge.animateGaugeDown(ulMbps > 0 ? ulMbps : 0, 800);
+
     // --- Done ---
-    setPhase('DOWNLOAD', '⬇');
-    var finalMbps = dlMbps > 0 ? dlMbps : 0;
-    if (speedEl) speedEl.textContent = formatMbps(finalMbps);
-    if (unitEl) unitEl.textContent = 'Mbps';
-    setNeedle(finalMbps);
-    setArcFill(finalMbps);
+    setPhase('');
+    gauge.reset();
 
     // Highlight all results
     [pingCard, downloadCard, uploadCard].forEach(function(c) { if(c) c.classList.add('active'); });

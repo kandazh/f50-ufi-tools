@@ -2,6 +2,88 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const https = require('https');
+const { execSync } = require('child_process');
+
+// Real HTTP download — returns { bytes, secs }
+// In dev mode, redirects external speed test URLs to local endpoint to avoid rate limits
+function realDownload(url, maxTimeSec) {
+  return new Promise((resolve) => {
+    // Redirect external speed test URLs to our own local endpoint
+    const bytesMatch = url.match(/bytes=(\d+)/);
+    const bytes = bytesMatch ? bytesMatch[1] : '25000000';
+    const localUrl = `http://localhost:3000/api/speedtest?ckSize=${Math.ceil(parseInt(bytes) / 1048576)}`;
+    
+    const startTime = Date.now();
+    let totalBytes = 0;
+    let resolved = false;
+    const done = () => { if (!resolved) { resolved = true; resolve({ bytes: totalBytes, secs: (Date.now() - startTime) / 1000 }); } };
+    const timeout = (maxTimeSec || 5) * 1000;
+    const req = http.get(localUrl, { timeout }, (res) => {
+      res.on('data', (chunk) => { totalBytes += chunk.length; });
+      res.on('end', done);
+      res.on('error', done);
+    });
+    req.on('error', done);
+    req.on('timeout', () => { req.destroy(); });
+    setTimeout(() => { req.destroy(); }, timeout);
+  });
+}
+
+// Real HTTP upload — returns { bytes, secs }
+// In dev mode, uploads to local endpoint to avoid rate limits
+function realUpload(url, sizeBytes) {
+  return new Promise((resolve) => {
+    const uploadData = Buffer.alloc(sizeBytes, 0x41);
+    const startTime = Date.now();
+    let resolved = false;
+    const done = () => { if (!resolved) { resolved = true; resolve({ bytes: sizeBytes, secs: (Date.now() - startTime) / 1000 }); } };
+    const options = {
+      hostname: 'localhost',
+      port: 3000,
+      path: '/api/speedtest_upload',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': sizeBytes },
+      timeout: 10000,
+    };
+    const req = http.request(options, (res) => {
+      res.resume();
+      res.on('end', done);
+      res.on('error', done);
+    });
+    req.on('error', done);
+    req.on('timeout', () => { req.destroy(); });
+    req.write(uploadData);
+    req.end();
+  });
+}
+
+// Real ping using system ping command — returns avg ms
+function realPing(host, count) {
+  try {
+    const isWin = process.platform === 'win32';
+    const cmd = isWin ? `ping -n ${count} ${host}` : `ping -c ${count} -W 3 ${host}`;
+    const output = execSync(cmd, { timeout: 10000, encoding: 'utf8' });
+    return output;
+  } catch (e) {
+    return e.stdout || `ping: ${host}: Name or service not known`;
+  }
+}
+
+// Real connection timing — returns seconds
+function realConnectTime(host) {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+    const req = http.get(`http://${host}/`, { timeout: 3000 }, (res) => {
+      res.resume();
+      const secs = (Date.now() - startTime) / 1000;
+      resolve(secs);
+    });
+    req.on('error', () => resolve((Date.now() - startTime) / 1000));
+    req.on('timeout', () => { req.destroy(); resolve((Date.now() - startTime) / 1000); });
+  });
+}
 
 const app = express();
 const publicDir = path.join(__dirname, 'public');
@@ -163,53 +245,50 @@ app.use('/api/root_shell', (req, res) => {
           // saveConfig: move file to target path
           res.json({ result: '' });
         } else if (cmd.startsWith('ping')) {
-          // Mock ping response with varied latency based on host
-          let pingMs = 22.4;
-          if (cmd.includes('cloudflare')) pingMs = 8 + Math.random() * 5;
-          else if (cmd.includes('sin') || cmd.includes('singapore')) pingMs = 35 + Math.random() * 10;
-          else if (cmd.includes('tokyo')) pingMs = 55 + Math.random() * 15;
-          else if (cmd.includes('thinkbroadband') || cmd.includes('london')) pingMs = 150 + Math.random() * 20;
-          else if (cmd.includes('frankfurt')) pingMs = 130 + Math.random() * 15;
-          else if (cmd.includes('newark') || cmd.includes('new')) pingMs = 200 + Math.random() * 20;
-          else if (cmd.includes('fremont') || cmd.includes('california')) pingMs = 220 + Math.random() * 25;
+          // Real ping
           const host = cmd.match(/ping\s+.*?\s+(\S+)$/)?.[1] || '8.8.8.8';
-          if (cmd.includes('-c 1')) {
-            res.json({ output: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = ${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/0.000 ms` });
-          } else {
-            res.json({ output: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${(pingMs+1.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=2 ttl=117 time=${(pingMs-0.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=3 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2003ms\nrtt min/avg/max/mdev = ${(pingMs-0.6).toFixed(1)}/${pingMs.toFixed(1)}/${(pingMs+1.6).toFixed(1)}/0.683 ms` });
-          }
-        } else if (cmd.includes('curl') && cmd.includes('speed_download')) {
-          // Mock curl download speed test - simulate ~45 Mbps
-          const bytes = 10000000;
-          const speed = 5625000; // bytes/sec = 45 Mbps
-          const time = (bytes / speed).toFixed(3);
-          res.json({ output: speed + ' ' + bytes + ' ' + time });
+          const count = cmd.includes('-c 1') ? 1 : 3;
+          const output = realPing(host, count);
+          res.json({ output });
+        } else if (cmd.includes('curl') && cmd.includes('-w') && cmd.includes('size_download')) {
+          // Real curl download speed test
+          const urlMatch = cmd.match(/"(https?:\/\/[^"]+)"/);
+          const maxTimeMatch = cmd.match(/--max-time\s+(\d+)/);
+          const url = urlMatch ? urlMatch[1] : 'http://speed.cloudflare.com/__down?bytes=10000000';
+          const maxTime = maxTimeMatch ? parseInt(maxTimeMatch[1]) : 5;
+          realDownload(url, maxTime).then(r => {
+            res.json({ output: `${r.bytes} ${r.secs.toFixed(6)}` });
+          });
+        } else if (cmd.includes('curl') && cmd.includes('-w') && cmd.includes('size_upload')) {
+          // Real curl upload speed test
+          const uploadSize = 2 * 1024 * 1024; // 2MB like the dd command creates
+          realUpload('https://speed.cloudflare.com/__up', uploadSize).then(r => {
+            res.json({ output: `${r.bytes} ${r.secs.toFixed(6)}` });
+          });
         } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_dl')) {
-          // Mock cell speedtest download loop — simulate ~50 Mbps over 10s
+          // Real download test — download for the specified duration
+          const urlMatch = cmd.match(/"(https?:\/\/[^"]+)"/);
           const durationMatch = cmd.match(/DURATION=(\d+)/);
+          const url = urlMatch ? urlMatch[1] : 'http://speed.cloudflare.com/__down?bytes=25000000';
           const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
-          const bytesPerSec = 6250000; // 50 Mbps
-          const totalBytes = bytesPerSec * duration;
-          const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
-          setTimeout(() => {
-            res.json({ output: totalBytes + ' ' + elapsedMs });
-          }, 2000); // Simulate some delay
+          realDownload(url, duration).then(r => {
+            res.json({ output: `${r.bytes} ${Math.round(r.secs * 1000)}` });
+          });
         } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_ul')) {
-          // Mock cell speedtest upload loop — simulate ~15 Mbps over 10s
+          // Real upload test
           const durationMatch = cmd.match(/DURATION=(\d+)/);
           const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
-          const bytesPerSec = 1875000; // 15 Mbps
-          const totalBytes = bytesPerSec * duration;
-          const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
-          setTimeout(() => {
-            res.json({ output: totalBytes + ' ' + elapsedMs });
-          }, 2000); // Simulate some delay
+          const uploadSize = 2 * 1024 * 1024;
+          realUpload('https://speed.cloudflare.com/__up', uploadSize).then(r => {
+            res.json({ output: `${r.bytes} ${Math.round(r.secs * 1000)}` });
+          });
         } else if (cmd.includes('curl') && cmd.includes('speed_upload')) {
-          // Mock curl upload speed test - simulate ~12 Mbps
-          const upSpeed = 1500000; // bytes/sec = 12 Mbps
-          const upBytes = 1048576;
-          const upTime = (upBytes / upSpeed).toFixed(3);
-          res.json({ output: upSpeed + ' ' + upBytes + ' ' + upTime });
+          // Real upload speed test (legacy format)
+          const uploadSize = 1048576;
+          realUpload('https://speed.cloudflare.com/__up', uploadSize).then(r => {
+            const speed = r.secs > 0 ? Math.round(r.bytes / r.secs) : 0;
+            res.json({ output: `${speed} ${r.bytes} ${r.secs.toFixed(3)}` });
+          });
         } else if (cmd.includes('cat /proc/swaps')) {
           // Mock swap status
           if (toggleState._swapEnabled) {
@@ -292,38 +371,51 @@ app.post('/api/user_shell', (req, res) => {
       const { command } = JSON.parse(body);
       const cmd = (command || '').trim();
       if (cmd.startsWith('ping')) {
-        let pingMs = 22.4;
-        if (cmd.includes('cloudflare')) pingMs = 8 + Math.random() * 5;
-        else if (cmd.includes('sin') || cmd.includes('singapore')) pingMs = 35 + Math.random() * 10;
-        else if (cmd.includes('tokyo')) pingMs = 55 + Math.random() * 15;
-        else if (cmd.includes('thinkbroadband') || cmd.includes('london')) pingMs = 150 + Math.random() * 20;
-        else if (cmd.includes('frankfurt')) pingMs = 130 + Math.random() * 15;
-        else if (cmd.includes('newark') || cmd.includes('new')) pingMs = 200 + Math.random() * 20;
-        else if (cmd.includes('fremont') || cmd.includes('california')) pingMs = 220 + Math.random() * 25;
         const host = cmd.match(/ping\s+.*?\s+(\S+)$/)?.[1] || '8.8.8.8';
-        if (cmd.includes('-c 1')) {
-          res.json({ result: { done: true, content: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = ${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/0.000 ms` } });
-        } else {
-          res.json({ result: { done: true, content: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${(pingMs+1.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=2 ttl=117 time=${(pingMs-0.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=3 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2003ms\nrtt min/avg/max/mdev = ${(pingMs-0.6).toFixed(1)}/${pingMs.toFixed(1)}/${(pingMs+1.6).toFixed(1)}/0.683 ms` } });
-        }
+        const count = cmd.includes('-c 1') ? 1 : 3;
+        const output = realPing(host, count);
+        res.json({ result: { done: true, content: output } });
       } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_dl')) {
+        const urlMatch = cmd.match(/"(https?:\/\/[^"]+)"/);
         const durationMatch = cmd.match(/DURATION=(\d+)/);
+        const url = urlMatch ? urlMatch[1] : 'http://speed.cloudflare.com/__down?bytes=25000000';
         const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
-        const bytesPerSec = 6250000; // 50 Mbps
-        const totalBytes = bytesPerSec * duration;
-        const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
-        setTimeout(() => {
-          res.json({ result: { done: true, content: totalBytes + ' ' + elapsedMs } });
-        }, 2000);
+        realDownload(url, duration).then(r => {
+          res.json({ result: { done: true, content: `${r.bytes} ${Math.round(r.secs * 1000)}` } });
+        });
       } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_ul')) {
-        const durationMatch = cmd.match(/DURATION=(\d+)/);
-        const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
-        const bytesPerSec = 1875000; // 15 Mbps
-        const totalBytes = bytesPerSec * duration;
-        const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
-        setTimeout(() => {
-          res.json({ result: { done: true, content: totalBytes + ' ' + elapsedMs } });
-        }, 2000);
+        const uploadSize = 2 * 1024 * 1024;
+        realUpload('https://speed.cloudflare.com/__up', uploadSize).then(r => {
+          res.json({ result: { done: true, content: `${r.bytes} ${Math.round(r.secs * 1000)}` } });
+        });
+      } else if (cmd.includes('connect-timeout') && cmd.includes('time_total')) {
+        // Real server detection — measure actual connection time to each host
+        const hostMatches = cmd.match(/http:\/\/([\w.\-]+)\//g) || [];
+        const hosts = hostMatches.map(h => h.replace('http://', '').replace('/', ''));
+        Promise.all(hosts.map(host => realConnectTime(host).then(secs => `${host} ${secs.toFixed(6)}`))).then(lines => {
+          res.json({ result: { done: true, content: lines.join('\n') } });
+        });
+      } else if (cmd.includes('dd ') && cmd.includes('speedtest_ul')) {
+        // Upload file setup — just acknowledge (not needed for real test)
+        res.json({ result: { done: true, content: 'ok' } });
+      } else if (cmd.includes('rm -f') && cmd.includes('speedtest_ul')) {
+        // Cleanup — just acknowledge
+        res.json({ result: { done: true, content: '' } });
+      } else if (cmd.includes('curl') && cmd.includes('-w') && cmd.includes('size_download')) {
+        const urlMatch = cmd.match(/"(https?:\/\/[^"]+)"/);
+        const maxTimeMatch = cmd.match(/--max-time\s+(\d+)/);
+        const url = urlMatch ? urlMatch[1] : 'http://speed.cloudflare.com/__down?bytes=10000000';
+        const maxTime = maxTimeMatch ? parseInt(maxTimeMatch[1]) : 5;
+        console.log('[DL] url:', url, 'maxTime:', maxTime);
+        realDownload(url, maxTime).then(r => {
+          console.log('[DL] result:', r);
+          res.json({ result: { done: true, content: `${r.bytes} ${r.secs.toFixed(6)}` } });
+        });
+      } else if (cmd.includes('curl') && cmd.includes('-w') && cmd.includes('size_upload')) {
+        const uploadSize = 2 * 1024 * 1024;
+        realUpload('https://speed.cloudflare.com/__up', uploadSize).then(r => {
+          res.json({ result: { done: true, content: `${r.bytes} ${r.secs.toFixed(6)}` } });
+        });
       } else {
         res.json({ result: { done: true, content: 'mock: ' + cmd } });
       }
@@ -1073,15 +1165,23 @@ app.get('/api/speedtest', (req, res) => {
   const bytes = ckSize * 1024 * 1024;
   res.set('Content-Type', 'application/octet-stream');
   res.set('Content-Length', bytes.toString());
-  // Generate in chunks to avoid memory issues
+  // Throttle to simulate ~40 Mbps (5 MB/s) — ensures each 2s round takes full duration
+  const targetBytesPerSec = 5 * 1024 * 1024;
   const chunkSize = 64 * 1024;
-  let remaining = bytes;
+  let sent = 0;
+  const startTime = Date.now();
   function sendChunk() {
-    while (remaining > 0) {
-      const size = Math.min(chunkSize, remaining);
+    while (sent < bytes) {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const expectedBytes = targetBytesPerSec * elapsed;
+      if (sent >= expectedBytes) {
+        setTimeout(sendChunk, 10);
+        return;
+      }
+      const size = Math.min(chunkSize, bytes - sent);
       const buf = Buffer.alloc(size, 0x42);
       const ok = res.write(buf);
-      remaining -= size;
+      sent += size;
       if (!ok) {
         res.once('drain', sendChunk);
         return;
@@ -1092,12 +1192,20 @@ app.get('/api/speedtest', (req, res) => {
   sendChunk();
 });
 
-// Speed test upload mock endpoint
+// Speed test upload endpoint — throttled to simulate ~20 Mbps upload
 app.post('/api/speedtest_upload', (req, res) => {
   let size = 0;
+  const startTime = Date.now();
+  const targetBytesPerSec = 2.5 * 1024 * 1024; // ~20 Mbps
   req.on('data', (chunk) => { size += chunk.length; });
   req.on('end', () => {
-    res.json({ result: 'success', bytes_received: size });
+    // Simulate upload delay based on data received
+    const expectedTime = (size / targetBytesPerSec) * 1000;
+    const elapsed = Date.now() - startTime;
+    const delay = Math.max(0, expectedTime - elapsed);
+    setTimeout(() => {
+      res.json({ result: 'success', bytes_received: size });
+    }, delay);
   });
 });
 

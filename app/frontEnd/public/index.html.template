@@ -201,6 +201,7 @@
     <script src="/script/controls/quick-shell.js"></script>
     <script src="/script/controls/advanced.js"></script>
     <script src="/script/controls/sms-panel.js"></script>
+    <script src="/script/controls/speedtest-gauge.js"></script>
     <script src="/script/controls/speedtest.js"></script>
     <script src="/script/controls/cell-speedtest.js"></script>
     <script src="/script/controls/at-cmd.js"></script>

@@ -1,15 +1,13 @@
 /**
  * Cellular Speed Test — Measures actual cellular network speed from the device
  * by running curl commands on the device via root_shell API.
+ * Uses SpeedGauge shared module for gauge logic.
  */
 (function () {
   var startBtn = document.getElementById('cell_speedtest_start_btn');
   var speedEl = document.getElementById('cell_speedtest_speed');
   var unitEl = document.getElementById('cell_speedtest_unit');
   var statusEl = document.getElementById('cell_speedtest_status');
-  var needleEl = document.getElementById('cell_speedtest_needle');
-  var arcBg = document.getElementById('cell_speedtest_arc_bg');
-  var arcFill = document.getElementById('cell_speedtest_arc_fill');
   var resultsEl = document.getElementById('cell_speedtest_results');
   var downloadEl = document.getElementById('cell_speedtest_download');
   var uploadEl = document.getElementById('cell_speedtest_upload');
@@ -19,117 +17,28 @@
   var uploadCard = document.getElementById('cell_speedtest_upload_card');
   var logEl = document.getElementById('cell_speedtest_log');
   var serverSelect = document.getElementById('cell_speedtest_server');
-  var gaugeArea = document.getElementById('cell_gauge_area');
 
   if (!startBtn) return;
 
-  // Gauge geometry — same as local speedtest
-  var CX = 150, CY = 150, R = 115;
-  var START_ANGLE = 225;
-  var END_ANGLE = -45;
-  var SWEEP = 270;
-  var SCALE_VALUES = [0, 5, 10, 50, 100, 250, 500, 750, 1000];
-
-  function degToRad(d) { return d * Math.PI / 180; }
-  function polarToXY(angle, radius) {
-    var rad = degToRad(angle);
-    return { x: CX + radius * Math.cos(rad), y: CY - radius * Math.sin(rad) };
-  }
-  function mbpsToAngle(mbps) {
-    if (mbps <= 0) return START_ANGLE;
-    var fraction = Math.log10(mbps + 1) / Math.log10(1001);
-    return START_ANGLE - fraction * SWEEP;
-  }
-  function arcPath(startAng, endAng, radius) {
-    var s = polarToXY(startAng, radius);
-    var e = polarToXY(endAng, radius);
-    var sweep = startAng - endAng;
-    var largeArc = sweep > 180 ? 1 : 0;
-    return 'M' + s.x.toFixed(1) + ',' + s.y.toFixed(1) +
-           ' A' + radius + ',' + radius + ' 0 ' + largeArc + ' 1 ' +
-           e.x.toFixed(1) + ',' + e.y.toFixed(1);
-  }
-  function initGauge() {
-    if (arcBg) arcBg.setAttribute('d', arcPath(START_ANGLE, END_ANGLE, R));
-    if (arcFill) arcFill.setAttribute('d', 'M0,0');
-    var labelsG = document.querySelector('.cell-scale-labels');
-    if (labelsG) {
-      labelsG.innerHTML = '';
-      SCALE_VALUES.forEach(function(val) {
-        var angle = mbpsToAngle(val);
-        var pos = polarToXY(angle, R + 22);
-        var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', pos.x.toFixed(1));
-        text.setAttribute('y', pos.y.toFixed(1));
-        text.setAttribute('dy', '0.35em');
-        text.textContent = val;
-        labelsG.appendChild(text);
-      });
-    }
-    setNeedle(0);
-  }
-  function setNeedle(mbps) {
-    if (!needleEl) return;
-    var angle = mbpsToAngle(mbps);
-    var svgAngle = 90 - angle;
-    needleEl.style.transform = 'rotate(' + svgAngle + 'deg)';
-  }
-  function setArcFill(mbps) {
-    if (!arcFill) return;
-    if (mbps <= 0) { arcFill.setAttribute('d', 'M0,0'); return; }
-    arcFill.setAttribute('d', arcPath(START_ANGLE, mbpsToAngle(mbps), R));
-  }
-
-  function animateGaugeDown(fromMbps, duration) {
-    return new Promise(function(resolve) {
-      var start = performance.now();
-      var dur = duration || 800;
-      function step(now) {
-        var t = Math.min((now - start) / dur, 1);
-        var ease = 1 - Math.pow(1 - t, 3);
-        var val = fromMbps * (1 - ease);
-        setNeedle(val);
-        setArcFill(val);
-        if (speedEl) speedEl.textContent = val >= 0.01 ? formatSpeed(val / 8) : '0.00';
-        if (t < 1) {
-          requestAnimationFrame(step);
-        } else {
-          setNeedle(0);
-          setArcFill(0);
-          if (speedEl) speedEl.textContent = '0.00';
-          resolve();
-        }
-      }
-      requestAnimationFrame(step);
-    });
-  }
-
-  if (gaugeArea) gaugeArea.classList.add('idle');
-  initGauge();
+  // Create gauge instance using shared module
+  var gauge = SpeedGauge.create({
+    needleEl: document.getElementById('cell_speedtest_needle'),
+    arcBg: document.getElementById('cell_speedtest_arc_bg'),
+    arcFill: document.getElementById('cell_speedtest_arc_fill'),
+    speedEl: speedEl,
+    unitEl: unitEl,
+    gaugeArea: document.getElementById('cell_gauge_area'),
+    scaleLabelsSelector: '.cell-scale-labels'
+  });
 
   var running = false;
+  var formatSpeed = SpeedGauge.formatSpeed;
+  var formatMbps = SpeedGauge.formatMbps;
+  var phaseIcon = document.getElementById('cell_speedtest_phase_icon');
 
-  function formatSpeed(MBps) {
-    if (MBps >= 1) return MBps.toFixed(2) + ' MB/s';
-    return (MBps * 1024).toFixed(0) + ' KB/s';
-  }
-
-  function formatMbps(mbps) {
-    if (mbps >= 100) return mbps.toFixed(0);
-    if (mbps >= 10) return mbps.toFixed(1);
-    return mbps.toFixed(2);
-  }
-
-  function setStatus(text) {
+  function setStatus(text, icon) {
     if (statusEl) statusEl.textContent = text;
-  }
-
-  function setSpeed(MBps) {
-    var mbps = MBps * 8;
-    if (speedEl) speedEl.textContent = formatMbps(mbps);
-    if (unitEl) unitEl.textContent = 'Mbps';
-    setNeedle(mbps);
-    setArcFill(mbps);
+    if (phaseIcon) phaseIcon.textContent = icon || '';
   }
 
   function addLog(msg) {
@@ -188,63 +97,108 @@
     }).catch(function () { return -1; });
   }
 
-  // Measure download speed via curl — loops for ~6 seconds
+  // Measure download speed via curl — multiple rounds with gauge updates
+  // Uses curl's built-in -w stats (no date +%s%N which fails on many Android shells)
   function measureDownload(url) {
-    setStatus('Testing download speed...');
-    addLog('curl download (10s loop): ' + url.split('/').pop());
-    // Loop downloads for DURATION seconds, sum total bytes and elapsed time
-    var cmd = 'DURATION=10; TOTAL=0; T1=$(date +%s%N); END=$(( $(date +%s) + DURATION )); ' +
-      'while [ $(date +%s) -lt $END ]; do ' +
-        CURL_BIN + ' -sL -o /data/local/tmp/speedtest_dl "' + url + '" && ' +
-        'SZ=$(wc -c < /data/local/tmp/speedtest_dl) && TOTAL=$((TOTAL + SZ)); ' +
-      'done; ' +
-      'T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "$TOTAL $MS"; rm -f /data/local/tmp/speedtest_dl';
-    return shellExec(cmd, 90000).then(function (res) {
-      var output = (res.output || res.result || '').trim();
-      addLog('Result: ' + output);
-      // Get the last line (in case curl outputs something)
-      var lines = output.split('\n');
-      var lastLine = lines[lines.length - 1].trim();
-      var parts = lastLine.split(/\s+/);
-      if (parts.length >= 2) {
-        var bytes = parseFloat(parts[0]);
-        var ms = parseFloat(parts[1]);
-        if (ms > 0 && bytes > 0) {
-          var MBps = bytes / (ms / 1000) / 1048576;
-          return { MBps: MBps, bytes: bytes, time: ms / 1000 };
+    addLog('curl download test: ' + url.split('/').pop());
+    var ROUNDS = 8;
+    var ROUND_MAX_TIME = 2; // max-time per curl request in seconds
+    var totalBytes = 0;
+    var totalTimeSec = 0;
+
+    function runRound() {
+      // Use -o /dev/null (no disk write) and -w to get stats directly from curl
+      var cmd = CURL_BIN + ' -sL -o /dev/null --max-time ' + ROUND_MAX_TIME +
+        ' -w "%{size_download} %{time_total}" "' + url + '"';
+      return shellExec(cmd, 15000).then(function (res) {
+        var output = (res.output || res.result || '').trim();
+        var lines = output.split('\n');
+        var lastLine = lines[lines.length - 1].trim();
+        var parts = lastLine.split(/\s+/);
+        if (parts.length >= 2) {
+          var bytes = parseFloat(parts[0]);
+          var secs = parseFloat(parts[1]);
+          if (secs > 0 && bytes > 0) return { bytes: bytes, secs: secs };
         }
+        return null;
+      }).catch(function () { return null; });
+    }
+
+    return (async function () {
+      for (var i = 0; i < ROUNDS; i++) {
+        var r = await runRound();
+        if (r) {
+          totalBytes += r.bytes;
+          totalTimeSec += r.secs;
+          var MBps = totalBytes / totalTimeSec / 1048576;
+          gauge.setSpeedSmooth(MBps);
+          addLog('Round ' + (i + 1) + '/' + ROUNDS + ': ' + formatSpeed(MBps) + ' (' + (r.bytes / 1048576).toFixed(1) + ' MB in ' + r.secs.toFixed(1) + 's)');
+        } else {
+          addLog('Round ' + (i + 1) + '/' + ROUNDS + ': failed');
+        }
+      }
+      if (totalTimeSec > 0 && totalBytes > 0) {
+        var MBps = totalBytes / totalTimeSec / 1048576;
+        addLog('Download total: ' + formatSpeed(MBps) + ' (' + (totalBytes / 1048576).toFixed(1) + ' MB in ' + totalTimeSec.toFixed(1) + 's)');
+        return { MBps: MBps, bytes: totalBytes, time: totalTimeSec };
       }
       return { MBps: -1, bytes: 0, time: 0 };
-    }).catch(function () { return { MBps: -1, bytes: 0, time: 0 }; });
+    })();
   }
 
-  // Measure upload speed via curl POST — loops for ~10 seconds
+  // Measure upload speed via curl POST — multiple rounds with gauge updates
+  // Uses curl's built-in -w stats (no date +%s%N which fails on many Android shells)
   function measureUpload() {
-    setStatus('Testing upload speed...');
-    addLog('curl upload test (10s loop)...');
-    // Create a 2MB file, then loop uploads for DURATION seconds
-    var cmd = 'dd if=/dev/urandom of=/data/local/tmp/speedtest_ul bs=1024 count=2048 2>/dev/null; ' +
-      'DURATION=10; TOTAL=0; T1=$(date +%s%N); END=$(( $(date +%s) + DURATION )); ' +
-      'while [ $(date +%s) -lt $END ]; do ' +
-        CURL_BIN + ' -sL -o /dev/null -X POST --data-binary @/data/local/tmp/speedtest_ul "http://speed.cloudflare.com/__up" && ' +
-        'TOTAL=$((TOTAL + 2097152)); ' +
-      'done; ' +
-      'T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "$TOTAL $MS"; rm -f /data/local/tmp/speedtest_ul';
-    return shellExec(cmd, 90000).then(function (res) {
-      var output = (res.output || res.result || '').trim();
-      addLog('Result: ' + output);
-      var lines = output.split('\n');
-      var lastLine = lines[lines.length - 1].trim();
-      var parts = lastLine.split(/\s+/);
-      if (parts.length >= 2) {
-        var bytes = parseFloat(parts[0]);
-        var ms = parseFloat(parts[1]);
-        if (ms > 0 && bytes > 0) {
-          return bytes / (ms / 1000) / 1048576;
+    addLog('curl upload test...');
+    var ROUNDS = 8;
+    var ROUND_MAX_TIME = 3;
+    var totalBytes = 0;
+    var totalTimeSec = 0;
+
+    // Create upload file once
+    var setupCmd = 'dd if=/dev/urandom of=/data/local/tmp/speedtest_ul bs=1024 count=2048 2>/dev/null; echo ok';
+
+    function runRound() {
+      // Use -w to get upload stats directly from curl
+      var cmd = CURL_BIN + ' -sL -o /dev/null -X POST --data-binary @/data/local/tmp/speedtest_ul' +
+        ' --max-time ' + ROUND_MAX_TIME +
+        ' -w "%{size_upload} %{time_total}" "http://speed.cloudflare.com/__up"';
+      return shellExec(cmd, 15000).then(function (res) {
+        var output = (res.output || res.result || '').trim();
+        var lines = output.split('\n');
+        var lastLine = lines[lines.length - 1].trim();
+        var parts = lastLine.split(/\s+/);
+        if (parts.length >= 2) {
+          var bytes = parseFloat(parts[0]);
+          var secs = parseFloat(parts[1]);
+          if (secs > 0 && bytes > 0) return { bytes: bytes, secs: secs };
+        }
+        return null;
+      }).catch(function () { return null; });
+    }
+
+    return (async function () {
+      await shellExec(setupCmd, 10000);
+      for (var i = 0; i < ROUNDS; i++) {
+        var r = await runRound();
+        if (r) {
+          totalBytes += r.bytes;
+          totalTimeSec += r.secs;
+          var MBps = totalBytes / totalTimeSec / 1048576;
+          gauge.setSpeedSmooth(MBps);
+          addLog('Round ' + (i + 1) + '/' + ROUNDS + ': ' + formatSpeed(MBps) + ' (' + (r.bytes / 1048576).toFixed(1) + ' MB in ' + r.secs.toFixed(1) + 's)');
+        } else {
+          addLog('Round ' + (i + 1) + '/' + ROUNDS + ': failed');
         }
       }
+      await shellExec('rm -f /data/local/tmp/speedtest_ul', 5000);
+      if (totalTimeSec > 0 && totalBytes > 0) {
+        var MBps = totalBytes / totalTimeSec / 1048576;
+        addLog('Upload total: ' + formatSpeed(MBps) + ' (' + (totalBytes / 1048576).toFixed(1) + ' MB in ' + totalTimeSec.toFixed(1) + 's)');
+        return MBps;
+      }
       return -1;
-    }).catch(function () { return -1; });
+    })();
   }
 
   // Server list for auto-detection (ping each, pick lowest latency)
@@ -260,39 +214,57 @@
 
   var serverStatusEl = document.getElementById('cell_speedtest_server_status');
 
-  // Auto-detect best server by pinging each
+  // Auto-detect best server by pinging all at once
   async function findBestServer() {
     setStatus('Finding best server...');
     addLog('Pinging servers to find nearest...');
-    var best = null;
-    var bestLatency = Infinity;
 
-    for (var i = 0; i < serverCandidates.length; i++) {
-      var srv = serverCandidates[i];
-      addLog('  ping ' + srv.name + '...');
-      try {
-        var res = await shellExec('ping -c 1 -W 3 ' + srv.ping_host);
-        var output = (res.output || res.result || '');
-        var match = output.match(/time[=<](\d+\.?\d*)/);
-        if (match) {
-          var ms = parseFloat(match[1]);
-          addLog('    ' + srv.name + ': ' + ms.toFixed(0) + ' ms');
-          if (ms < bestLatency) {
-            bestLatency = ms;
-            best = srv;
+    // Build a single shell command that pings all servers and outputs "host ms" lines
+    var hosts = serverCandidates.map(function (s) { return s.ping_host; });
+    var cmd = hosts.map(function (h) {
+      return 'R=$(' + CURL_BIN + ' -so /dev/null -w "%{time_total}" --connect-timeout 3 -m 3 http://' + h + '/ 2>/dev/null) && echo "' + h + ' $R" || echo "' + h + ' fail"';
+    }).join('; ');
+
+    try {
+      var res = await shellExec(cmd, 30000);
+      var output = (res.output || res.result || '');
+      var lines = output.trim().split('\n');
+      var best = null;
+      var bestLatency = Infinity;
+
+      for (var i = 0; i < lines.length; i++) {
+        var parts = lines[i].trim().split(/\s+/);
+        if (parts.length >= 2 && parts[1] !== 'fail') {
+          var host = parts[0];
+          var sec = parseFloat(parts[1]);
+          if (isNaN(sec)) continue;
+          var ms = sec * 1000;
+          // Find matching server
+          var srv = null;
+          for (var j = 0; j < serverCandidates.length; j++) {
+            if (serverCandidates[j].ping_host === host) { srv = serverCandidates[j]; break; }
+          }
+          if (srv) {
+            addLog('  ' + srv.name + ': ' + ms.toFixed(0) + ' ms');
+            if (ms < bestLatency) { bestLatency = ms; best = srv; }
           }
         } else {
-          addLog('    ' + srv.name + ': timeout');
+          var host2 = parts[0];
+          var srv2 = null;
+          for (var j = 0; j < serverCandidates.length; j++) {
+            if (serverCandidates[j].ping_host === host2) { srv2 = serverCandidates[j]; break; }
+          }
+          if (srv2) addLog('  ' + srv2.name + ': timeout');
         }
-      } catch (e) {
-        addLog('    ' + srv.name + ': error');
       }
-    }
 
-    if (best) {
-      addLog('✓ Best server: ' + best.name + ' (' + bestLatency.toFixed(0) + ' ms)');
-      if (serverStatusEl) serverStatusEl.textContent = '✓ ' + best.name + ' (' + bestLatency.toFixed(0) + 'ms)';
-      return best.url;
+      if (best) {
+        addLog('✓ Best server: ' + best.name + ' (' + bestLatency.toFixed(0) + ' ms)');
+        if (serverStatusEl) serverStatusEl.textContent = '✓ ' + best.name + ' (' + bestLatency.toFixed(0) + 'ms)';
+        return best.url;
+      }
+    } catch (e) {
+      addLog('⚠ Server detection failed: ' + e.message);
     }
     // Fallback
     addLog('⚠ Using default (Cloudflare)');
@@ -303,12 +275,8 @@
     if (running) return;
     running = true;
     startBtn.classList.add('hidden');
-    if (gaugeArea) gaugeArea.classList.remove('idle');
+    gauge.activate();
     clearLog();
-    setNeedle(0);
-    setArcFill(0);
-
-
 
     // Reset result cards
     [pingCard, downloadCard, uploadCard].forEach(function(c) { if(c) c.classList.remove('active'); });
@@ -327,7 +295,7 @@
     }
 
     // Latency
-    setStatus('PING');
+    setStatus('PING', '');
     if (pingCard) pingCard.classList.add('active');
     var latency = await measureLatency();
     if (latency > 0) {
@@ -335,44 +303,47 @@
       if (latencyEl) latencyEl.textContent = latency.toFixed(0) + ' ms';
     }
 
-    // Download
-    setStatus('DOWNLOAD');
+    // Download — start smooth gauge animation
+    setStatus('DOWNLOAD', '⬇');
     if (pingCard) pingCard.classList.remove('active');
     if (downloadCard) downloadCard.classList.add('active');
+    gauge.resetSmooth();
+    gauge.startGaugeAnimation();
     var dlResult = await measureDownload(url);
+    gauge.stopGaugeAnimation();
     if (dlResult.MBps > 0) {
-      setSpeed(dlResult.MBps);
       addLog('Download: ' + formatSpeed(dlResult.MBps));
       if (downloadEl) downloadEl.textContent = formatSpeed(dlResult.MBps);
     } else {
       if (downloadEl) downloadEl.textContent = 'Error';
     }
 
-    // Upload
+    // Upload — animate gauge down, pause, then start upload
     var lastDlMbps = dlResult.MBps > 0 ? dlResult.MBps * 8 : 0;
-    await animateGaugeDown(lastDlMbps, 800);
-    await new Promise(function(r) { setTimeout(r, 2000); });
-    setStatus('UPLOAD');
+    await gauge.animateGaugeDown(lastDlMbps, 800);
+    await new Promise(function(r) { setTimeout(r, 1500); });
+    setStatus('UPLOAD', '⬆');
     if (downloadCard) downloadCard.classList.remove('active');
     if (uploadCard) uploadCard.classList.add('active');
+    gauge.resetSmooth();
+    gauge.startGaugeAnimation();
     var upload = await measureUpload();
+    gauge.stopGaugeAnimation();
     if (upload > 0) {
-      setSpeed(upload);
       addLog('Upload: ' + formatSpeed(upload));
       if (uploadEl) uploadEl.textContent = formatSpeed(upload);
     } else {
       if (uploadEl) uploadEl.textContent = 'Error';
     }
 
-    // Show results
+    // Animate gauge down from last upload speed
+    var lastUlMbps = upload > 0 ? upload * 8 : 0;
+    await gauge.animateGaugeDown(lastUlMbps, 800);
+
     setStatus('');
     [pingCard, downloadCard, uploadCard].forEach(function(c) { if(c) c.classList.add('active'); });
 
-    var finalMbps = dlResult.MBps > 0 ? dlResult.MBps * 8 : 0;
-    setNeedle(finalMbps);
-    setArcFill(finalMbps);
-    if (speedEl) speedEl.textContent = '';
-    if (unitEl) unitEl.textContent = '';
+    gauge.reset();
 
     running = false;
     startBtn.classList.remove('hidden');

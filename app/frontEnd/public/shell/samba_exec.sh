@@ -13,6 +13,8 @@ TTYD_PATH="/data/data/com.hotbox.f50_app/files/ttyd"
 LOGIN_PATH="/data/data/com.hotbox.f50_app/files/login.sh"
 BOOTUP_SCRIPT_PATH="/sdcard/ufi_tools_boot.sh"
 SCHEDULE_SCRIPT_PATH="/sdcard/ufi_tools_schedule.sh"
+APP_PKG="com.hotbox.f50_app"
+CORRECT_SMB_SRC="/sdcard/Android/data/$APP_PKG/files/smb.conf"
 
 UNLOCK_SAMBA_CONF='#!/system/bin/sh
 chattr -i /data/samba/etc/smb.conf
@@ -254,6 +256,25 @@ keep_ufi_running(){
     fi
 }
 
+fix_smb_conf(){
+    # Self-heal: if smb.conf has a stale/wrong package path, replace it with the correct one
+    if [ -f /data/samba/etc/smb.conf ]; then
+        if ! grep -q "$APP_PKG" /data/samba/etc/smb.conf; then
+            echo "[$(date)] smb.conf has wrong app path, fixing..." >> "$LOG_FILE"
+            chattr -i /data/samba/etc/smb.conf 2>/dev/null
+            chmod 777 /data/samba/etc/smb.conf 2>/dev/null
+            if [ -f "$CORRECT_SMB_SRC" ]; then
+                cat "$CORRECT_SMB_SRC" > /data/samba/etc/smb.conf
+                echo "[$(date)] smb.conf fixed from $CORRECT_SMB_SRC" >> "$LOG_FILE"
+            else
+                # Inline fix: replace any old package path with the correct one
+                sed -i "s|/data/data/[^/]*/files/samba_exec.sh|/data/data/$APP_PKG/files/samba_exec.sh|g" /data/samba/etc/smb.conf
+                echo "[$(date)] smb.conf fixed via sed" >> "$LOG_FILE"
+            fi
+        fi
+    fi
+}
+
 lock_smb_conf(){
     #lock samba conf
     if [ -f /data/samba/etc/smb.conf ]; then
@@ -384,6 +405,7 @@ boot_up_script() {
   echo "$UNLOCK_SAMBA_CONF" > /sdcard/unlock_samba.sh
 
   samba_path
+  fix_smb_conf
   lock_smb_conf
   check_log_file
   check_ttyd_running
@@ -404,6 +426,7 @@ schedule_script() {
       echo "[`date`] $SCHEDULE_SCRIPT_PATH not found, skip" >> "$LOG_FILE"
   fi
 
+  fix_smb_conf
   lock_smb_conf
   check_log_file
   check_ttyd_running
