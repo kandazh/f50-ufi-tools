@@ -1,5 +1,5 @@
 /**
- * Plugin Panel
+ * Plugin Panel — Per-plugin storage model
  */
 (function () {
   var panel = document.querySelector('[data-ctrl-panel="plugin"]');
@@ -42,38 +42,41 @@
   var clearBtn = document.getElementById('plugin_clear_btn');
   var storeList = document.getElementById('plugin_store_list');
   var nameInput = document.getElementById('plugin_name_input');
+  var pluginListEl = document.getElementById('plugin_installed_list');
 
-  async function loadCurrent() {
-    try {
-      var res = await fetch(HOTBOX_baseURL + '/get_custom_head', { headers: common_headers });
-      var data = await res.json();
-      codeArea.value = data.text || '';
-    } catch (e) {
-      codeArea.value = '';
-    }
+  // --- API helpers ---
+  async function apiGetAllCode() {
+    var res = await fetch(HOTBOX_baseURL + '/get_custom_head', { headers: common_headers });
+    var data = await res.json();
+    return data.text || '';
   }
 
-  async function getSavedCode() {
-    try {
-      var res = await fetch(HOTBOX_baseURL + '/get_custom_head', { headers: common_headers });
-      var data = await res.json();
-      return data.text || '';
-    } catch (e) { return ''; }
+  async function apiListPlugins() {
+    var res = await fetch(HOTBOX_baseURL + '/list_plugins', { headers: common_headers });
+    return await res.json(); // returns array of names
   }
 
-  async function savePlugin() {
-    var code = codeArea.value;
-    var res = await fetch(HOTBOX_baseURL + '/set_custom_head', {
+  async function apiSavePlugin(name, code) {
+    var res = await fetch(HOTBOX_baseURL + '/set_plugin', {
       method: 'POST',
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ text: code })
+      body: JSON.stringify({ name: name, text: code })
     });
     var data = await res.json();
-    if (!data || data.result !== 'success') {
-      throw new Error((data && data.error) || 'Failed');
-    }
+    if (!data || data.result !== 'success') throw new Error((data && data.error) || 'Save failed');
   }
 
+  async function apiDeletePlugin(name) {
+    var res = await fetch(HOTBOX_baseURL + '/delete_plugin', {
+      method: 'POST',
+      headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ name: name })
+    });
+    var data = await res.json();
+    if (!data || data.result !== 'success') throw new Error((data && data.error) || 'Delete failed');
+  }
+
+  // --- Plugin Store ---
   async function loadStore() {
     try {
       var res = await fetch(HOTBOX_baseURL + '/plugins_store', { headers: common_headers });
@@ -106,28 +109,63 @@
       }).join('');
 
       storeList.querySelectorAll('.plugin-store-install-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () { installPlugin(btn.dataset.url, btn.dataset.name); });
+        btn.addEventListener('click', function () { installFromStore(btn.dataset.url, btn.dataset.name); });
       });
     } catch (e) {
       storeList.innerHTML = '<div class="sched-empty">Failed to load store</div>';
     }
   }
 
-  async function installPlugin(url, name) {
+  async function installFromStore(url, name) {
     try {
       var res = await fetch(url);
       var code = await res.text();
-      // Add marker so we can identify this plugin later
-      var block = '// [Plugin: ' + name + ']\n' + code + '\n// [/Plugin: ' + name + ']';
-      codeArea.value = block;
-      nameInput.value = '';
-      showCtrlToast(name + ' loaded into editor — click Save & Apply to activate', 'success');
+      var pluginCode = '// [Plugin: ' + name + ']\n' + code + '\n// [/Plugin: ' + name + ']';
+      await apiSavePlugin(name, pluginCode);
+      showCtrlToast(name + ' installed', 'success');
+      await reloadAll();
     } catch (e) {
-      showCtrlToast('Failed to download: ' + e.message, 'error');
+      showCtrlToast('Failed to install: ' + e.message, 'error');
     }
   }
 
   // --- Installed Plugins list ---
+  async function renderInstalledPlugins() {
+    if (!pluginListEl) return;
+    try {
+      var names = await apiListPlugins();
+      if (!names || !names.length) {
+        pluginListEl.innerHTML = '<div class="sched-empty">No plugins installed</div>';
+        return;
+      }
+      pluginListEl.innerHTML = names.map(function (name) {
+        return '<div class="plugin-store-item">' +
+          '<div class="plugin-store-info">' +
+            '<span class="plugin-store-name">' + escapeHtml(name) + '</span>' +
+          '</div>' +
+          '<button class="plugin-remove-btn" data-plugin-name="' + escapeHtml(name) + '" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5;padding:4px 12px;border-radius:6px;border:1px solid;cursor:pointer;font-size:12px">Remove</button>' +
+        '</div>';
+      }).join('');
+
+      pluginListEl.querySelectorAll('.plugin-remove-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { removePlugin(btn.dataset.pluginName); });
+      });
+    } catch (e) {
+      pluginListEl.innerHTML = '<div class="sched-empty">Error loading list</div>';
+    }
+  }
+
+  async function removePlugin(name) {
+    try {
+      await apiDeletePlugin(name);
+      showCtrlToast(name + ' removed', 'success');
+      await reloadAll();
+    } catch (e) {
+      showCtrlToast('Failed to remove: ' + e.message, 'error');
+    }
+  }
+
+  // --- Apply plugins ---
   var PLUGIN_MARKER_RE = /\/\/ \[Plugin: (.+?)\]\n([\s\S]*?)\/\/ \[\/Plugin: \1\]/g;
 
   function parsePlugins(code) {
@@ -135,62 +173,15 @@
     if (!code || !code.trim()) return plugins;
     var m;
     PLUGIN_MARKER_RE.lastIndex = 0;
-    // Collect marked plugins and track what's covered
     var remaining = code;
     while ((m = PLUGIN_MARKER_RE.exec(code)) !== null) {
       plugins.push({ name: m[1], code: m[0], marked: true });
       remaining = remaining.replace(m[0], '');
     }
-    // Any leftover non-empty code is "Custom Code"
     if (remaining.trim()) {
       plugins.unshift({ name: 'Custom Code', code: remaining.trim(), marked: false });
     }
     return plugins;
-  }
-
-  var pluginListEl = document.getElementById('plugin_installed_list');
-
-  function renderInstalledPlugins(code) {
-    if (!pluginListEl) return;
-    var plugins = parsePlugins(code || '');
-    if (!plugins.length) {
-      pluginListEl.innerHTML = '<div class="sched-empty">No plugins installed</div>';
-      return;
-    }
-    pluginListEl.innerHTML = plugins.map(function (p) {
-      return '<div class="plugin-store-item">' +
-        '<div class="plugin-store-info">' +
-          '<span class="plugin-store-name">' + escapeHtml(p.name) + '</span>' +
-        '</div>' +
-        '<button class="plugin-remove-btn" data-plugin-name="' + escapeHtml(p.name) + '" data-marked="' + (p.marked ? '1' : '0') + '" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5;padding:4px 12px;border-radius:6px;border:1px solid;cursor:pointer;font-size:12px">Remove</button>' +
-      '</div>';
-    }).join('');
-
-    pluginListEl.querySelectorAll('.plugin-remove-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () { removePlugin(btn.dataset.pluginName, btn.dataset.marked === '1'); });
-    });
-  }
-
-  async function removePlugin(name, isMarked) {
-    if (isMarked) {
-      var pattern = new RegExp('\\n?\\n?\\/\\/ \\[Plugin: ' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]\\n[\\s\\S]*?\\/\\/ \\[\\/Plugin: ' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]', 'g');
-      codeArea.value = codeArea.value.replace(pattern, '').trim();
-    } else {
-      // Remove everything that's NOT inside markers (custom code)
-      var marked = [];
-      var m;
-      PLUGIN_MARKER_RE.lastIndex = 0;
-      while ((m = PLUGIN_MARKER_RE.exec(codeArea.value)) !== null) {
-        marked.push(m[0]);
-      }
-      codeArea.value = marked.join('\n\n').trim();
-    }
-    try {
-      applyPlugin(codeArea.value);
-    } catch (e) { /* ignore apply errors during remove */ }
-    await savePlugin();
-    renderInstalledPlugins(codeArea.value);
-    showCtrlToast(name + ' removed', 'success');
   }
 
   function applyPlugin(code) {
@@ -202,7 +193,6 @@
     var errors = [];
 
     plugins.forEach(function (p) {
-      // Snapshot current children count
       var before = container.children.length;
 
       try {
@@ -214,7 +204,6 @@
         errors.push(p.name + ': ' + e.message);
       }
 
-      // Wrap any new elements added by this plugin into a collapsible group box
       var after = container.children.length;
       if (after > before) {
         var group = document.createElement('div');
@@ -229,14 +218,12 @@
         var btnWrap = document.createElement('div');
         btnWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;padding:0 12px 12px';
 
-        // Move newly added elements into the group
         while (container.children.length > before) {
           btnWrap.appendChild(container.children[before]);
         }
         group.appendChild(btnWrap);
         container.appendChild(group);
 
-        // Toggle collapse on click
         (function (h, w) {
           h.addEventListener('click', function () {
             var arrow = h.querySelector('.plugin-group-arrow');
@@ -257,49 +244,57 @@
     }
   }
 
+  // --- Reload all plugins from backend ---
+  async function reloadAll() {
+    try {
+      var code = await apiGetAllCode();
+      try { applyPlugin(code); } catch (e) {}
+      await renderInstalledPlugins();
+    } catch (e) {}
+  }
+
+  // --- Save & Apply button ---
   bindCtrlSave('plugin_save_btn', async function () {
     var code = codeArea.value.trim();
     if (!code) throw new Error('No code to save');
     var pluginName = (nameInput.value || '').trim();
-    var saved = await getSavedCode();
 
-    // Check if code is already fully wrapped in plugin markers
-    var alreadyWrapped = /^\/\/ \[Plugin: .+?\]\n[\s\S]*\/\/ \[\/Plugin: .+?\]$/.test(code);
+    // Extract name from markers if already wrapped
+    var markerMatch = code.match(/^\/\/ \[Plugin: (.+?)\]/);
+    if (markerMatch && !pluginName) {
+      pluginName = markerMatch[1];
+    }
 
-    if (!pluginName && !alreadyWrapped) {
-      // Auto-generate name: Custom 1, Custom 2, etc.
+    if (!pluginName) {
+      // Auto-generate name
+      var existingNames = [];
+      try { existingNames = await apiListPlugins(); } catch (e) {}
       var n = 1;
-      while (saved.indexOf('// [Plugin: Custom ' + n + ']') !== -1) n++;
+      while (existingNames.indexOf('Custom ' + n) !== -1) n++;
       pluginName = 'Custom ' + n;
     }
 
-    if (!alreadyWrapped && pluginName) {
-      // Wrap with markers if not already wrapped with this name
-      var escName = pluginName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      if (!code.match(new RegExp('^// \\[Plugin: ' + escName + '\\]'))) {
-        code = '// [Plugin: ' + pluginName + ']\n' + code + '\n// [/Plugin: ' + pluginName + ']';
-      }
+    // Wrap with markers if not already wrapped
+    var alreadyWrapped = /^\/\/ \[Plugin: .+?\]\n[\s\S]*\/\/ \[\/Plugin: .+?\]$/.test(code);
+    if (!alreadyWrapped) {
+      code = '// [Plugin: ' + pluginName + ']\n' + code + '\n// [/Plugin: ' + pluginName + ']';
     }
 
-    // Remove old version of same plugin if exists, then append
-    var plugins = parsePlugins(code);
-    plugins.forEach(function (p) {
-      if (p.marked) {
-        var esc = p.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        saved = saved.replace(new RegExp('\\n?\\n?\\/\\/ \\[Plugin: ' + esc + '\\]\\n[\\s\\S]*?\\/\\/ \\[\\/Plugin: ' + esc + '\\]', 'g'), '').trim();
-      }
-    });
-    codeArea.value = saved + (saved ? '\n\n' : '') + code;
-
-    applyPlugin(codeArea.value);
-    await savePlugin();
+    await apiSavePlugin(pluginName, code);
+    codeArea.value = '';
     nameInput.value = '';
-    renderInstalledPlugins(codeArea.value);
+    await reloadAll();
   }, { needsLogin: false, successMsg: 'Saved & Applied' });
+
   loadBtn.addEventListener('click', async function () {
-    await loadCurrent();
-    renderInstalledPlugins(codeArea.value);
+    try {
+      var code = await apiGetAllCode();
+      codeArea.value = code;
+    } catch (e) {
+      codeArea.value = '';
+    }
   });
+
   clearBtn.addEventListener('click', function () {
     codeArea.value = '';
     nameInput.value = '';
@@ -307,105 +302,19 @@
 
   document.addEventListener('ctrl-panel-show', async function (e) {
     if (e.detail && e.detail.tab === 'plugin') {
-      await loadCurrent();
-      try { applyPlugin(codeArea.value); } catch (err) {}
-      renderInstalledPlugins(codeArea.value);
+      await reloadAll();
       loadStore();
     }
   });
 
-  // Auto-load and apply saved plugin on init (simulates prod behavior)
+  // Auto-load and apply on init
   (async function () {
     try {
-      var res = await fetch(HOTBOX_baseURL + '/get_custom_head', { headers: common_headers });
-      var data = await res.json();
-      if (data.text && data.text.trim()) {
-        applyPlugin(data.text);
-        renderInstalledPlugins(data.text);
+      var code = await apiGetAllCode();
+      if (code && code.trim()) {
+        applyPlugin(code);
+        renderInstalledPlugins();
       }
     } catch (e) {}
-  })();
-
-  // --- Live Translation (Google Translate, plugin panel only) ---
-  (function () {
-    var translateEl = document.getElementById('plugin_translate_el');
-    var pluginPanel = document.getElementById('plugin_panel');
-    if (!translateEl || !pluginPanel) return;
-
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = 'Translate to English';
-    btn.style.cssText = 'padding:4px 10px;font-size:11px;border-radius:4px;background:rgba(14,165,233,0.15);border:1px solid rgba(56,189,248,0.3);color:#93c5fd;cursor:pointer;outline:none;white-space:nowrap;font-weight:500;overflow:visible;line-height:normal;-webkit-text-fill-color:#93c5fd';
-    translateEl.appendChild(btn);
-
-    var translated = false;
-    var originals = null;
-
-    function collectTextNodes(el) {
-      var nodes = [];
-      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
-        acceptNode: function (node) {
-          if (node.parentElement && (node.parentElement.tagName === 'TEXTAREA' || node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE' || node.parentElement.tagName === 'SELECT' || node.parentElement.tagName === 'OPTION' || node.parentElement.tagName === 'INPUT')) return NodeFilter.FILTER_REJECT;
-          return node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-        }
-      });
-      while (walker.nextNode()) nodes.push(walker.currentNode);
-      return nodes;
-    }
-
-    function saveOriginals() {
-      var nodes = collectTextNodes(pluginPanel);
-      originals = nodes.map(function (n) { return { node: n, text: n.textContent }; });
-    }
-
-    function restoreOriginals() {
-      if (!originals) return;
-      originals.forEach(function (o) { o.node.textContent = o.text; });
-      originals = null;
-    }
-
-    async function translateToEnglish() {
-      saveOriginals();
-      var nodes = collectTextNodes(pluginPanel);
-      var texts = nodes.map(function (n) { return n.textContent.trim(); }).filter(Boolean);
-      if (!texts.length) return;
-
-      btn.textContent = 'Translating...';
-      btn.disabled = true;
-      try {
-        var res = await fetch(HOTBOX_baseURL + '/translate', {
-          method: 'POST',
-          headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ texts: texts, sl: 'zh-CN', tl: 'en' })
-        });
-        if (!res.ok) throw new Error('Server returned ' + res.status);
-        var text = await res.text();
-        if (!text || !text.trim()) throw new Error('Empty response');
-        var data = JSON.parse(text);
-        var result = Array.isArray(data) ? data : [];
-        nodes.forEach(function (n, i) {
-          if (i < result.length) {
-            var t = Array.isArray(result[i]) ? result[i][0] : result[i];
-            if (t) n.textContent = t;
-          }
-        });
-        translated = true;
-        btn.textContent = 'Show Original';
-      } catch (e) {
-        showCtrlToast('Translation failed: ' + e.message, 'error');
-        btn.textContent = 'Translate to English';
-      }
-      btn.disabled = false;
-    }
-
-    btn.addEventListener('click', function () {
-      if (translated) {
-        restoreOriginals();
-        translated = false;
-        btn.textContent = 'Translate to English';
-      } else {
-        translateToEnglish();
-      }
-    });
   })();
 })();
