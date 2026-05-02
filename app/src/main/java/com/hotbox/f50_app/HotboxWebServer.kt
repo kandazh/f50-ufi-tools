@@ -18,51 +18,43 @@ class HotboxWebServer(private val context: Context, port: Int, private val proxy
         private const val KEYSTORE_PASSWORD = "changeit"
         private const val KEY_ALIAS = "ufi-tools"
         private const val TAG = "UFI_TOOLS_LOG"
+        private const val SSL_ENABLED = false // Set to true to enable HTTPS
     }
 
     private val server = run {
         val environment = applicationEngineEnvironment {
-            // Try loading SSL keystore
-            var sslLoaded = false
-            try {
-                val keyStore = KeyStore.getInstance("PKCS12").apply {
-                    context.assets.open("certs/ssl.p12").use { stream ->
-                        load(stream, KEYSTORE_PASSWORD.toCharArray())
+            if (SSL_ENABLED) {
+                try {
+                    val keyStore = KeyStore.getInstance("PKCS12").apply {
+                        context.assets.open("certs/ssl.p12").use { stream ->
+                            load(stream, KEYSTORE_PASSWORD.toCharArray())
+                        }
+                    }
+                    val alias = keyStore.aliases().toList().firstOrNull { keyStore.isKeyEntry(it) }
+                        ?: KEY_ALIAS
+                    sslConnector(
+                        keyStore = keyStore,
+                        keyAlias = alias,
+                        keyStorePassword = { KEYSTORE_PASSWORD.toCharArray() },
+                        privateKeyPassword = { KEYSTORE_PASSWORD.toCharArray() }
+                    ) {
+                        this.port = port
+                        host = "0.0.0.0"
+                    }
+                    HotboxLog.d(TAG, "SSL keystore loaded successfully, alias=$alias")
+                } catch (e: Exception) {
+                    HotboxLog.e(TAG, "SSL keystore failed: ${e.message}, falling back to HTTP")
+                    connector {
+                        this.port = port
+                        host = "0.0.0.0"
                     }
                 }
-                // Use first available alias (Windows exports use thumbprint as alias)
-                val alias = keyStore.aliases().toList().firstOrNull { keyStore.isKeyEntry(it) }
-                    ?: KEY_ALIAS
-                sslConnector(
-                    keyStore = keyStore,
-                    keyAlias = alias,
-                    keyStorePassword = { KEYSTORE_PASSWORD.toCharArray() },
-                    privateKeyPassword = { KEYSTORE_PASSWORD.toCharArray() }
-                ) {
-                    this.port = port
-                    host = "0.0.0.0"
-                }
-                sslLoaded = true
-                HotboxLog.d(TAG, "SSL keystore loaded successfully, alias=$alias")
-            } catch (e: Exception) {
-                HotboxLog.e(TAG, "SSL keystore failed: ${e.message}, falling back to HTTP")
-            }
-
-            // Fallback to plain HTTP if SSL failed
-            if (!sslLoaded) {
+            } else {
                 connector {
                     this.port = port
                     host = "0.0.0.0"
                 }
-            }
-
-            // Also add plain HTTP connector so http:// always works
-            if (sslLoaded) {
-                connector {
-                    this.port = port + 1
-                    host = "0.0.0.0"
-                }
-                HotboxLog.d(TAG, "HTTP also available on port ${port + 1}")
+                HotboxLog.d(TAG, "HTTP server on port $port")
             }
 
             module {

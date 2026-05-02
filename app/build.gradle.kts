@@ -48,6 +48,13 @@ tasks.register<Delete>("deleteDumpSymsFromApk") {
     delete(file("${layout.buildDirectory}/dump_syms"))
 }
 
+// Force BuildConfig to regenerate every build (so timestamp is always fresh)
+tasks.configureEach {
+    if (name.contains("BuildConfig")) {
+        outputs.upToDateWhen { false }
+    }
+}
+
 android {
     namespace = "com.hotbox.f50_app"
     compileSdk = 35

@@ -3,9 +3,9 @@
 
 Set-Location $PSScriptRoot
 
-# 1. Build release APK (includes frontend build automatically)
-Write-Host "`n=== Building Release APK ===" -ForegroundColor Cyan
-.\gradlew.bat assembleRelease
+# 1. Clean and build release APK (includes frontend build automatically)
+Write-Host "`n=== Cleaning & Building Release APK ===" -ForegroundColor Cyan
+.\gradlew.bat clean assembleRelease
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed!" -ForegroundColor Red; exit 1 }
 
 # 2. Find the generated APK
@@ -20,12 +20,14 @@ Write-Host "`n=== Device found ===" -ForegroundColor Cyan
 
 # 4. Install APK (uninstall first if signature mismatch)
 Write-Host "`n=== Installing ===" -ForegroundColor Cyan
-& ".\platform-tools\adb.exe" install -r $apk.FullName
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Signature mismatch - uninstalling old version..." -ForegroundColor Yellow
+$installOutput = & ".\platform-tools\adb.exe" install -r "$($apk.FullName)" 2>&1 | Out-String
+Write-Host $installOutput
+if ($installOutput -match "INSTALL_FAILED" -or $installOutput -match "Failure") {
+    Write-Host "Signature mismatch or install failed - uninstalling old version..." -ForegroundColor Yellow
     & ".\platform-tools\adb.exe" uninstall com.hotbox.f50_app
-    & ".\platform-tools\adb.exe" install $apk.FullName
-    if ($LASTEXITCODE -ne 0) { Write-Host "Install failed!" -ForegroundColor Red; exit 1 }
+    $installOutput = & ".\platform-tools\adb.exe" install "$($apk.FullName)" 2>&1 | Out-String
+    Write-Host $installOutput
+    if ($installOutput -notmatch "Success") { Write-Host "Install failed!" -ForegroundColor Red; exit 1 }
 }
 
 Write-Host "`n=== Done! $($apk.Name) installed ===" -ForegroundColor Green
