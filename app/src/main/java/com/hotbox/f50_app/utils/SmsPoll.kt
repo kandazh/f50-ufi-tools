@@ -2,6 +2,7 @@ package com.hotbox.f50_app.utils
 
 import android.content.Context
 import android.net.Uri
+import android.provider.CallLog
 import com.hotbox.f50_app.configs.AppMeta
 import com.hotbox.f50_app.utils.HotboxUtils.Companion.buildStatusSmsMsg
 import com.hotbox.f50_app.utils.HotboxUtils.Companion.sendShellCmd
@@ -303,34 +304,114 @@ object SmsPoll {
             var statusText = ""
             if (shouldForwardDeviceInfo == "1") {
                 statusText = buildStatusSmsMsg(
-                    "Daily:{{daily-flow}} Monthly:{{monthly-flow-count}} Battery:{{battery-level}}",
+                    "\nDaily:{{daily-flow}} Monthly:{{monthly-flow-count}} Battery:{{battery-level}}",
                     context, TAG
                 )
             }
 
-            val body = "From:${sms_data.address} Time:$smsTime\n${sms_data.body}" +
-                    if (statusText.isNotEmpty()) "\n$statusText" else ""
+            val body = "SMS from ${sms_data.address}\nTime: $smsTime\n${sms_data.body}$statusText"
 
-            // Encode to UTF-16BE hex (GSM encoding for ZTE)
-            val encodedBody = body.toByteArray(Charsets.UTF_16BE).joinToString("") { "%02X".format(it) }
+            sendSmsViaGoform(body, forwardNumber, ADB_IP, ADMIN_PWD)
+        } catch (e: Exception) {
+            HotboxLog.e(TAG, "SMS forward (forwardBySms) error: ", e)
+        }
+    }
 
-            runBlocking {
-                val req = HotboxGoformRequest("http://$ADB_IP:8080")
-                val cookie = req.login(ADMIN_PWD)
-                if (cookie != null) {
-                    val result = req.postData(cookie, mapOf(
-                        "goformId" to "SEND_SMS",
-                        "Number" to forwardNumber,
-                        "MessageBody" to encodedBody
-                    ))
-                    req.logout(cookie)
-                    HotboxLog.d(TAG, "SMS forward result: $result")
-                } else {
-                    HotboxLog.e(TAG, "SMS forward error: login failed")
+    //Forward call notification via SMS
+    fun forwardCallBySms(callerNumber: String, callTime: Long, context: Context) {
+        val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        val forwardNumber = sharedPrefs.getString("hotbox_sms_forward_number", null)
+        if (forwardNumber.isNullOrEmpty()) {
+            HotboxLog.e(TAG, "Call notify config error: hotbox_sms_forward_number is empty")
+            return
+        }
+
+        val ADB_IP = sharedPrefs.getString("gateway_ip", "")?.substringBefore(":") ?: ""
+        if (ADB_IP.isEmpty()) {
+            HotboxLog.e(TAG, "Call notify error: gateway_ip is empty")
+            return
+        }
+
+        val ADMIN_PWD = sharedPrefs.getString("ADMIN_PWD", "Wa@9w+YWRtaW4=") ?: "Wa@9w+YWRtaW4="
+
+        HotboxLog.d(TAG, "Forwarding call notification... (SMS to $forwardNumber)")
+        try {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                .withZone(ZoneId.systemDefault())
+            val timeStr = formatter.format(Instant.ofEpochMilli(callTime))
+
+            val body = "Call from $callerNumber\nTime: $timeStr"
+
+            sendSmsViaGoform(body, forwardNumber, ADB_IP, ADMIN_PWD)
+        } catch (e: Exception) {
+            HotboxLog.e(TAG, "Call notify (forwardCallBySms) error: ", e)
+        }
+    }
+
+    private fun sendSmsViaGoform(body: String, toNumber: String, ip: String, password: String) {
+        // Encode to UTF-16BE hex (GSM encoding for ZTE)
+        val encodedBody = body.toByteArray(Charsets.UTF_16BE).joinToString("") { "%02X".format(it) }
+
+        runBlocking {
+            val req = HotboxGoformRequest("http://$ip:8080")
+            val cookie = req.login(password)
+            if (cookie != null) {
+                val result = req.postData(cookie, mapOf(
+                    "goformId" to "SEND_SMS",
+                    "Number" to toNumber,
+                    "MessageBody" to encodedBody
+                ))
+                req.logout(cookie)
+                HotboxLog.d(TAG, "SMS send result: $result")
+            } else {
+                HotboxLog.e(TAG, "SMS send error: login failed")
+            }
+        }
+    }
+
+    // Check for new missed/incoming calls and notify
+    private var lastCallTimestamp: Long = 0
+
+    fun checkNewCallAndNotify(context: Context) {
+        val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val callNotifyEnabled = sharedPrefs.getString("hotbox_call_notify_enabled", "0") ?: "0"
+        if (callNotifyEnabled != "1") return
+
+        val smsForwardMethod = sharedPrefs.getString("hotbox_sms_forward_method", "") ?: ""
+        if (smsForwardMethod != "SMS") return // Only SMS method supports call notify for now
+
+        try {
+            val uri = CallLog.Calls.CONTENT_URI
+            val projection = arrayOf(
+                CallLog.Calls.NUMBER,
+                CallLog.Calls.DATE,
+                CallLog.Calls.TYPE
+            )
+            val sortOrder = "${CallLog.Calls.DATE} DESC"
+
+            val cursor = context.contentResolver.query(uri, projection, null, null, sortOrder)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val number = it.getString(it.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
+                    val date = it.getLong(it.getColumnIndexOrThrow(CallLog.Calls.DATE))
+                    val type = it.getInt(it.getColumnIndexOrThrow(CallLog.Calls.TYPE))
+
+                    // Only forward incoming/missed calls within last 2 minutes
+                    val now = System.currentTimeMillis()
+                    val isRecent = now - date <= 2 * 60 * 1000
+                    val isIncoming = type == CallLog.Calls.INCOMING_TYPE || type == CallLog.Calls.MISSED_TYPE
+                    val isNew = date > lastCallTimestamp
+
+                    if (isRecent && isIncoming && isNew) {
+                        lastCallTimestamp = date
+                        HotboxLog.d(TAG, "New call from $number, forwarding notification")
+                        forwardCallBySms(number, date, context)
+                    }
                 }
             }
         } catch (e: Exception) {
-            HotboxLog.e(TAG, "SMS forward (forwardBySms) error: ", e)
+            HotboxLog.e(TAG, "Call log read error: ", e)
         }
     }
 

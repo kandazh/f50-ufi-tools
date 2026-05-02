@@ -119,8 +119,7 @@
       var code = await res.text();
       // Add marker so we can identify this plugin later
       var block = '// [Plugin: ' + name + ']\n' + code + '\n// [/Plugin: ' + name + ']';
-      var current = codeArea.value.trim();
-      codeArea.value = current + (current ? '\n\n' : '') + block;
+      codeArea.value = block;
       nameInput.value = '';
       showCtrlToast(name + ' loaded into editor — click Save & Apply to activate', 'success');
     } catch (e) {

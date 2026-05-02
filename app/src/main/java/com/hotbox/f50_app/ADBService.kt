@@ -165,6 +165,11 @@ class ADBService : Service() {
                 } catch (e: Exception) {
                     HotboxLog.e(TAG, "Error reading SMS", e)
                 }
+                try {
+                    SmsPoll.checkNewCallAndNotify(applicationContext)
+                } catch (e: Exception) {
+                    HotboxLog.e(TAG, "Error checking calls", e)
+                }
             }
             handler.postDelayed(this, 5000)
         }
