@@ -192,41 +192,32 @@
       }
     } catch (e) { /* ignore */ }
 
-    // Current cell from standard status fields (separate request)
+    // Current cell from main status poll (UFI_DATA) — ZTE firmware only returns
+    // these fields when bundled with the full status batch, not standalone
     if (!lockedOnly) {
-      try {
-        var cellParams = new URLSearchParams({
-          cmd: 'Lte_pci,Lte_fcn,Lte_bands,lte_rsrp,Lte_snr,lte_rsrq,Nr_pci,Nr_fcn,Nr_bands,Z5g_rsrp,Nr_snr,nr_rsrq',
-          multi_data: '1'
+      var d = window.UFI_DATA || {};
+      var cells = [];
+      if (d.Lte_pci && d.Lte_fcn) {
+        cells.push({
+          band: 'B' + (d.Lte_bands || '?'),
+          fcn: d.Lte_fcn,
+          pci: d.Lte_pci,
+          rsrp: d.lte_rsrp || '',
+          sinr: d.Lte_snr || '',
+          rsrq: d.lte_rsrq || ''
         });
-        var cellRes = await getData(cellParams);
-        if (cellRes) {
-          var cells = [];
-          // 4G cell
-          if (cellRes.Lte_pci && cellRes.Lte_fcn) {
-            cells.push({
-              band: 'B' + (cellRes.Lte_bands || '?'),
-              fcn: cellRes.Lte_fcn,
-              pci: cellRes.Lte_pci,
-              rsrp: cellRes.lte_rsrp || '',
-              sinr: cellRes.Lte_snr || '',
-              rsrq: cellRes.lte_rsrq || ''
-            });
-          }
-          // 5G cell
-          if (cellRes.Nr_pci && cellRes.Nr_fcn) {
-            cells.push({
-              band: 'N' + (cellRes.Nr_bands || '?'),
-              fcn: cellRes.Nr_fcn,
-              pci: cellRes.Nr_pci,
-              rsrp: cellRes.Z5g_rsrp || '',
-              sinr: cellRes.Nr_snr || '',
-              rsrq: cellRes.nr_rsrq || ''
-            });
-          }
-          renderCurrentCell(cells);
-        }
-      } catch (e) { /* ignore */ }
+      }
+      if (d.Nr_pci && d.Nr_fcn) {
+        cells.push({
+          band: 'N' + (d.Nr_bands || '?'),
+          fcn: d.Nr_fcn,
+          pci: d.Nr_pci,
+          rsrp: d.Z5g_rsrp || '',
+          sinr: d.Nr_snr || '',
+          rsrq: d.nr_rsrq || ''
+        });
+      }
+      renderCurrentCell(cells);
     }
   }
 

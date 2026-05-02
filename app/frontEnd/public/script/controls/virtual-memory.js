@@ -5,6 +5,7 @@
 (function () {
   var SWAP_FILE = '/data/swapfile';
   var SH_FILE = '/sdcard/hotbox_swap.sh';
+  var OLD_SH_FILE = '/sdcard/kano_swap.sh';
   var LOG_FILE = '/data/swap_setup.log';
   var BOOT_SH = '/sdcard/ufi_tools_boot.sh';
   var SWAP_SIZE_MB = parseInt(localStorage.getItem('swap_size_mb')) || 1536;
@@ -125,20 +126,22 @@
   async function checkSwapStatus() {
     try {
       var res = await runShellWithRoot('cat /proc/swaps');
-      if (res.success && res.content.includes(SWAP_FILE)) {
+      var lines = res.success ? res.content.trim().split('\n') : [];
+      var hasOurFile = res.success && res.content.includes(SWAP_FILE);
+      // Check for file-based swap (not zram which is kernel-managed)
+      var hasFileSwap = false;
+      var totalKb = 0;
+      for (var i = 1; i < lines.length; i++) {
+        var parts = lines[i].split(/\s+/);
+        if (parts[0] && !parts[0].includes('zram')) {
+          hasFileSwap = true;
+          totalKb += parseInt(parts[2]) || 0;
+        }
+      }
+      if (hasOurFile || hasFileSwap) {
         setStatus('Active', '#4ade80', 'enabled');
         swapToggle.set(true);
-        // Parse size
-        var lines = res.content.trim().split('\n');
-        for (var i = 1; i < lines.length; i++) {
-          if (lines[i].includes(SWAP_FILE)) {
-            var parts = lines[i].split(/\s+/);
-            var kb = parseInt(parts[2]) || 0;
-            sizeEl.textContent = (kb / 1024).toFixed(0) + ' MB';
-            return;
-          }
-        }
-        sizeEl.textContent = SWAP_SIZE_MB + ' MB';
+        sizeEl.textContent = totalKb > 0 ? (totalKb / 1024).toFixed(0) + ' MB' : SWAP_SIZE_MB + ' MB';
       } else {
         setStatus('Inactive', '#94a3b8', '');
         swapToggle.set(false);
@@ -189,6 +192,10 @@
       setBusy(false);
       return;
     }
+
+    // Clean up old renamed script
+    await runShellWithRoot('rm -f ' + OLD_SH_FILE);
+    await runShellWithRoot("sed -i '/kano_swap/d' " + BOOT_SH);
 
     // Add to boot script for persistence
     await runShellWithRoot(
@@ -241,9 +248,11 @@
     }
 
     await runShellWithRoot("sed -i '/swapon/d' " + BOOT_SH);
+    await runShellWithRoot("sed -i '/kano_swap/d' " + BOOT_SH);
     await runShellWithRoot('swapoff ' + SWAP_FILE);
     await runShellWithRoot('rm -f ' + SWAP_FILE);
     await runShellWithRoot('rm -f ' + SH_FILE);
+    await runShellWithRoot('rm -f ' + OLD_SH_FILE);
 
     setLog('Virtual memory disabled and files removed.');
     showCtrlToast('Virtual memory disabled');

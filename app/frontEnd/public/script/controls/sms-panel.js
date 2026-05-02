@@ -467,10 +467,7 @@
         .then(function () {
           if (typeof createToast === 'function') createToast('Call notifications ' + (enabled === '1' ? 'enabled' : 'disabled'), 'green');
         })
-        .catch(function () {
-          if (typeof createToast === 'function') createToast('Failed to update', 'red');
-          callSwitch.set(!checked);
-        });
+        .catch(function () {});
     });
 
     // Load initial state

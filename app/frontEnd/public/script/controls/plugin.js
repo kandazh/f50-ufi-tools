@@ -382,7 +382,10 @@
           headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
           body: JSON.stringify({ texts: texts, sl: 'zh-CN', tl: 'en' })
         });
-        var data = await res.json();
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        var text = await res.text();
+        if (!text || !text.trim()) throw new Error('Empty response');
+        var data = JSON.parse(text);
         var result = Array.isArray(data) ? data : [];
         nodes.forEach(function (n, i) {
           if (i < result.length) {
