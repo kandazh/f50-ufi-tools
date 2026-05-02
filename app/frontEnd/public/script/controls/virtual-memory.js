@@ -21,7 +21,7 @@
   if (sizeInput) sizeInput.value = SWAP_SIZE_MB;
 
   if (saveSizeBtn) {
-    saveSizeBtn.addEventListener('click', function() {
+    saveSizeBtn.addEventListener('click', async function() {
       var val = parseInt(sizeInput.value);
       if (!val || val < 256 || val > 4096) {
         showCtrlToast('Size must be between 256–4096 MB', 'error');

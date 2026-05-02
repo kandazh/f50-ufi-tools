@@ -15,7 +15,7 @@
     // Toggle panels
     document.querySelectorAll('.ctrl-panel').forEach(function (p) {
       if (p.dataset.ctrlPanel === name) {
-        p.style.display = p.dataset.ctrlPanel === 'quick_shell' ? 'flex' : '';
+        p.style.display = (name === 'quick_shell' || name === 'ttyd') ? 'flex' : '';
       } else {
         p.style.display = 'none';
       }
@@ -49,7 +49,7 @@
     });
     document.querySelectorAll('.ctrl-panel').forEach(function (p) {
       if (p.dataset.ctrlPanel === saved) {
-        p.style.display = p.dataset.ctrlPanel === 'quick_shell' ? 'flex' : '';
+        p.style.display = (saved === 'quick_shell' || saved === 'ttyd') ? 'flex' : '';
       } else {
         p.style.display = 'none';
       }

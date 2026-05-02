@@ -3917,10 +3917,6 @@ function main_func() {
     collapseGen("#collapse_status_btn", "#collapse_status", "collapse_status")
 
     // Expand/collapse
-    // Config observer: TTYD
-    collapseGen("#collapse_ttyd_btn", "#collapse_ttyd", "collapse_ttyd")
-
-    // Expand/collapse
     // Config observer: lock band
     collapseGen("#collapse_lkband_btn", "#collapse_lkband", "collapse_lkband")
 

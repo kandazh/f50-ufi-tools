@@ -13,6 +13,7 @@
                         <div class="ctrl-nav-group-title">Tools</div>
                         <button class="ctrl-nav-btn" data-ctrl-tab="root_access"><span class="ctrl-nav-icon">🔓</span><span>Root Access</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="adguard"><span class="ctrl-nav-icon">🛡️</span><span>AdGuard Home</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="ttyd"><span class="ctrl-nav-icon">💻</span><span>TTYD Terminal</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="quick_shell"><span class="ctrl-nav-icon">⚡</span><span>Quick Shell</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="speedtest"><span class="ctrl-nav-icon">⚡</span><span>Speed Test</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="at"><span class="ctrl-nav-icon">⌨️</span><span>AT Commands</span></button>
@@ -26,6 +27,7 @@
                         <button class="ctrl-nav-btn" data-ctrl-tab="data_mgmt"><span class="ctrl-nav-icon">📊</span><span>Data Management</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="changepwd"><span class="ctrl-nav-icon">🔑</span><span>Change Password</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot"><span class="ctrl-nav-icon">🔄</span><span>Scheduling</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="band_lock"><span class="ctrl-nav-icon">📡</span><span>Band Lock</span></button>
 
                         <button class="ctrl-nav-btn" data-ctrl-tab="advanced"><span class="ctrl-nav-icon">⚙️</span><span>Advanced</span></button>
                     </div>
@@ -1454,6 +1456,90 @@ uptime</pre>
                         <div class="ctrl-section">
                             <div class="ctrl-section-title"><span class="ctrl-section-icon">📋</span> Log</div>
                             <div class="swap-log-output" id="agh_log"></div>
+                        </div>
+                    </div>
+
+
+                    <!-- TTYD Terminal Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="ttyd" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+                        <div class="ctrl-panel-title" style="display:flex;align-items:center;gap:12px;flex-shrink:0">TTYD Terminal</div>
+                        <div class="ctrl-section" style="flex-shrink:0">
+                            <div class="swap-status-cards">
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 8l3 3-3 3"/><line x1="13" y1="14" x2="17" y2="14"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Service</span>
+                                        <span class="data-mgmt-card-value" id="ttyd_service_status">Checking...</span>
+                                    </div>
+                                    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+                                        <span id="ttyd_port_display" style="font-size:11px;opacity:0.5"></span>
+                                        <div id="ttyd_toggle_switch"></div>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card" id="ttyd_newtab_card" onclick="window.open(document.getElementById('ttyd_service_status').dataset.url||'','_blank')" style="cursor:pointer">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">New Tab</span>
+                                        <span class="data-mgmt-card-value">Open in browser</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ctrl-section" style="flex:1;overflow:hidden;padding:0;margin:0">
+                            <div id="ttyd_iframe_container" style="width:100%;height:100%;overflow:hidden">
+                                <div style="padding:40px 20px;text-align:center;opacity:0.4;font-size:13px">TTYD service is disabled</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Band Lock Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="band_lock" style="display:none">
+                        <div class="ctrl-panel-title">Band Lock</div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M10 20h4"/><path d="M10 10h4l-2-8-2 8z"/><path d="M5 16a9 9 0 0 1 0-8"/><path d="M19 8a9 9 0 0 1 0 8"/><path d="M7.5 14a5 5 0 0 1 0-4"/><path d="M16.5 10a5 5 0 0 1 0 4"/></svg></span> Status</div>
+                            <p class="plugin-desc">Lock specific LTE/NR bands to optimize signal or force carrier selection.</p>
+                            <div class="swap-status-cards">
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 20V4"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Device</span>
+                                        <span class="data-mgmt-card-value" id="band_lock_status">--</span>
+                                    </div>
+                                </div>
+                                <div class="data-mgmt-card">
+                                    <div class="data-mgmt-card-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M10 22h4"/><path d="M10 12h4l-2-9-2 9z"/><path d="M6 16a8.5 8.5 0 0 1 0-8"/><path d="M18 8a8.5 8.5 0 0 1 0 8"/></svg>
+                                    </div>
+                                    <div class="data-mgmt-card-info">
+                                        <span class="data-mgmt-card-label">Bands</span>
+                                        <span class="data-mgmt-card-value" id="band_lock_count">0/0 locked</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="3" height="8" rx="1"/><rect x="9" y="9" width="3" height="13" rx="1"/><rect x="15" y="4" width="3" height="18" rx="1"/><circle cx="21" cy="3" r="1.5" fill="currentColor"/></svg></span> Band Selection</div>
+                            <div class="band-filter-bar">
+                                <button class="band-filter-btn active" data-band-filter="all">All</button>
+                                <button class="band-filter-btn" data-band-filter="4G">4G LTE</button>
+                                <button class="band-filter-btn" data-band-filter="5G">5G NR</button>
+                                <span style="flex:1"></span>
+                                <button class="band-filter-btn" id="band_lock_select_all_btn">Select All</button>
+                                <button class="band-filter-btn" id="band_lock_clear_all_btn">Clear</button>
+                            </div>
+                            <div id="band_lock_chips"></div>
+                        </div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-actions" style="gap:8px;flex-wrap:wrap">
+                                <button type="button" class="ctrl-submit-btn" id="band_lock_apply_btn" style="padding:7px 16px;font-size:12px">Apply</button>
+                                <button type="button" class="ctrl-submit-btn" id="band_lock_unlock_btn" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.3);color:#fbbf24;padding:7px 16px;font-size:12px">Unlock All</button>
+                            </div>
                         </div>
                     </div>
 

@@ -433,11 +433,12 @@
     fwdSwitch = createCtrlToggle(fwdSwitchContainer, function (checked) {
       var enabled = checked ? '1' : '0';
       fetch(HOTBOX_baseURL + '/sms_forward_enabled?enable=' + enabled, { headers: common_headers })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res && res.result === 'success') {
-            if (typeof createToast === 'function') createToast('Forwarding ' + (enabled === '1' ? 'enabled' : 'disabled'), 'green');
-          }
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        })
+        .then(function () {
+          if (typeof createToast === 'function') createToast('Forwarding ' + (enabled === '1' ? 'enabled' : 'disabled'), 'green');
         })
         .catch(function () {
           if (typeof createToast === 'function') createToast('Failed to update', 'red');
@@ -447,7 +448,7 @@
 
     // Load initial state
     fetch(HOTBOX_baseURL + '/sms_forward_enabled', { headers: common_headers })
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (data) { fwdSwitch.set(data.enabled === '1'); })
       .catch(function () {});
   }
@@ -459,11 +460,12 @@
     callSwitch = createCtrlToggle(callSwitchContainer, function (checked) {
       var enabled = checked ? '1' : '0';
       fetch(HOTBOX_baseURL + '/call_notify_enabled?enable=' + enabled, { headers: common_headers })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res && res.result === 'success') {
-            if (typeof createToast === 'function') createToast('Call notifications ' + (enabled === '1' ? 'enabled' : 'disabled'), 'green');
-          }
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        })
+        .then(function () {
+          if (typeof createToast === 'function') createToast('Call notifications ' + (enabled === '1' ? 'enabled' : 'disabled'), 'green');
         })
         .catch(function () {
           if (typeof createToast === 'function') createToast('Failed to update', 'red');
@@ -473,7 +475,7 @@
 
     // Load initial state
     fetch(HOTBOX_baseURL + '/call_notify_enabled', { headers: common_headers })
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (data) { callSwitch.set(data.enabled === '1'); })
       .catch(function () {});
   }
@@ -503,13 +505,14 @@
       headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json;charset=UTF-8' }),
       body: JSON.stringify({ sms_format: smsFormat, call_format: callFormat })
     });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
     var data = await res.json();
     if (!data || data.result !== 'success') throw new Error((data && data.error) || 'Save failed');
   }, { needsLogin: false });
 
   // Load saved format
   fetch(HOTBOX_baseURL + '/sms_forward_format', { headers: common_headers })
-    .then(function (r) { return r.json(); })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(function (data) {
       var smsInput = document.getElementById('fwd_sms_format');
       var callInput = document.getElementById('fwd_call_format');

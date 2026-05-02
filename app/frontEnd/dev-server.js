@@ -1129,7 +1129,7 @@ app.post('/api/set_custom_head', express.json(), (req, res) => {
 
 app.get('/api/plugins_store', (req, res) => {
   res.json({
-    download_url: 'https://example.com/plugins',
+    download_url: '/api/plugins_download',
     res: {
       code: 200,
       data: {
@@ -1153,6 +1153,32 @@ app.get('/api/plugins_store', (req, res) => {
       }
     }
   });
+});
+
+app.get('/api/plugins_download/:name', (req, res) => {
+  var name = req.params.name.replace(/\.js$/, '');
+  res.type('application/javascript').send(
+    '// Plugin: ' + name + '\nconsole.log("' + name + ' plugin loaded");'
+  );
+});
+
+// Translate proxy — forwards to Google Translate API to avoid CORS
+app.post('/api/translate', express.json(), async (req, res) => {
+  try {
+    const { texts, sl, tl } = req.body;
+    if (!texts || !texts.length) return res.json([]);
+    const url = `https://translate.googleapis.com/translate_a/t?client=gtx&sl=${encodeURIComponent(sl || 'zh-CN')}&tl=${encodeURIComponent(tl || 'en')}`;
+    const body = texts.map(t => 'q=' + encodeURIComponent(t)).join('&');
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body
+    });
+    const data = await resp.json();
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Speed test mock endpoint - generates random data for download
