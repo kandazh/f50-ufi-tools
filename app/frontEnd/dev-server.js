@@ -124,8 +124,12 @@ app.use('/api/root_shell', (req, res) => {
       try {
         const { command } = JSON.parse(body);
         const cmd = (command || '').trim();
-        if (cmd === 'whoami') {
-          res.json({ result: toggleState._advancedEnabled ? 'root' : '' });
+        if (!toggleState._advancedEnabled) {
+          res.status(500).json({ error: 'Root shell not available' });
+        } else if (cmd === 'whoami') {
+          res.json({ result: 'root' });
+        } else if (cmd === 'echo ok') {
+          res.json({ output: 'ok', result: 'ok' });
         } else if (cmd.includes('cat') && cmd.includes('/sys/devices/system/cpu/cpu')) {
           // CPU core online status read
           const m = cmd.match(/cpu(\d+)\/online/);
@@ -180,6 +184,26 @@ app.use('/api/root_shell', (req, res) => {
           const speed = 5625000; // bytes/sec = 45 Mbps
           const time = (bytes / speed).toFixed(3);
           res.json({ output: speed + ' ' + bytes + ' ' + time });
+        } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_dl')) {
+          // Mock cell speedtest download loop — simulate ~50 Mbps over 10s
+          const durationMatch = cmd.match(/DURATION=(\d+)/);
+          const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
+          const bytesPerSec = 6250000; // 50 Mbps
+          const totalBytes = bytesPerSec * duration;
+          const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
+          setTimeout(() => {
+            res.json({ output: totalBytes + ' ' + elapsedMs });
+          }, 2000); // Simulate some delay
+        } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_ul')) {
+          // Mock cell speedtest upload loop — simulate ~15 Mbps over 10s
+          const durationMatch = cmd.match(/DURATION=(\d+)/);
+          const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
+          const bytesPerSec = 1875000; // 15 Mbps
+          const totalBytes = bytesPerSec * duration;
+          const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
+          setTimeout(() => {
+            res.json({ output: totalBytes + ' ' + elapsedMs });
+          }, 2000); // Simulate some delay
         } else if (cmd.includes('curl') && cmd.includes('speed_upload')) {
           // Mock curl upload speed test - simulate ~12 Mbps
           const upSpeed = 1500000; // bytes/sec = 12 Mbps
@@ -257,6 +281,56 @@ app.use('/api/root_shell', (req, res) => {
     return;
   }
   res.json({ result: '' });
+});
+
+// Mock /api/user_shell (runs as app UID, no root needed)
+app.post('/api/user_shell', (req, res) => {
+  let body = '';
+  req.on('data', c => body += c);
+  req.on('end', () => {
+    try {
+      const { command } = JSON.parse(body);
+      const cmd = (command || '').trim();
+      if (cmd.startsWith('ping')) {
+        let pingMs = 22.4;
+        if (cmd.includes('cloudflare')) pingMs = 8 + Math.random() * 5;
+        else if (cmd.includes('sin') || cmd.includes('singapore')) pingMs = 35 + Math.random() * 10;
+        else if (cmd.includes('tokyo')) pingMs = 55 + Math.random() * 15;
+        else if (cmd.includes('thinkbroadband') || cmd.includes('london')) pingMs = 150 + Math.random() * 20;
+        else if (cmd.includes('frankfurt')) pingMs = 130 + Math.random() * 15;
+        else if (cmd.includes('newark') || cmd.includes('new')) pingMs = 200 + Math.random() * 20;
+        else if (cmd.includes('fremont') || cmd.includes('california')) pingMs = 220 + Math.random() * 25;
+        const host = cmd.match(/ping\s+.*?\s+(\S+)$/)?.[1] || '8.8.8.8';
+        if (cmd.includes('-c 1')) {
+          res.json({ result: { done: true, content: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = ${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/${pingMs.toFixed(1)}/0.000 ms` } });
+        } else {
+          res.json({ result: { done: true, content: `PING ${host} (1.2.3.4) 56(84) bytes of data.\n64 bytes from ${host}: icmp_seq=1 ttl=117 time=${(pingMs+1.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=2 ttl=117 time=${(pingMs-0.6).toFixed(1)} ms\n64 bytes from ${host}: icmp_seq=3 ttl=117 time=${pingMs.toFixed(1)} ms\n\n--- ${host} ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2003ms\nrtt min/avg/max/mdev = ${(pingMs-0.6).toFixed(1)}/${pingMs.toFixed(1)}/${(pingMs+1.6).toFixed(1)}/0.683 ms` } });
+        }
+      } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_dl')) {
+        const durationMatch = cmd.match(/DURATION=(\d+)/);
+        const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
+        const bytesPerSec = 6250000; // 50 Mbps
+        const totalBytes = bytesPerSec * duration;
+        const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
+        setTimeout(() => {
+          res.json({ result: { done: true, content: totalBytes + ' ' + elapsedMs } });
+        }, 2000);
+      } else if (cmd.includes('DURATION=') && cmd.includes('speedtest_ul')) {
+        const durationMatch = cmd.match(/DURATION=(\d+)/);
+        const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
+        const bytesPerSec = 1875000; // 15 Mbps
+        const totalBytes = bytesPerSec * duration;
+        const elapsedMs = duration * 1000 + Math.floor(Math.random() * 500);
+        setTimeout(() => {
+          res.json({ result: { done: true, content: totalBytes + ' ' + elapsedMs } });
+        }, 2000);
+      } else {
+        res.json({ result: { done: true, content: 'mock: ' + cmd } });
+      }
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 });
 
 // Mock /api/upload_img (file upload → returns mock filename)

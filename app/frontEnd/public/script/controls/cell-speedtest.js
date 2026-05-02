@@ -148,12 +148,27 @@
     }
   }
 
+  // Path to bundled curl binary in app files
+  var CURL_BIN = '/data/data/com.hotbox.f50_app/files/curl';
+
   function shellExec(command, timeout) {
-    return fetch(HOTBOX_baseURL + '/root_shell', {
+    return fetch(HOTBOX_baseURL + '/user_shell', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, common_headers),
       body: JSON.stringify({ command: command, timeout: timeout || 60000 })
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('shell returned ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      // Normalize: user_shell returns {"result":{"done":true,"content":"..."}}
+      var content = '';
+      if (data.result && typeof data.result === 'object') {
+        content = data.result.content || '';
+      } else {
+        content = data.output || data.result || '';
+      }
+      return { output: content, result: content };
+    });
   }
 
   // Measure latency via ping
@@ -180,7 +195,7 @@
     // Loop downloads for DURATION seconds, sum total bytes and elapsed time
     var cmd = 'DURATION=10; TOTAL=0; T1=$(date +%s%N); END=$(( $(date +%s) + DURATION )); ' +
       'while [ $(date +%s) -lt $END ]; do ' +
-        'curl -sL -o /data/local/tmp/speedtest_dl "' + url + '" && ' +
+        CURL_BIN + ' -sL -o /data/local/tmp/speedtest_dl "' + url + '" && ' +
         'SZ=$(wc -c < /data/local/tmp/speedtest_dl) && TOTAL=$((TOTAL + SZ)); ' +
       'done; ' +
       'T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "$TOTAL $MS"; rm -f /data/local/tmp/speedtest_dl';
@@ -211,7 +226,7 @@
     var cmd = 'dd if=/dev/urandom of=/data/local/tmp/speedtest_ul bs=1024 count=2048 2>/dev/null; ' +
       'DURATION=10; TOTAL=0; T1=$(date +%s%N); END=$(( $(date +%s) + DURATION )); ' +
       'while [ $(date +%s) -lt $END ]; do ' +
-        'curl -sL -o /dev/null -X POST --data-binary @/data/local/tmp/speedtest_ul "http://speed.cloudflare.com/__up" && ' +
+        CURL_BIN + ' -sL -o /dev/null -X POST --data-binary @/data/local/tmp/speedtest_ul "http://speed.cloudflare.com/__up" && ' +
         'TOTAL=$((TOTAL + 2097152)); ' +
       'done; ' +
       'T2=$(date +%s%N); MS=$(( (T2 - T1) / 1000000 )); echo "$TOTAL $MS"; rm -f /data/local/tmp/speedtest_ul';
@@ -292,6 +307,8 @@
     clearLog();
     setNeedle(0);
     setArcFill(0);
+
+
 
     // Reset result cards
     [pingCard, downloadCard, uploadCard].forEach(function(c) { if(c) c.classList.remove('active'); });

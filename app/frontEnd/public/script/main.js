@@ -451,8 +451,6 @@ function main_func() {
         initChangeTokenData()
         try { adbQuery() } catch(e) {}
         loadTitle()
-        handlerADBStatus()
-        handlerADBNetworkStatus()
         handlerPerformaceStatus()
         initNetworktype()
         initSMBStatus()
@@ -668,25 +666,13 @@ function main_func() {
         btn.classList.toggle('qt-busy', !!busy)
     }
 
-    let _lastAdbnetCheck = 0
     const qtUpdateAll = () => {
         const d = window.UFI_DATA || {}
         qtSet('data', d.ppp_status && d.ppp_status !== 'ppp_disconnected')
-        qtSet('adb', d.usb_port_switch === '1')
         qtSet('perf', d.performance_mode === '1')
         qtSet('light', d.indicator_light_switch === '1')
         qtSet('smb', d.samba_switch === '1')
         qtSet('roam', d.roam_setting_option === 'on' || d.dial_roam_setting_option === 'on')
-        // adbnet uses a separate endpoint - throttle to every 10s
-        const now = Date.now()
-        if (now - _lastAdbnetCheck > 10000) {
-            _lastAdbnetCheck = now
-            fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
-                method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
-            }, 2000).then(r => r.json()).then(res => {
-                qtSet('adbnet', res.enabled === 'true' || res.enabled === true)
-            }).catch(() => {})
-        }
     }
 
     const qtToggle = async (id) => {
@@ -704,43 +690,6 @@ function main_func() {
                     await (await postData(cookie, { goformId: on ? 'DISCONNECT_NETWORK' : 'CONNECT_NETWORK' })).json()
                     d.ppp_status = on ? 'ppp_disconnected' : 'ppp_connected'
                     qtSet('data', !on)
-                    break
-                }
-                case 'adb': {
-                    const on = d.usb_port_switch === '1'
-                    await (await postData(cookie, { goformId: 'USB_PORT_SETTING', usb_port_switch: on ? '0' : '1' })).json()
-                    d.usb_port_switch = on ? '0' : '1'
-                    qtSet('adb', !on)
-                    break
-                }
-                case 'adbnet': {
-                    const res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
-                        method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
-                    }, 3000)).json()
-                    const on = res.enabled === 'true' || res.enabled === true
-                    if (!on) {
-                        await (await postData(cookie, { goformId: 'USB_PORT_SETTING', usb_port_switch: '1' })).json()
-                        d.usb_port_switch = '1'
-                        qtSet('adb', true)
-                    }
-                    await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
-                        method: 'POST',
-                        headers: { ...common_headers, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ enabled: !on, password: HOTBOX_PASSWORD })
-                    })).json()
-                    // Poll until actual state matches desired state
-                    const desired = !on
-                    for (let attempt = 0; attempt < 10; attempt++) {
-                        await new Promise(r => setTimeout(r, 1000))
-                        try {
-                            const check = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
-                                method: 'GET', headers: { ...common_headers, 'Content-Type': 'application/json' }
-                            }, 3000)).json()
-                            const actual = check.enabled === 'true' || check.enabled === true
-                            if (actual === desired) break
-                        } catch {}
-                    }
-                    qtSet('adbnet', desired)
                     break
                 }
                 case 'perf': {
@@ -1425,112 +1374,6 @@ function main_func() {
     }
     handlerStatusRender(true)
     StopStatusRenderTimer = requestInterval(() => handlerStatusRender(), REFRESH_TIME)
-
-    // Check USB debug status
-    let handlerADBStatus = async () => {
-        const btn = document.querySelector('#ADB')
-        if (!btn) return null
-        if (!(await initRequestData())) {
-            btn.onclick = () => createToast(t('toast_please_login'), 'red')
-            btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-            return null
-        }
-        let res = await getData(new URLSearchParams({
-            cmd: 'usb_port_switch'
-        }))
-        btn.onclick = async () => {
-            try {
-                if (!(await initRequestData())) {
-                    return null
-                }
-                const cookie = await login()
-                if (!cookie) {
-                    createToast(t('login_failed_check_pwd'), 'red')
-                    out()
-                    return null
-                }
-                let res1 = await (await postData(cookie, {
-                    goformId: 'USB_PORT_SETTING',
-                    usb_port_switch: res.usb_port_switch == '1' ? '0' : '1'
-                })).json()
-
-                if (res1.result == 'success') {
-                    createToast(t('toast_oprate_success'), 'green')
-                    await handlerADBStatus()
-                } else {
-                    createToast(t('toast_oprate_failed'), 'red')
-                }
-            } catch (e) {
-                console.error(e.message)
-            }
-        }
-        btn.style.backgroundColor = res.usb_port_switch == '1' ? 'var(--dark-btn-color-active)' : ''
-
-    }
-    handlerADBStatus()
-
-    // Check USB network debug status
-    let handlerADBNetworkStatus = async () => {
-        const btn = document.querySelector('#ADB_NET')
-        if (!btn) return null
-        if (!(await initRequestData())) {
-            btn.onclick = () => createToast(t('toast_please_login'), 'red')
-            btn.style.backgroundColor = 'var(--dark-btn-disabled-color)'
-            return null
-        }
-
-        let res = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
-            method: 'GET',
-            headers: {
-                ...common_headers,
-                'Content-Type': 'application/json',
-            }
-        }, 3000)).json()
-
-        btn.onclick = async () => {
-            try {
-                if (!(await initRequestData())) {
-                    return null
-                }
-                const cookie = await login()
-                if (!cookie) {
-                    createToast(t('toast_login_failed_check_network'), 'red')
-                    out()
-                    return null
-                }
-                // USB debug must be synced on
-                if (!(res.enabled == "true" || res.enabled == true)) {
-                    await (await postData(cookie, {
-                        goformId: 'USB_PORT_SETTING',
-                        usb_port_switch: '1'
-                    })).json()
-                }
-                let res1 = await (await fetchWithTimeout(`${HOTBOX_baseURL}/adb_wifi_setting`, {
-                    method: 'POST',
-                    headers: {
-                        ...common_headers,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        enabled: res.enabled == "true" || res.enabled == true ? false : true,
-                        password: HOTBOX_PASSWORD
-                    })
-                }, 3000)).json()
-                if (res1.result == 'success') {
-                    createToast(t('toast_oprate_success_reboot'), 'green')
-                    await handlerADBStatus()
-                    await handlerADBNetworkStatus()
-                } else {
-                    createToast(t('toast_oprate_failed'), 'red')
-                }
-            } catch (e) {
-                console.error(e.message)
-            }
-        }
-        btn.style.backgroundColor = res.enabled == "true" || res.enabled == true ? 'var(--dark-btn-color-active)' : ''
-
-    }
-    handlerADBNetworkStatus()
 
     // Check performance mode status
     let handlerPerformaceStatus = async () => {

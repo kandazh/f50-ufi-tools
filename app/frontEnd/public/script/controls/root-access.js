@@ -51,12 +51,15 @@
     };
   }
 
-  var rootToggle, coreToggleSw, bigCoreToggleSw;
+  var rootToggle, coreToggleSw, bigCoreToggleSw, usbDebugToggle, netAdbToggle;
 
   function initToggles() {
     rootToggle = createToggle('ADV_ROOT_TOGGLE', function () { handleRootToggle(); });
     coreToggleSw = createToggle('ADV_CORE_TOGGLE', function (on) { handleCoreToggle('little', on); });
     bigCoreToggleSw = createToggle('ADV_BIG_CORE_TOGGLE', function (on) { handleCoreToggle('big', on); });
+    usbDebugToggle = createToggle('ADV_USB_DEBUG_TOGGLE', function (on) { handleUsbDebugToggle(on); });
+    netAdbToggle = createToggle('ADV_NET_ADB_TOGGLE', function (on) { handleNetAdbToggle(on); });
+    checkAdbStatus();
   }
 
   /* --- Status check --- */
@@ -82,8 +85,8 @@
       var btn = document.getElementById(id);
       if (btn) btn.disabled = !advEnabled;
     });
-    if (coreToggleSw) { if (advEnabled) coreToggleSw.enable(); else coreToggleSw.disable(); }
-    if (bigCoreToggleSw) { if (advEnabled) bigCoreToggleSw.enable(); else bigCoreToggleSw.disable(); }
+    if (coreToggleSw) coreToggleSw.enable();
+    if (bigCoreToggleSw) bigCoreToggleSw.enable();
     if (logBox && result && !result.innerHTML) {
       logBox.style.display = '';
       result.innerHTML = '<span class="ctrl-adv-step-text" style="opacity:0.6">' +
@@ -97,6 +100,28 @@
     var result = document.getElementById('ADV_RESULT');
     var logBox = document.getElementById('ADV_LOG_BOX');
     if (!indicator || !result) return;
+
+    // Gate: require USB Debug + Network ADB before enabling root
+    if (!advEnabled) {
+      try {
+        var usbRes = await getData(new URLSearchParams({ cmd: 'usb_port_switch' }));
+        var usbOn = usbRes.usb_port_switch === '1';
+        var netRes = await (await fetchWithTimeout(HOTBOX_baseURL + '/adb_wifi_setting', {
+          method: 'GET', headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' })
+        }, 3000)).json();
+        var netOn = netRes.enabled === 'true' || netRes.enabled === true;
+        if (!usbOn || !netOn) {
+          showCtrlToast('Enable USB Debugging and Network ADB first', 'error');
+          rootToggle.set(false);
+          return;
+        }
+      } catch (e) {
+        showCtrlToast('Could not verify ADB status', 'error');
+        rootToggle.set(false);
+        return;
+      }
+    }
+
     rootToggle.disable();
     result.innerHTML = '';
     if (logBox) logBox.open = true;
@@ -232,33 +257,40 @@
   }
 
   async function checkCoreStatus() {
+    // Big cores: query via goform (no root needed)
+    try {
+      var perfData = await getData(new URLSearchParams({ cmd: 'performance_mode' }));
+      bigCoresEnabled = perfData.performance_mode === '1';
+    } catch (e) {}
+
+    // Little cores: requires root to read sysfs
     if (!advEnabled) {
-      if (coreResult) coreResult.innerHTML = '<span style="opacity:0.6">⏸ Requires root access</span>';
+      littleCoresEnabled = null;
       updateCoreUI();
+      var status = [];
+      status.push('<span style="opacity:0.6">⏸ CPU1–CPU3 | Requires root to check</span>');
+      status.push(bigCoresEnabled ? '✅ CPU4–CPU7 | Online' : '⏸ CPU4–CPU7 | Offline');
+      if (coreResult) coreResult.innerHTML = status.join('<br>');
       return;
     }
     try {
       var res1 = await runShellWithRoot('cat /sys/devices/system/cpu/cpu1/online');
       if (res1.success) {
-        // Only treat as disabled if response is explicitly "0"
         littleCoresEnabled = res1.content.trim() !== '0';
       }
-      var res2 = await runShellWithRoot('cat /sys/devices/system/cpu/cpu4/online');
-      if (res2.success) {
-        bigCoresEnabled = res2.content.trim() !== '0';
-      }
-      updateCoreUI();
-      var status = [];
-      status.push(littleCoresEnabled ? '✅ CPU1–CPU3 | Online' : '⏸ CPU1–CPU3 | Offline');
-      status.push(bigCoresEnabled ? '✅ CPU4–CPU7 | Online' : '⏸ CPU4–CPU7 | Offline');
-      if (coreResult) coreResult.innerHTML = '<span style="opacity:0.6">' + status.join('<br>') + '</span>';
     } catch (e) {}
+    updateCoreUI();
+    var status = [];
+    status.push(littleCoresEnabled ? '✅ CPU1–CPU3 | Online' : '⏸ CPU1–CPU3 | Offline');
+    status.push(bigCoresEnabled ? '✅ CPU4–CPU7 | Online' : '⏸ CPU4–CPU7 | Offline');
+    if (coreResult) coreResult.innerHTML = '<span style="opacity:0.6">' + status.join('<br>') + '</span>';
   }
 
   /* --- System tool buttons --- */
   function bindSystemButtons() {
     bindBtn('ADV_EDIT_BOOT_BTN', function () { handleEditBootScriptModal(); });
     bindBtn('ADV_DUMP_BOOT_BTN', function () { return getBoot(); });
+    bindBtn('ADV_UNINSTALL_ROOT_BTN', function () { handleUninstallRoot(); });
 
     // Get indicator/result elements
     coreIndicator = document.getElementById('ADV_CORE_INDICATOR');
@@ -267,9 +299,48 @@
     coreLogBox = document.getElementById('ADV_CORE_LOG_BOX');
   }
 
+  async function handleUninstallRoot() {
+    if (!advEnabled) {
+      showCtrlToast('Root access is not active', 'error');
+      return;
+    }
+    var indicator = document.getElementById('ADV_INDICATOR');
+    var result = document.getElementById('ADV_RESULT');
+    var logBox = document.getElementById('ADV_LOG_BOX');
+    if (rootToggle) rootToggle.disable();
+    if (indicator) indicator.className = 'ctrl-adv-indicator pending';
+    if (result) result.innerHTML = '';
+    if (logBox) logBox.open = true;
+    appendStep(result, 'Removing advanced configuration...', 'running');
+    try {
+      var res = await uninstallAdvanced();
+      updateLastStep(result, 'ok', res);
+    } catch (e) {
+      updateLastStep(result, 'fail', e.message || 'Failed');
+    }
+    appendStep(result, 'Verifying removal...', 'running');
+    try {
+      var v = await verifyRemoved();
+      updateLastStep(result, 'ok', v);
+    } catch (e) {
+      updateLastStep(result, 'fail', e.message || 'Failed');
+    }
+    appendStep(result, '🔴 Root access removed. Reboot to apply.', 'done');
+    await checkStatus();
+    if (checkCoreStatus) checkCoreStatus();
+    if (rootToggle) rootToggle.enable();
+  }
+
   async function handleCoreToggle(type, wantEnabled) {
-    if (!advEnabled) return;
     var isLittle = (type === 'little');
+
+    // Little cores require root
+    if (isLittle && !advEnabled) {
+      showCtrlToast('Root access required for little core control', 'error');
+      if (coreToggleSw) coreToggleSw.set(!wantEnabled);
+      return;
+    }
+
     // Safety: can't disable if the other group is also disabled
     if (!wantEnabled) {
       if (isLittle && bigCoresEnabled === false) {
@@ -293,18 +364,33 @@
     if (coreResult) coreResult.innerHTML = wantEnabled ? '⏳ Enabling ' + label + '...' : '⏳ Disabling ' + label + '...';
     if (coreLogBox) coreLogBox.open = true;
     try {
-      var cores = isLittle ? ['cpu1', 'cpu2', 'cpu3'] : ['cpu4', 'cpu5', 'cpu6', 'cpu7'];
-      var shell = cores.map(function (c) { return 'echo ' + (wantEnabled ? '1' : '0') + ' > /sys/devices/system/cpu/' + c + '/online'; }).join('; ');
-      await runShellWithRoot(shell);
-      // Verify
-      if (coreResult) coreResult.innerHTML = 'Verifying...';
-      var verifyCore = isLittle ? 'cpu1' : 'cpu4';
-      var verify = await runShellWithRoot('cat /sys/devices/system/cpu/' + verifyCore + '/online');
-      var actualState = verify.success ? verify.content.trim() !== '0' : wantEnabled;
-      if (isLittle) littleCoresEnabled = actualState;
-      else bigCoresEnabled = actualState;
+      if (isLittle) {
+        // Little cores: sysfs via root shell
+        var cores = ['cpu1', 'cpu2', 'cpu3'];
+        var shell = cores.map(function (c) { return 'echo ' + (wantEnabled ? '1' : '0') + ' > /sys/devices/system/cpu/' + c + '/online'; }).join('; ');
+        await runShellWithRoot(shell);
+        // Verify
+        if (coreResult) coreResult.innerHTML = 'Verifying...';
+        var verify = await runShellWithRoot('cat /sys/devices/system/cpu/cpu1/online');
+        var actualState = verify.success ? verify.content.trim() !== '0' : wantEnabled;
+        littleCoresEnabled = actualState;
+      } else {
+        // Big cores: use PERFORMANCE_MODE_SETTING (no root needed)
+        var cookie = await login();
+        if (!cookie) { throw new Error('Login failed'); }
+        var result = await (await postData(cookie, { goformId: 'PERFORMANCE_MODE_SETTING', performance_mode: wantEnabled ? '1' : '0' })).json();
+        if (result.result === '3' || result.result === 'failure') {
+          throw new Error('Goform rejected: ' + JSON.stringify(result));
+        }
+        // Verify via getData
+        if (coreResult) coreResult.innerHTML = 'Verifying...';
+        var perfData = await getData(new URLSearchParams({ cmd: 'performance_mode' }));
+        var actualState = perfData.performance_mode === '1';
+        bigCoresEnabled = actualState;
+      }
       updateCoreUI();
-      if (coreResult) coreResult.innerHTML = actualState ? '✅ ' + label + ' | Online • Verified' : '⏸ ' + label + ' | Offline • Verified';
+      var finalState = isLittle ? littleCoresEnabled : bigCoresEnabled;
+      if (coreResult) coreResult.innerHTML = finalState ? '✅ ' + label + ' | Online • Verified' : '⏸ ' + label + ' | Offline • Verified';
     } catch (e) {
       if (coreResult) coreResult.innerHTML = 'Error: ' + e.message;
       if (indicator) indicator.classList.remove('pending');
@@ -378,5 +464,178 @@
     var d = document.createElement('div');
     d.textContent = s;
     return d.innerHTML;
+  }
+
+  /* --- ADB Controls --- */
+  async function disableRootIfActive() {
+    if (!advEnabled) return;
+    var indicator = document.getElementById('ADV_INDICATOR');
+    var result = document.getElementById('ADV_RESULT');
+    var logBox = document.getElementById('ADV_LOG_BOX');
+    if (indicator) indicator.className = 'ctrl-adv-indicator pending';
+    if (result) result.innerHTML = '';
+    if (logBox) logBox.open = true;
+    try {
+      if (result) appendStep(result, 'ADB dependency lost — disabling root...', 'running');
+      await uninstallAdvanced();
+      if (result) updateLastStep(result, 'ok', 'Removed');
+      if (result) appendStep(result, '🔴 Root access removed (ADB turned off)', 'done');
+    } catch (e) {
+      if (result) updateLastStep(result, 'fail', e.message || 'Failed');
+    }
+    await checkStatus();
+    if (checkCoreStatus) checkCoreStatus();
+    if (rootToggle) rootToggle.set(false);
+  }
+
+  async function checkAdbStatus() {
+    var usbIndicator = document.getElementById('ADV_USB_DEBUG_INDICATOR');
+    var netIndicator = document.getElementById('ADV_NET_ADB_INDICATOR');
+    // Fresh query for USB debug state
+    try {
+      var res = await getData(new URLSearchParams({ cmd: 'usb_port_switch' }));
+      var usbOn = res.usb_port_switch === '1';
+      if (usbDebugToggle) usbDebugToggle.set(usbOn);
+      if (usbIndicator) usbIndicator.className = 'ctrl-adv-indicator' + (usbOn ? ' enabled' : '');
+    } catch (e) {
+      if (usbDebugToggle) usbDebugToggle.set(false);
+      if (usbIndicator) usbIndicator.className = 'ctrl-adv-indicator';
+    }
+    // Fresh query for Network ADB state
+    try {
+      var netRes = await (await fetchWithTimeout(HOTBOX_baseURL + '/adb_wifi_setting', {
+        method: 'GET', headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' })
+      }, 3000)).json();
+      var netOn = netRes.enabled === 'true' || netRes.enabled === true;
+      if (netAdbToggle) netAdbToggle.set(netOn);
+      if (netIndicator) netIndicator.className = 'ctrl-adv-indicator' + (netOn ? ' enabled' : '');
+    } catch (e) {
+      if (netAdbToggle) netAdbToggle.set(false);
+      if (netIndicator) netIndicator.className = 'ctrl-adv-indicator';
+    }
+  }
+
+  async function handleUsbDebugToggle(on) {
+    var indicator = document.getElementById('ADV_USB_DEBUG_INDICATOR');
+    var adbResult = document.getElementById('ADV_ADB_RESULT');
+    var adbLogBox = document.getElementById('ADV_ADB_LOG_BOX');
+    if (usbDebugToggle) usbDebugToggle.disable();
+    if (adbResult) adbResult.innerHTML = '';
+    if (adbLogBox) adbLogBox.open = true;
+    appendStep(adbResult, (on ? 'Enabling' : 'Disabling') + ' USB Debugging...', 'running');
+    try {
+      var cookie = await login();
+      if (!cookie) throw new Error('Login required');
+      var result = await (await postData(cookie, { goformId: 'USB_PORT_SETTING', usb_port_switch: on ? '1' : '0' })).json();
+      if (result.result === '3' || result.result === 'failure') throw new Error('Device rejected request');
+      updateLastStep(adbResult, 'ok', 'Command sent');
+      appendStep(adbResult, 'Verifying state...', 'running');
+      var verify = await getData(new URLSearchParams({ cmd: 'usb_port_switch' }));
+      var actualOn = verify.usb_port_switch === '1';
+      if (usbDebugToggle) usbDebugToggle.set(actualOn);
+      if (indicator) indicator.className = 'ctrl-adv-indicator' + (actualOn ? ' enabled' : '');
+      if (actualOn === on) {
+        updateLastStep(adbResult, 'ok', 'Confirmed ' + (actualOn ? 'ON' : 'OFF'));
+      } else {
+        updateLastStep(adbResult, 'fail', 'State mismatch — device reports ' + (actualOn ? 'ON' : 'OFF'));
+        showCtrlToast('USB debug toggle did not take effect', 'error');
+      }
+      if (!actualOn) {
+        // USB off = everything dependent is dead
+        appendStep(adbResult, 'USB off — disabling Network ADB...', 'running');
+        try {
+          await (await fetchWithTimeout(HOTBOX_baseURL + '/adb_wifi_setting', {
+            method: 'POST',
+            headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ enabled: false, password: HOTBOX_PASSWORD })
+          })).json();
+          updateLastStep(adbResult, 'ok', 'Network ADB disabled');
+        } catch (e) {
+          updateLastStep(adbResult, 'ok', 'Network ADB inactive (adbd stopped)');
+        }
+        if (netAdbToggle) netAdbToggle.set(false);
+        var netInd = document.getElementById('ADV_NET_ADB_INDICATOR');
+        if (netInd) netInd.className = 'ctrl-adv-indicator';
+        await disableRootIfActive();
+      }
+    } catch (e) {
+      updateLastStep(adbResult, 'fail', e.message || 'Failed');
+      try {
+        var cur = await getData(new URLSearchParams({ cmd: 'usb_port_switch' }));
+        var curOn = cur.usb_port_switch === '1';
+        if (usbDebugToggle) usbDebugToggle.set(curOn);
+        if (indicator) indicator.className = 'ctrl-adv-indicator' + (curOn ? ' enabled' : '');
+      } catch (e2) {
+        if (usbDebugToggle) usbDebugToggle.set(!on);
+      }
+    }
+    if (usbDebugToggle) usbDebugToggle.enable();
+  }
+
+  async function handleNetAdbToggle(on) {
+    var indicator = document.getElementById('ADV_NET_ADB_INDICATOR');
+    var adbResult = document.getElementById('ADV_ADB_RESULT');
+    var adbLogBox = document.getElementById('ADV_ADB_LOG_BOX');
+    if (netAdbToggle) netAdbToggle.disable();
+    if (adbResult) adbResult.innerHTML = '';
+    if (adbLogBox) adbLogBox.open = true;
+    try {
+      if (on) {
+        appendStep(adbResult, 'Ensuring USB Debugging is enabled...', 'running');
+        var cookie = await login();
+        if (!cookie) throw new Error('Login required');
+        var usbRes = await (await postData(cookie, { goformId: 'USB_PORT_SETTING', usb_port_switch: '1' })).json();
+        if (usbRes.result === '3' || usbRes.result === 'failure') throw new Error('Could not enable USB debug');
+        var usbVerify = await getData(new URLSearchParams({ cmd: 'usb_port_switch' }));
+        var usbActual = usbVerify.usb_port_switch === '1';
+        if (usbDebugToggle) usbDebugToggle.set(usbActual);
+        var usbInd = document.getElementById('ADV_USB_DEBUG_INDICATOR');
+        if (usbInd) usbInd.className = 'ctrl-adv-indicator' + (usbActual ? ' enabled' : '');
+        if (!usbActual) throw new Error('USB debug failed to enable');
+        updateLastStep(adbResult, 'ok', 'USB Debug confirmed ON');
+      }
+      appendStep(adbResult, (on ? 'Enabling' : 'Disabling') + ' Network ADB...', 'running');
+      await (await fetchWithTimeout(HOTBOX_baseURL + '/adb_wifi_setting', {
+        method: 'POST',
+        headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ enabled: on, password: HOTBOX_PASSWORD })
+      })).json();
+      updateLastStep(adbResult, 'ok', 'Command sent');
+      appendStep(adbResult, 'Polling for confirmation...', 'running');
+      var confirmed = false;
+      for (var attempt = 0; attempt < 10; attempt++) {
+        await new Promise(function (r) { setTimeout(r, 1000); });
+        try {
+          var check = await (await fetchWithTimeout(HOTBOX_baseURL + '/adb_wifi_setting', {
+            method: 'GET', headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' })
+          }, 3000)).json();
+          var actual = check.enabled === 'true' || check.enabled === true;
+          if (actual === on) { confirmed = true; break; }
+        } catch (e) {}
+      }
+      if (confirmed) {
+        updateLastStep(adbResult, 'ok', 'Confirmed ' + (on ? 'ON' : 'OFF'));
+      } else {
+        updateLastStep(adbResult, 'fail', 'Timed out waiting for confirmation');
+        showCtrlToast('Network ADB toggle did not confirm', 'error');
+      }
+      if (netAdbToggle) netAdbToggle.set(confirmed ? on : !on);
+      if (indicator) indicator.className = 'ctrl-adv-indicator' + ((confirmed ? on : !on) ? ' enabled' : '');
+      var finalState = confirmed ? on : !on;
+      if (!finalState) await disableRootIfActive();
+    } catch (e) {
+      updateLastStep(adbResult, 'fail', e.message || 'Failed');
+      try {
+        var netCheck = await (await fetchWithTimeout(HOTBOX_baseURL + '/adb_wifi_setting', {
+          method: 'GET', headers: Object.assign({}, common_headers, { 'Content-Type': 'application/json' })
+        }, 3000)).json();
+        var netActual = netCheck.enabled === 'true' || netCheck.enabled === true;
+        if (netAdbToggle) netAdbToggle.set(netActual);
+        if (indicator) indicator.className = 'ctrl-adv-indicator' + (netActual ? ' enabled' : '');
+      } catch (e2) {
+        if (netAdbToggle) netAdbToggle.set(!on);
+      }
+    }
+    if (netAdbToggle) netAdbToggle.enable();
   }
 })();
