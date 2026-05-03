@@ -588,7 +588,7 @@
         } catch (e) {}
     }
     pollConnInfo();
-    setInterval(pollConnInfo, 5000);
+    setInterval(pollConnInfo, 15000);
 
     // --- Battery Gauge ---
     const batteryGauge = (() => {
@@ -655,7 +655,7 @@
         } catch (e) { /* silent */ }
     }
     setTimeout(pollUSBStatus, 1500);
-    setInterval(pollUSBStatus, 10000);
+    setInterval(pollUSBStatus, 300000);
 
     // --- Data Usage Donut ---
     const dataDonut = (() => {
@@ -1002,6 +1002,6 @@
         } catch (e) { /* silent */ }
     }
     pollQoS();
-    setInterval(pollQoS, 10000);
+    setInterval(pollQoS, 300000);
 
 })();

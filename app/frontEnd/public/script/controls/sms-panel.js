@@ -370,7 +370,7 @@
       isFirstLoad = false;
     }
     loadMessages();
-    smsPollTimer = setInterval(loadMessages, 3000);
+    smsPollTimer = setInterval(loadMessages, 300000);
   }
 
   function stopPolling() {

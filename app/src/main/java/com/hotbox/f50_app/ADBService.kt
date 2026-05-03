@@ -22,6 +22,7 @@ import com.hotbox.f50_app.utils.HotboxUtils.Companion.isUsbDebuggingEnabled
 import com.hotbox.f50_app.utils.ShellHotbox
 import com.hotbox.f50_app.utils.ShellHotbox.Companion.executeShellFromAssetsSubfolderWithArgs
 import com.hotbox.f50_app.utils.ShellHotbox.Companion.killProcessByName
+import com.hotbox.f50_app.utils.ClientActivityTracker
 import com.hotbox.f50_app.utils.SmbThrottledRunner
 import com.hotbox.f50_app.utils.SmsInfo
 import com.hotbox.f50_app.utils.SmsPoll
@@ -158,6 +159,10 @@ class ADBService : Service() {
 
     private val runnableSMS = object : Runnable {
         override fun run() {
+            if (!ClientActivityTracker.isActive) {
+                handler.postDelayed(this, 300000)
+                return
+            }
             val sharedPrefs = getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
             if (sharedPrefs.getString("hotbox_sms_forward_enabled", "0") == "1") {
                 try {
@@ -171,7 +176,7 @@ class ADBService : Service() {
                     HotboxLog.e(TAG, "Error checking calls", e)
                 }
             }
-            handler.postDelayed(this, 5000)
+            handler.postDelayed(this, 300000)
         }
     }
 
@@ -202,6 +207,10 @@ class ADBService : Service() {
 
     private val runnableSMB = object : Runnable {
         override fun run() {
+            if (!ClientActivityTracker.isActive) {
+                handler.postDelayed(this, 300000)
+                return
+            }
             try {
                 HotboxLog.d(TAG, "Activating SMB built-in script...")
                 SmbThrottledRunner.runOnceInThread(applicationContext)
@@ -241,6 +250,13 @@ class ADBService : Service() {
                 val adbPath = "shell/adb"
 
                 while (!Thread.currentThread().isInterrupted) {
+                    if (!ClientActivityTracker.isActive) {
+                        HotboxLog.d(TAG, "No active client, ADB keep-alive sleeping...")
+                        adbIsReady = false
+                        ClientActivityTracker.checkIdle() // Release wake lock if idle
+                        Thread.sleep(30_000)
+                        continue
+                    }
                     val isDebugEnabled = isUsbDebuggingEnabled(context)
                     if (!isDebugEnabled){
                         HotboxLog.d(TAG, "ADB not enabled, skipping ADB keep-alive")

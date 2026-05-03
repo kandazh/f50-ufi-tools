@@ -15,6 +15,7 @@ import com.hotbox.f50_app.modules.smsForward.smsModule
 import com.hotbox.f50_app.modules.speedtest.SpeedTestDispatchers
 import com.hotbox.f50_app.modules.speedtest.speedTestModule
 import com.hotbox.f50_app.modules.theme.themeModule
+import com.hotbox.f50_app.utils.ClientActivityTracker
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
@@ -29,6 +30,11 @@ fun Application.mainModule(context: Context, proxyServerIp: String) {
     install(DefaultHeaders)
     val targetServerIP = proxyServerIp  // Target server address
     val TAG = "[$BASE_TAG]_reverseProxyModule"
+
+    // Track client activity — mark active on every request
+    intercept(io.ktor.server.application.ApplicationCallPipeline.Plugins) {
+        ClientActivityTracker.markActive()
+    }
 
     routing {
         // Static resources

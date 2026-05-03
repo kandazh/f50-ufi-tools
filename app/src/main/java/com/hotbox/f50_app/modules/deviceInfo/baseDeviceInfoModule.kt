@@ -46,7 +46,7 @@ private data class DeviceMetricsCache(
     val timestamp: Long
 )
 @Volatile private var metricsCache: DeviceMetricsCache? = null
-private const val CACHE_TTL_MS = 500L // 0.5 second cache (matches min refresh rate)
+private const val CACHE_TTL_MS = 3000L // 3 second cache — reduces /proc/sys reads on low-RAM devices
 
 fun Route.baseDeviceInfoModule(context: Context) {
     val TAG = "[$BASE_TAG]_baseDeviceInfoModule"
@@ -126,16 +126,10 @@ fun Route.baseDeviceInfoModule(context: Context) {
             HotboxLog.d(TAG, "Error getting storage & daily data:  ${e.message}")
         }
 
-        // Battery info
-        var batteryLevel: Int? = null; var currentNow: Int? = null; var voltageNow: Int? = null
-        try {
-            batteryLevel = HotboxUtils.getBatteryPercentage(context)
-            val batteryStatus = readBatteryStatus()
-            currentNow = batteryStatus.current_uA
-            voltageNow = batteryStatus.voltage_uV
-        } catch (e: Exception) {
-            HotboxLog.d(TAG, "Error getting model and battery info: ${e.message}")
-        }
+        // Battery info — hardcoded: device has no battery (always powered)
+        val batteryLevel: Int = 100
+        val currentNow: Int? = null
+        val voltageNow: Int? = null
 
         val jsonResult = """
             {

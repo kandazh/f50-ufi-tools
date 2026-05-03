@@ -108,8 +108,13 @@ class TaskScheduler(
 
     fun start() {
         if (job?.isActive == true) return
+        if (taskMap.isEmpty()) {
+            HotboxLog.d("UFI_TOOLS_LOG_TaskScheduler", "No tasks configured, scheduler idle")
+            startPolling()  // Still poll in case tasks are added later
+            return
+        }
         reschedule()
-        startPolling()  // Start poller
+        startPolling()
     }
 
     private fun startPolling() {
@@ -117,6 +122,10 @@ class TaskScheduler(
         pollJob = scope.launch {
             while (isActive) {
                 delay(5 * 60 * 1000L) // Every 5 minutes
+                if (taskMap.isEmpty()) {
+                    HotboxLog.d("UFI_TOOLS_LOG_TaskScheduler", "No scheduled tasks, sleeping...")
+                    continue
+                }
                 HotboxLog.d("UFI_TOOLS_LOG_TaskScheduler", "Periodic poll triggered reschedule() update")
                 reschedule()
             }

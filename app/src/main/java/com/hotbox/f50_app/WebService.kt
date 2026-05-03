@@ -16,6 +16,7 @@ import com.hotbox.f50_app.configs.AppMeta
 import com.hotbox.f50_app.utils.HotboxLog
 import com.hotbox.f50_app.utils.HotboxUtils
 import com.hotbox.f50_app.utils.UniqueDeviceIDManager
+import com.hotbox.f50_app.utils.ClientActivityTracker
 import com.hotbox.f50_app.utils.WakeLock
 import kotlin.concurrent.thread
 
@@ -56,13 +57,9 @@ class WebService : Service() {
         val prefs = getSharedPreferences("Hotbox_ZTE_store", Context.MODE_PRIVATE)
         val needWakeLock = prefs.getString("wakeLock", "lock") ?: "lock"
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        if(needWakeLock != "lock") {
-            HotboxLog.d("UFI_TOOLS_LOG","Wake lock not needed, releasing...")
-            WakeLock.releaseWakeLock()
-        } else {
-            HotboxLog.d("UFI_TOOLS_LOG","Wake lock needed, executing...")
-            WakeLock.execWakeLock(pm)
-        }
+        // Initialize activity tracker — wake lock will only be acquired when a client connects
+        ClientActivityTracker.init(pm, needWakeLock == "lock")
+        HotboxLog.d("UFI_TOOLS_LOG","Wake lock deferred until client connects (enabled=${needWakeLock == "lock"})")
 
         // Register broadcast receiver
         registerReceiver(statusReceiver, IntentFilter(UI_INTENT), Context.RECEIVER_EXPORTED)
