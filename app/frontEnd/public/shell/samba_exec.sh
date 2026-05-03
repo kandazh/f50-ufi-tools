@@ -429,9 +429,10 @@ schedule_script() {
   fix_smb_conf
   lock_smb_conf
   check_log_file
-  check_ttyd_running
-  check_socat_running
   keep_ufi_running 0
+  # DISABLED: stable daemons started at boot, re-enable if OOM-kills observed
+  #check_ttyd_running
+  #check_socat_running
   socat_guard_once >> "$LOG_FILE" 2>&1 &
 }
 

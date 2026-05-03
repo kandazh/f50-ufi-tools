@@ -217,7 +217,7 @@ class ADBService : Service() {
             } catch (e: Exception) {
                 HotboxLog.e(TAG, "SMB built-in script activation error")
             }
-            handler.postDelayed(this, 20_000)
+            handler.postDelayed(this, 300_000)
         }
     }
 
