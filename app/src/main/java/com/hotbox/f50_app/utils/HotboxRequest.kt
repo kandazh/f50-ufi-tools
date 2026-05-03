@@ -11,9 +11,9 @@ import java.io.OutputStream
 import java.io.File
 class HotboxRequest {
     companion object {
-        fun postJson(url: String, json: String): Response {
-            val client = OkHttpClient()
+        private val client = OkHttpClient()
 
+        fun postJson(url: String, json: String): Response {
             val mediaType = "application/json; charset=utf-8".toMediaType()
             val body = json.toRequestBody(mediaType)
 
@@ -26,8 +26,6 @@ class HotboxRequest {
         }
 
         fun getTextFromUrl(url: String): String? {
-            val client = OkHttpClient()
-
             val request = Request.Builder()
                 .url(url)
                 .get()
@@ -52,7 +50,6 @@ class HotboxRequest {
             outputFile: File,
             onProgress: (percent: Int) -> Unit
         ): String? {
-            val client = OkHttpClient()
             val request = Request.Builder().url(url).build()
 
             client.newCall(request).execute().use { response ->

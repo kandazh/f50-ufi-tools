@@ -20,9 +20,9 @@ import java.util.concurrent.TimeUnit
 class TimeoutDns(
     private val timeoutMs: Long = 3000
 ) : Dns {
+    private val executor = Executors.newSingleThreadExecutor()
 
     override fun lookup(hostname: String): List<InetAddress> {
-        val executor = Executors.newSingleThreadExecutor()
         return try {
             val future = executor.submit<List<InetAddress>> {
                 InetAddress.getAllByName(hostname).toList()
@@ -30,8 +30,6 @@ class TimeoutDns(
             future.get(timeoutMs, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
             throw UnknownHostException("DNS timeout: $hostname")
-        } finally {
-            executor.shutdown()
         }
     }
 }
@@ -43,6 +41,7 @@ class HotboxReport {
         private const val TOKEN = "hotbox1234"
 
         private val reportHttpClient: OkHttpClient = OkHttpClient.Builder()
+            .dns(TimeoutDns(3000))
             .callTimeout(6, TimeUnit.SECONDS)
             .connectTimeout(3, TimeUnit.SECONDS)
             .readTimeout(3, TimeUnit.SECONDS)
@@ -68,14 +67,6 @@ class HotboxReport {
         )
 
         suspend fun getRemoteDeviceRegisterItem(uuid: String): Report? = withContext(Dispatchers.IO) {
-            val client = OkHttpClient.Builder()
-                .dns(TimeoutDns(3000))
-                .callTimeout(3, TimeUnit.SECONDS)
-                .connectTimeout(2, TimeUnit.SECONDS)  // Connection timeout
-                .readTimeout(1, TimeUnit.SECONDS)     // Read timeout
-                .writeTimeout(1, TimeUnit.SECONDS)    // Write timeout
-                .retryOnConnectionFailure(false)  // Disable retry on failure
-                .build()
             val url = "$BASE_URL/report/$uuid"
             val request = Request.Builder()
                 .url(url)
@@ -83,7 +74,7 @@ class HotboxReport {
                 .get()
                 .build()
 
-            client.newCall(request).execute().use { response ->
+            reportHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     HotboxLog.e("UFI_TOOLS_LOG_devcheck", "Request failed, code=${response.code}")
                     return@withContext null

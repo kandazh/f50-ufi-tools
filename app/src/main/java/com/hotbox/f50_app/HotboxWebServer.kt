@@ -62,7 +62,11 @@ class HotboxWebServer(private val context: Context, port: Int, private val proxy
             }
         }
 
-        embeddedServer(Netty, environment)
+        embeddedServer(Netty, environment) {
+            connectionGroupSize = 1
+            workerGroupSize = 2
+            callGroupSize = 4
+        }
     }
 
     fun start() {

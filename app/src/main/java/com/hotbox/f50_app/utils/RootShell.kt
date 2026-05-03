@@ -32,11 +32,16 @@ object RootShell {
             outputStream.flush()
             HotboxLog.d("UFI_TOOLS_LOG", "Socket write")
 
-            // Read response
+            // Read response (capped at 512 KB to prevent OOM)
             val result = StringBuilder()
+            val maxSize = 512 * 1024
             while (true) {
                 val line = inputStream.readLine() ?: break
                 if (line.trim() == "__END__") break
+                if (result.length + line.length > maxSize) {
+                    result.appendLine("... [output truncated at 512 KB]")
+                    break
+                }
                 HotboxLog.d("UFI_TOOLS_LOG", "Socket : ${line.trim()}")
                 result.appendLine(line)
             }

@@ -34,10 +34,10 @@ private val proxyHttpClient: OkHttpClient = OkHttpClient.Builder()
     .writeTimeout(8, TimeUnit.SECONDS)
     .callTimeout(30, TimeUnit.SECONDS)
     .retryOnConnectionFailure(false)
-    .connectionPool(ConnectionPool(8, 2, TimeUnit.MINUTES))
+    .connectionPool(ConnectionPool(4, 1, TimeUnit.MINUTES))
     .dispatcher(Dispatcher().apply {
-        maxRequests = 32
-        maxRequestsPerHost = 8
+        maxRequests = 16
+        maxRequestsPerHost = 4
     })
     .addInterceptor { chain ->
         val request = chain.request().newBuilder()

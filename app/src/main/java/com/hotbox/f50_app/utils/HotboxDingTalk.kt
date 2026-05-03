@@ -21,6 +21,10 @@ class HotboxDingTalk(
     // Prevent duplicate sends
     private val isSending = AtomicBoolean(false)
 
+    companion object {
+        private val client = OkHttpClient()
+    }
+
     fun sendMessage(content: String) {
         // If already sending, return immediately
         if (!isSending.compareAndSet(false, true)) {
@@ -30,7 +34,6 @@ class HotboxDingTalk(
 
         Thread {
             try {
-                val client = OkHttpClient()
                 val mediaType = "application/json; charset=utf-8".toMediaType()
                 
                 // Build message content

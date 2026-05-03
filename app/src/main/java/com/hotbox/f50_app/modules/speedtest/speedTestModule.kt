@@ -21,13 +21,13 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
 object SpeedTestCache {
-    val buffer = ByteArray(1024 * 1024) { 0x66.toByte() }
+    val buffer by lazy { ByteArray(1024 * 1024) { 0x66.toByte() } }
 }
 
-val speedTestLimiter = Semaphore(6)
+val speedTestLimiter = Semaphore(2)
 
 object SpeedTestDispatchers {
-    val dispatcher = Executors.newFixedThreadPool(6) {
+    val dispatcher = Executors.newFixedThreadPool(2) {
         Thread(it, "SpeedTestThread").apply {
             priority = Thread.MAX_PRIORITY
         }

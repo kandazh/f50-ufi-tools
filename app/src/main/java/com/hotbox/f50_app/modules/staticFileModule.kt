@@ -18,8 +18,8 @@ import java.io.FileNotFoundException
 fun Route.staticFileModule(context: Context) {
     val TAG = "[$BASE_TAG]_staticFileModule"
 
-    // 4 MB LRU cache for static assets (keys = path, values = byte arrays)
-    val maxCacheSize = 4 * 1024 * 1024 // 4 MB
+    // 1.5 MB LRU cache for static assets (keys = path, values = byte arrays)
+    val maxCacheSize = 1536 * 1024 // 1.5 MB
     val assetCache = object : LruCache<String, ByteArray>(maxCacheSize) {
         override fun sizeOf(key: String, value: ByteArray): Int = value.size
     }
