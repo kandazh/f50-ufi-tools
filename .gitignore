@@ -32,7 +32,7 @@ apk-download/
 apk-latest/
 
 # Local deploy script (machine-specific paths)
-deploy.ps1
+
 
 # Platform tools (adb) - downloaded locally
 platform-tools/
