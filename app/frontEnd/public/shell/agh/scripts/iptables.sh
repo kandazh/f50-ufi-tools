@@ -49,48 +49,61 @@ validate_ip_or_cidr() {
   return 1
 }
 
+# Check if an address is IPv4 format
+is_ipv4() {
+  echo "$1" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]{1,2})?$'
+}
+
+# Check if an address is IPv6 format
+is_ipv6() {
+  echo "$1" | grep -qE '^[0-9a-fA-F:]+(/[0-9]{1,3})?$'
+}
+
 harden_firewall() {
   log "Applying firewall hardening (default-deny INPUT policy)"
 
   # === IPv4 INPUT hardening ===
+  # Drop invalid packets early
+  $iptables_w -C INPUT -m state --state INVALID -j DROP 2>/dev/null || \
+    $iptables_w -I INPUT 1 -m state --state INVALID -j DROP
   # Allow replies to outbound connections (AGH upstream, NTP, etc.)
   $iptables_w -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || \
-    $iptables_w -I INPUT 1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+    $iptables_w -I INPUT 2 -m state --state ESTABLISHED,RELATED -j ACCEPT
   # Allow loopback (internal process communication)
   $iptables_w -C INPUT -i lo -j ACCEPT 2>/dev/null || \
-    $iptables_w -I INPUT 2 -i lo -j ACCEPT
+    $iptables_w -I INPUT 3 -i lo -j ACCEPT
   # Allow all LAN traffic (WiFi clients can reach all device services)
   $iptables_w -C INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null || \
-    $iptables_w -I INPUT 3 -i "$lan_interface" -j ACCEPT
+    $iptables_w -I INPUT 4 -i "$lan_interface" -j ACCEPT
   # Allow DHCP replies from carrier (broadcast-based, may not match conntrack)
-  $iptables_w -C INPUT -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null || \
-    $iptables_w -I INPUT 4 -p udp --sport 67 --dport 68 -j ACCEPT
+  $iptables_w -C INPUT -i "$wan_interface" -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null || \
+    $iptables_w -I INPUT 5 -i "$wan_interface" -p udp --sport 67 --dport 68 -j ACCEPT
   # Default deny: drop everything not matched above (WAN/cellular side)
   $iptables_w -P INPUT DROP
-  log "IPv4 INPUT: ESTABLISHED + loopback + LAN + DHCP allowed, all else dropped"
+  log "IPv4 INPUT: INVALID dropped, ESTABLISHED + loopback + LAN + DHCP allowed, all else dropped"
 
   # === IPv6 INPUT hardening ===
+  # Drop invalid packets early
+  $ip6tables_w -C INPUT -m state --state INVALID -j DROP 2>/dev/null || \
+    $ip6tables_w -I INPUT 1 -m state --state INVALID -j DROP
   # Allow replies to outbound connections
   $ip6tables_w -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || \
-    $ip6tables_w -I INPUT 1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+    $ip6tables_w -I INPUT 2 -m state --state ESTABLISHED,RELATED -j ACCEPT
   # Allow loopback
   $ip6tables_w -C INPUT -i lo -j ACCEPT 2>/dev/null || \
-    $ip6tables_w -I INPUT 2 -i lo -j ACCEPT
+    $ip6tables_w -I INPUT 3 -i lo -j ACCEPT
   # Allow all LAN traffic
   $ip6tables_w -C INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null || \
-    $ip6tables_w -I INPUT 3 -i "$lan_interface" -j ACCEPT
-  # Allow link-local (required for IPv6 neighbor discovery on LAN)
-  $ip6tables_w -C INPUT -s fe80::/10 -j ACCEPT 2>/dev/null || \
-    $ip6tables_w -I INPUT 4 -s fe80::/10 -j ACCEPT
+    $ip6tables_w -I INPUT 4 -i "$lan_interface" -j ACCEPT
   # Allow ICMPv6 (mandatory for IPv6: neighbor solicitation, router adverts, PMTU)
   $ip6tables_w -C INPUT -p icmpv6 -j ACCEPT 2>/dev/null || \
     $ip6tables_w -I INPUT 5 -p icmpv6 -j ACCEPT
-  # Allow DHCPv6 replies from carrier (UDP port 546)
-  $ip6tables_w -C INPUT -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null || \
-    $ip6tables_w -I INPUT 6 -p udp --sport 547 --dport 546 -j ACCEPT
+  # Allow DHCPv6 replies from carrier (scoped to WAN interface)
+  $ip6tables_w -C INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 6 -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT
   # Default deny: drop everything not matched above (public IPv6 internet)
   $ip6tables_w -P INPUT DROP
-  log "IPv6 INPUT: ESTABLISHED + loopback + LAN + link-local + ICMPv6 + DHCPv6 allowed, all else dropped"
+  log "IPv6 INPUT: INVALID dropped, ESTABLISHED + loopback + LAN + ICMPv6 + DHCPv6 allowed, all else dropped"
 }
 
 remove_hardening() {
@@ -100,23 +113,42 @@ remove_hardening() {
   $iptables_w -P INPUT ACCEPT
   $ip6tables_w -P INPUT ACCEPT
   # Remove IPv4 hardening rules
+  $iptables_w -D INPUT -m state --state INVALID -j DROP 2>/dev/null
   $iptables_w -D INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null
   $iptables_w -D INPUT -i lo -j ACCEPT 2>/dev/null
   $iptables_w -D INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null
-  $iptables_w -D INPUT -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null
+  $iptables_w -D INPUT -i "$wan_interface" -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null
   # Remove IPv6 hardening rules
+  $ip6tables_w -D INPUT -m state --state INVALID -j DROP 2>/dev/null
   $ip6tables_w -D INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -i lo -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null
-  $ip6tables_w -D INPUT -s fe80::/10 -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -p icmpv6 -j ACCEPT 2>/dev/null
-  $ip6tables_w -D INPUT -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null
   log "Firewall hardening removed"
 }
 
 enable_iptables() {
   if $iptables_w -t nat -L ADGUARD_REDIRECT_DNS >/dev/null 2>&1; then
-    log "ADGUARD_REDIRECT_DNS chain already exists, skipping creation"
+    log "ADGUARD_REDIRECT_DNS chain already exists, ensuring jump rules are in place"
+    # Ensure OUTPUT jump exists
+    $iptables_w -t nat -C OUTPUT -j ADGUARD_REDIRECT_DNS 2>/dev/null || \
+      $iptables_w -t nat -I OUTPUT -j ADGUARD_REDIRECT_DNS
+    # Ensure PREROUTING DNAT rules exist
+    $iptables_w -t nat -C PREROUTING -i "$lan_interface" -p udp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port" 2>/dev/null || \
+      $iptables_w -t nat -I PREROUTING -i "$lan_interface" -p udp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port"
+    $iptables_w -t nat -C PREROUTING -i "$lan_interface" -p tcp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port" 2>/dev/null || \
+      $iptables_w -t nat -I PREROUTING -i "$lan_interface" -p tcp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port"
+    # Ensure bypass rules for ignore_src_list
+    for subnet in $ignore_src_list; do
+      if ! validate_ip_or_cidr "$subnet" || ! is_ipv4 "$subnet"; then
+        continue
+      fi
+      $iptables_w -t nat -C PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null || \
+        $iptables_w -t nat -I PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT
+      $iptables_w -t nat -C PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null || \
+        $iptables_w -t nat -I PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT
+    done
     return 0
   fi
 
@@ -140,8 +172,8 @@ enable_iptables() {
   log "Added iptables rules"
 
   for subnet in $ignore_dest_list; do
-    if ! validate_ip_or_cidr "$subnet"; then
-      log "INVALID destination skipped (bad format): $subnet"
+    if ! validate_ip_or_cidr "$subnet" || ! is_ipv4 "$subnet"; then
+      log "INVALID destination skipped (bad format or not IPv4): $subnet"
       continue
     fi
     log "Adding iptables rules for destination: $subnet"
@@ -153,8 +185,8 @@ enable_iptables() {
   done
 
   for subnet in $ignore_src_list; do
-    if ! validate_ip_or_cidr "$subnet"; then
-      log "INVALID source skipped (bad format): $subnet"
+    if ! validate_ip_or_cidr "$subnet" || ! is_ipv4 "$subnet"; then
+      log "INVALID source skipped (bad format or not IPv4): $subnet"
       continue
     fi
     log "Adding iptables rules for source: $subnet"
@@ -194,20 +226,27 @@ enable_iptables() {
 
   log "Applying DNAT rules to PREROUTING for client DNS"
   $iptables_w -t nat -I PREROUTING -i "$lan_interface" -p udp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port" || {
-    log "Failed to apply PREROUTING udp DNAT rule"
+    log "Failed to apply PREROUTING udp DNAT rule, rolling back OUTPUT hook"
+    $iptables_w -t nat -D OUTPUT -j ADGUARD_REDIRECT_DNS 2>/dev/null
+    $iptables_w -t nat -F ADGUARD_REDIRECT_DNS 2>/dev/null
+    $iptables_w -t nat -X ADGUARD_REDIRECT_DNS 2>/dev/null
     return 1
   }
   log "Applied PREROUTING udp DNAT rule"
 
   $iptables_w -t nat -I PREROUTING -i "$lan_interface" -p tcp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port" || {
-    log "Failed to apply PREROUTING tcp DNAT rule"
+    log "Failed to apply PREROUTING tcp DNAT rule, rolling back"
+    $iptables_w -t nat -D PREROUTING -i "$lan_interface" -p udp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port" 2>/dev/null
+    $iptables_w -t nat -D OUTPUT -j ADGUARD_REDIRECT_DNS 2>/dev/null
+    $iptables_w -t nat -F ADGUARD_REDIRECT_DNS 2>/dev/null
+    $iptables_w -t nat -X ADGUARD_REDIRECT_DNS 2>/dev/null
     return 1
   }
   log "Applied PREROUTING tcp DNAT rule"
 
   # Insert bypass rules AFTER DNAT so they end up above DNAT (higher priority with -I)
   for subnet in $ignore_src_list; do
-    if ! validate_ip_or_cidr "$subnet"; then
+    if ! validate_ip_or_cidr "$subnet" || ! is_ipv4 "$subnet"; then
       continue
     fi
     log "Adding PREROUTING bypass for source: $subnet"
@@ -230,39 +269,16 @@ apply_wan_firewall() {
     $iptables_w -I INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP
   # Also block on IPv6 WAN
   $ip6tables_w -C INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP 2>/dev/null || \
-    $ip6tables_w -I INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP 2>/dev/null
+    $ip6tables_w -I INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP
   $ip6tables_w -C INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null || \
-    $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null
+    $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP
   $ip6tables_w -C INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP 2>/dev/null || \
-    $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP 2>/dev/null
+    $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP
   log "Applied WAN firewall rules (IPv4 + IPv6)"
 }
 
 disable_iptables() {
-  if ! $iptables_w -t nat -L ADGUARD_REDIRECT_DNS >/dev/null 2>&1; then
-    log "ADGUARD_REDIRECT_DNS chain does not exist, skipping deletion"
-    return 0
-  fi
-
-  log "Deleting iptables OUTPUT rules"
-  $iptables_w -t nat -D OUTPUT -j ADGUARD_REDIRECT_DNS || {
-    log "Failed to delete iptables OUTPUT rules"
-  }
-  log "Deleted iptables OUTPUT rules"
-
-  log "Deleting PREROUTING DNAT rules"
-  $iptables_w -t nat -D PREROUTING -i $lan_interface -p udp --dport 53 -j DNAT --to-destination $router_ip:$redir_port || {
-    log "Failed to delete PREROUTING udp DNAT rule"
-  }
-  $iptables_w -t nat -D PREROUTING -i $lan_interface -p tcp --dport 53 -j DNAT --to-destination $router_ip:$redir_port || {
-    log "Failed to delete PREROUTING tcp DNAT rule"
-  }
-  for subnet in $ignore_src_list; do
-    $iptables_w -t nat -D PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null
-    $iptables_w -t nat -D PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null
-  done
-  log "Deleted PREROUTING DNAT rules"
-
+  # Always clean up WAN firewall rules (they exist independently of the NAT chain)
   log "Removing WAN firewall rules"
   $iptables_w -D INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP 2>/dev/null
   $iptables_w -D INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null
@@ -271,6 +287,27 @@ disable_iptables() {
   $ip6tables_w -D INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null
   $ip6tables_w -D INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP 2>/dev/null
   log "Removed WAN firewall rules (IPv4 + IPv6)"
+
+  # Always attempt PREROUTING cleanup (these can exist even if chain was manually removed)
+  log "Deleting PREROUTING DNAT rules"
+  $iptables_w -t nat -D PREROUTING -i "$lan_interface" -p udp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port" 2>/dev/null
+  $iptables_w -t nat -D PREROUTING -i "$lan_interface" -p tcp --dport 53 -j DNAT --to-destination "$router_ip":"$redir_port" 2>/dev/null
+  for subnet in $ignore_src_list; do
+    $iptables_w -t nat -D PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null
+    $iptables_w -t nat -D PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null
+  done
+  log "Deleted PREROUTING DNAT rules"
+
+  if ! $iptables_w -t nat -L ADGUARD_REDIRECT_DNS >/dev/null 2>&1; then
+    log "ADGUARD_REDIRECT_DNS chain does not exist, skipping chain deletion"
+    return 0
+  fi
+
+  log "Deleting iptables OUTPUT rules"
+  $iptables_w -t nat -D OUTPUT -j ADGUARD_REDIRECT_DNS || {
+    log "Failed to delete iptables OUTPUT rules"
+  }
+  log "Deleted iptables OUTPUT rules"
 
   log "Flushing iptables rules"
   $iptables_w -t nat -F ADGUARD_REDIRECT_DNS || {
@@ -292,7 +329,25 @@ enable_ipv6_iptables() {
     log "ip6tables nat supported, using NAT redirect"
 
     if $ip6tables_w -t nat -L ADGUARD_REDIRECT_DNS6 >/dev/null 2>&1; then
-      log "ADGUARD_REDIRECT_DNS6 chain already exists, skipping creation"
+      log "ADGUARD_REDIRECT_DNS6 chain already exists, ensuring jump rules are in place"
+      # Ensure OUTPUT jump exists
+      $ip6tables_w -t nat -C OUTPUT -j ADGUARD_REDIRECT_DNS6 2>/dev/null || \
+        $ip6tables_w -t nat -I OUTPUT -j ADGUARD_REDIRECT_DNS6
+      # Ensure PREROUTING rules exist
+      $ip6tables_w -t nat -C PREROUTING -i "$lan_interface" -p udp --dport 53 -j REDIRECT --to-ports "$redir_port" 2>/dev/null || \
+        $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -p udp --dport 53 -j REDIRECT --to-ports "$redir_port"
+      $ip6tables_w -t nat -C PREROUTING -i "$lan_interface" -p tcp --dport 53 -j REDIRECT --to-ports "$redir_port" 2>/dev/null || \
+        $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -p tcp --dport 53 -j REDIRECT --to-ports "$redir_port"
+      # Ensure PREROUTING bypass rules for ignore_src_list
+      for subnet in $ignore_src_list; do
+        if ! validate_ip_or_cidr "$subnet" || is_ipv4 "$subnet"; then
+          continue
+        fi
+        $ip6tables_w -t nat -C PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null || \
+          $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT
+        $ip6tables_w -t nat -C PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null || \
+          $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT
+      done
       return 0
     fi
 
@@ -303,11 +358,37 @@ enable_ipv6_iptables() {
     }
 
     $ip6tables_w -t nat -A ADGUARD_REDIRECT_DNS6 -m owner --uid-owner "$adg_user" --gid-owner "$adg_group" -j RETURN
+
+    # Apply ignore_dest_list bypasses for IPv6
+    for subnet in $ignore_dest_list; do
+      if ! validate_ip_or_cidr "$subnet" || is_ipv4 "$subnet"; then
+        continue
+      fi
+      $ip6tables_w -t nat -A ADGUARD_REDIRECT_DNS6 -d "$subnet" -j RETURN
+    done
+
+    # Apply ignore_src_list bypasses for IPv6
+    for subnet in $ignore_src_list; do
+      if ! validate_ip_or_cidr "$subnet" || is_ipv4 "$subnet"; then
+        continue
+      fi
+      $ip6tables_w -t nat -A ADGUARD_REDIRECT_DNS6 -s "$subnet" -j RETURN
+    done
+
     $ip6tables_w -t nat -A ADGUARD_REDIRECT_DNS6 -p udp --dport 53 -j REDIRECT --to-ports "$redir_port"
     $ip6tables_w -t nat -A ADGUARD_REDIRECT_DNS6 -p tcp --dport 53 -j REDIRECT --to-ports "$redir_port"
     $ip6tables_w -t nat -I OUTPUT -j ADGUARD_REDIRECT_DNS6
     $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -p udp --dport 53 -j REDIRECT --to-ports "$redir_port"
     $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -p tcp --dport 53 -j REDIRECT --to-ports "$redir_port"
+    # Insert PREROUTING bypass rules for ignore_src_list (above REDIRECT rules)
+    for subnet in $ignore_src_list; do
+      if ! validate_ip_or_cidr "$subnet" || is_ipv4 "$subnet"; then
+        continue
+      fi
+      log "Adding IPv6 PREROUTING bypass for source: $subnet"
+      $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT
+      $ip6tables_w -t nat -I PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT
+    done
     log "Applied IPv6 NAT redirect rules"
     return 0
   fi
@@ -331,7 +412,7 @@ enable_ipv6_iptables() {
 
   # Apply ignore_src_list bypass for IPv6 FORWARD (so bypassed clients aren't blocked)
   for subnet in $ignore_src_list; do
-    if ! validate_ip_or_cidr "$subnet"; then
+    if ! validate_ip_or_cidr "$subnet" || is_ipv4 "$subnet"; then
       continue
     fi
     log "Adding IPv6 FORWARD bypass for source: $subnet"
@@ -346,6 +427,11 @@ disable_ipv6_iptables() {
   if $ip6tables_w -t nat -L ADGUARD_REDIRECT_DNS6 >/dev/null 2>&1; then
     $ip6tables_w -t nat -D PREROUTING -i $lan_interface -p udp --dport 53 -j REDIRECT --to-ports $redir_port 2>/dev/null
     $ip6tables_w -t nat -D PREROUTING -i $lan_interface -p tcp --dport 53 -j REDIRECT --to-ports $redir_port 2>/dev/null
+    # Clean up PREROUTING bypass rules for ignore_src_list
+    for subnet in $ignore_src_list; do
+      $ip6tables_w -t nat -D PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null
+      $ip6tables_w -t nat -D PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null
+    done
     $ip6tables_w -t nat -D OUTPUT -j ADGUARD_REDIRECT_DNS6 2>/dev/null
     $ip6tables_w -t nat -F ADGUARD_REDIRECT_DNS6 2>/dev/null
     $ip6tables_w -t nat -X ADGUARD_REDIRECT_DNS6 2>/dev/null
@@ -373,7 +459,25 @@ disable_ipv6_iptables() {
 
 add_block_ipv6_dns() {
   if $ip6tables_w -t filter -L ADGUARD_BLOCK_DNS >/dev/null 2>&1; then
-    log "ADGUARD_BLOCK_DNS chain already exists, skipping creation"
+    log "ADGUARD_BLOCK_DNS chain already exists, ensuring hooks are in place"
+    # Ensure OUTPUT hook exists
+    $ip6tables_w -t filter -C OUTPUT -j ADGUARD_BLOCK_DNS 2>/dev/null || \
+      $ip6tables_w -t filter -I OUTPUT -j ADGUARD_BLOCK_DNS
+    # Ensure FORWARD rules exist
+    $ip6tables_w -t filter -C FORWARD -i "$lan_interface" -p udp --dport 53 -j DROP 2>/dev/null || \
+      $ip6tables_w -t filter -I FORWARD -i "$lan_interface" -p udp --dport 53 -j DROP
+    $ip6tables_w -t filter -C FORWARD -i "$lan_interface" -p tcp --dport 53 -j DROP 2>/dev/null || \
+      $ip6tables_w -t filter -I FORWARD -i "$lan_interface" -p tcp --dport 53 -j DROP
+    # Ensure FORWARD bypass rules for ignore_src_list
+    for subnet in $ignore_src_list; do
+      if ! validate_ip_or_cidr "$subnet" || is_ipv4 "$subnet"; then
+        continue
+      fi
+      $ip6tables_w -t filter -C FORWARD -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null || \
+        $ip6tables_w -t filter -I FORWARD -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT
+      $ip6tables_w -t filter -C FORWARD -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null || \
+        $ip6tables_w -t filter -I FORWARD -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT
+    done
     return 0
   fi
 
@@ -414,12 +518,32 @@ add_block_ipv6_dns() {
     log "Failed to apply IPv6 FORWARD tcp DROP"
     return 1
   }
+  # Apply ignore_src_list bypass for FORWARD (so bypassed clients aren't blocked)
+  for subnet in $ignore_src_list; do
+    if ! validate_ip_or_cidr "$subnet" || is_ipv4 "$subnet"; then
+      continue
+    fi
+    log "Adding IPv6 FORWARD block bypass for source: $subnet"
+    $ip6tables_w -t filter -I FORWARD -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null
+    $ip6tables_w -t filter -I FORWARD -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null
+  done
   log "Applied IPv6 FORWARD DNS block rules"
 }
 
 del_block_ipv6_dns() {
+  # Always clean up FORWARD rules (they exist independently of the chain)
+  log "Cleaning up IPv6 FORWARD DNS block rules"
+  $ip6tables_w -t filter -D FORWARD -i "$lan_interface" -p udp --dport 53 -j DROP 2>/dev/null
+  $ip6tables_w -t filter -D FORWARD -i "$lan_interface" -p tcp --dport 53 -j DROP 2>/dev/null
+  # Clean up FORWARD bypass rules for ignore_src_list
+  for subnet in $ignore_src_list; do
+    $ip6tables_w -t filter -D FORWARD -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null
+    $ip6tables_w -t filter -D FORWARD -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT 2>/dev/null
+  done
+  log "Cleaned up IPv6 FORWARD DNS block rules"
+
   if ! $ip6tables_w -t filter -L ADGUARD_BLOCK_DNS >/dev/null 2>&1; then
-    log "ADGUARD_BLOCK_DNS chain does not exist, skipping deletion"
+    log "ADGUARD_BLOCK_DNS chain does not exist, skipping chain deletion"
     return 0
   fi
 
@@ -443,11 +567,6 @@ del_block_ipv6_dns() {
     return 1
   }
   log "Flushed ipv6 iptables rules"
-
-  log "Cleaning up IPv6 FORWARD DNS block rules"
-  $ip6tables_w -t filter -D FORWARD -i "$lan_interface" -p udp --dport 53 -j DROP 2>/dev/null
-  $ip6tables_w -t filter -D FORWARD -i "$lan_interface" -p tcp --dport 53 -j DROP 2>/dev/null
-  log "Cleaned up IPv6 FORWARD DNS block rules"
 }
 
 case "$1" in
@@ -462,27 +581,31 @@ enable)
     apply_wan_firewall
   fi
 
-  log "Enabling iptables"
-  enable_iptables || {
-    log "Failed to enable iptables"
-    exit 1
-  }
-  log "Enabled iptables"
-  
-  if [ "$block_ipv6_dns" = true ]; then
-    log "Enabling ipv6 DNS blocking"
-    add_block_ipv6_dns || {
-      log "Failed to enable ipv6 DNS blocking"
+  if [ "$enable_iptables" = false ]; then
+    log "enable_iptables is disabled in settings, skipping DNS redirect rules"
+  else
+    log "Enabling iptables"
+    enable_iptables || {
+      log "Failed to enable iptables"
       exit 1
     }
-    log "Enabled ipv6 DNS blocking"
-  elif [ "$redirect_ipv6_dns" = true ]; then
-    log "Enabling IPv6 DNS redirect"
-    enable_ipv6_iptables || {
-      log "Failed to enable IPv6 DNS redirect"
-      exit 1
-    }
-    log "Enabled IPv6 DNS redirect"
+    log "Enabled iptables"
+
+    if [ "$block_ipv6_dns" = true ]; then
+      log "Enabling ipv6 DNS blocking"
+      add_block_ipv6_dns || {
+        log "Failed to enable ipv6 DNS blocking"
+        exit 1
+      }
+      log "Enabled ipv6 DNS blocking"
+    elif [ "$redirect_ipv6_dns" = true ]; then
+      log "Enabling IPv6 DNS redirect"
+      enable_ipv6_iptables || {
+        log "Failed to enable IPv6 DNS redirect"
+        exit 1
+      }
+      log "Enabled IPv6 DNS redirect"
+    fi
   fi
   ;;
 disable)
