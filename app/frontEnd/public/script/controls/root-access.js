@@ -300,10 +300,6 @@
   }
 
   async function handleUninstallRoot() {
-    if (!advEnabled) {
-      showCtrlToast('Root access is not active', 'error');
-      return;
-    }
     var indicator = document.getElementById('ADV_INDICATOR');
     var result = document.getElementById('ADV_RESULT');
     var logBox = document.getElementById('ADV_LOG_BOX');
