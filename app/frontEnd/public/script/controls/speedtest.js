@@ -91,47 +91,57 @@
       var activeReaders = [];
 
       function cleanup() {
-        controller.abort();
-        activeReaders.forEach(function (r) { try { r.cancel(); } catch(e) {} });
+        try { controller.abort(); } catch (e) {}
         activeReaders = [];
+      }
+
+      function finish(result) {
+        if (done) return;
+        done = true;
+        cleanup();
+        resolve(result);
       }
 
       function runOne() {
         if (done) return;
-        fetch(HOTBOX_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now(), { cache: 'no-store', signal: controller.signal })
+        return fetch(HOTBOX_baseURL + '/speedtest?ckSize=' + ckSize + '&cors=1&_t=' + Date.now(), { cache: 'no-store', signal: controller.signal })
           .then(function (res) {
             if (done) return;
-            if (!res.ok) { if (!done) { done = true; cleanup(); resolve(-1); } return; }
+            if (!res.ok) { finish(-1); return; }
             var reader = res.body.getReader();
             activeReaders.push(reader);
             function pump() {
               return reader.read().then(function (result) {
-                if (done) { reader.cancel(); return; }
+                if (done) return;
                 if (result.done) {
                   var idx = activeReaders.indexOf(reader);
                   if (idx >= 0) activeReaders.splice(idx, 1);
                   if ((performance.now() - startTime) < TEST_DURATION_MS) { runOne(); }
-                  else { finish(); }
+                  else {
+                    var elapsed = Math.max((performance.now() - startTime) / 1000, 0.001);
+                    finish(totalLoaded / (elapsed * 1048576));
+                  }
                   return;
                 }
                 totalLoaded += result.value.length;
                 var elapsed = (performance.now() - startTime) / 1000;
                 if (elapsed > 0) { onProgress(totalLoaded / (elapsed * 1048576)); }
-                if ((performance.now() - startTime) >= TEST_DURATION_MS) { finish(); return; }
+                if ((performance.now() - startTime) >= TEST_DURATION_MS) {
+                  finish(totalLoaded / (Math.max(elapsed, 0.001) * 1048576));
+                  return;
+                }
                 return pump();
-              }).catch(function () {});
+              }).catch(function (err) {
+                if (done || (err && err.name === 'AbortError')) return;
+                finish(-1);
+              });
             }
-            pump();
+            return pump();
           })
-          .catch(function () { if (!done) { done = true; resolve(-1); } });
-      }
-
-      function finish() {
-        if (done) return;
-        done = true;
-        cleanup();
-        var elapsed = (performance.now() - startTime) / 1000;
-        resolve(totalLoaded / (elapsed * 1048576));
+          .catch(function (err) {
+            if (done || (err && err.name === 'AbortError')) return;
+            finish(-1);
+          });
       }
 
       runOne();
@@ -146,31 +156,47 @@
       var done = false;
       var controller = new AbortController();
       var chunkBytes = sizeMB * 1024 * 1024;
+      var payloadBlob = new Blob([new Uint8Array(chunkBytes)]);
 
-      function cleanup() {
-        controller.abort();
+      function finish(result) {
+        if (done) return;
+        done = true;
+        try { controller.abort(); } catch (e) {}
+        resolve(result);
       }
 
       function runOne() {
         if (done) return;
-        var data = new ArrayBuffer(chunkBytes);
-        fetch(HOTBOX_baseURL + '/speedtest_upload?_t=' + Date.now(), { method: 'POST', body: new Blob([data]), signal: controller.signal })
+        fetch(HOTBOX_baseURL + '/speedtest_upload?_t=' + Date.now(), {
+          method: 'POST',
+          body: payloadBlob,
+          signal: controller.signal,
+          cache: 'no-store'
+        })
           .then(function (res) {
             if (done) return;
-            return res.text().then(function () {
+            if (!res.ok) throw new Error('Upload test failed');
+            return res.json().then(function (payload) {
               if (done) return;
-              totalUploaded += chunkBytes;
+              var uploadedBytes = Number(payload && payload.bytes);
+              if (!Number.isFinite(uploadedBytes) || uploadedBytes <= 0) uploadedBytes = chunkBytes;
+              totalUploaded += uploadedBytes;
               var elapsed = (performance.now() - startTime) / 1000;
-              onProgress(totalUploaded / (elapsed * 1048576));
-              if ((performance.now() - startTime) >= TEST_DURATION_MS) { done = true; cleanup(); resolve(totalUploaded / (elapsed * 1048576)); }
+              if (elapsed > 0) onProgress(totalUploaded / (elapsed * 1048576));
+              if ((performance.now() - startTime) >= TEST_DURATION_MS) { finish(totalUploaded / (elapsed * 1048576)); }
               else { runOne(); }
+            }).catch(function () {
+              if (done) return;
+              throw new Error('Upload test failed');
             });
           })
-          .catch(function () { if (!done) { done = true; resolve(-1); } });
+          .catch(function (err) {
+            if (done || (err && err.name === 'AbortError')) return;
+            finish(-1);
+          });
       }
 
-      // 2 parallel streams
-      runOne(); runOne();
+      runOne();
     });
   }
 

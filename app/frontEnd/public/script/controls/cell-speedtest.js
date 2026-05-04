@@ -154,13 +154,15 @@
     var ROUND_MAX_TIME = 3;
     var totalBytes = 0;
     var totalTimeSec = 0;
+    var uploadPath = '/data/local/tmp/speedtest_ul';
 
     // Create upload file once
-    var setupCmd = 'dd if=/dev/urandom of=/data/local/tmp/speedtest_ul bs=1024 count=2048 2>/dev/null; echo ok';
+    var cleanupCmd = 'rm -f ' + uploadPath;
+    var setupCmd = cleanupCmd + '; dd if=/dev/urandom of=' + uploadPath + ' bs=1024 count=2048 2>/dev/null; echo ok';
 
     function runRound() {
       // Use -w to get upload stats directly from curl
-      var cmd = CURL_BIN + ' -sL -o /dev/null -X POST --data-binary @/data/local/tmp/speedtest_ul' +
+      var cmd = CURL_BIN + ' -sL -o /dev/null -X POST --data-binary @' + uploadPath +
         ' --max-time ' + ROUND_MAX_TIME +
         ' -w "%{size_upload} %{time_total}" "http://speed.cloudflare.com/__up"';
       return shellExec(cmd, 15000).then(function (res) {
@@ -178,20 +180,27 @@
     }
 
     return (async function () {
-      await shellExec(setupCmd, 10000);
-      for (var i = 0; i < ROUNDS; i++) {
-        var r = await runRound();
-        if (r) {
-          totalBytes += r.bytes;
-          totalTimeSec += r.secs;
-          var MBps = totalBytes / totalTimeSec / 1048576;
-          gauge.setSpeedSmooth(MBps);
-          addLog('Round ' + (i + 1) + '/' + ROUNDS + ': ' + formatSpeed(MBps) + ' (' + (r.bytes / 1048576).toFixed(1) + ' MB in ' + r.secs.toFixed(1) + 's)');
-        } else {
-          addLog('Round ' + (i + 1) + '/' + ROUNDS + ': failed');
+      try {
+        await shellExec(setupCmd, 10000);
+        for (var i = 0; i < ROUNDS; i++) {
+          var r = await runRound();
+          if (r) {
+            totalBytes += r.bytes;
+            totalTimeSec += r.secs;
+            var MBps = totalBytes / totalTimeSec / 1048576;
+            gauge.setSpeedSmooth(MBps);
+            addLog('Round ' + (i + 1) + '/' + ROUNDS + ': ' + formatSpeed(MBps) + ' (' + (r.bytes / 1048576).toFixed(1) + ' MB in ' + r.secs.toFixed(1) + 's)');
+          } else {
+            addLog('Round ' + (i + 1) + '/' + ROUNDS + ': failed');
+          }
         }
+      } catch (err) {
+        addLog('Upload setup failed');
+        return -1;
+      } finally {
+        await shellExec(cleanupCmd, 5000).catch(function () {});
       }
-      await shellExec('rm -f /data/local/tmp/speedtest_ul', 5000);
+
       if (totalTimeSec > 0 && totalBytes > 0) {
         var MBps = totalBytes / totalTimeSec / 1048576;
         addLog('Upload total: ' + formatSpeed(MBps) + ' (' + (totalBytes / 1048576).toFixed(1) + ' MB in ' + totalTimeSec.toFixed(1) + 's)');

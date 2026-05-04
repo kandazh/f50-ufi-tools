@@ -1113,27 +1113,47 @@ function main_func() {
                 }
             })();
 
+            const hasMetricValue = (value) => {
+                if (value == null) return false;
+                const text = String(value).trim();
+                return text !== '' && text !== '--' && text.toLowerCase() !== 'nan';
+            };
+            const pickMetricNumber = (...values) => {
+                for (const value of values) {
+                    if (!hasMetricValue(value)) continue;
+                    const parsed = Number.parseFloat(value);
+                    if (Number.isFinite(parsed)) return parsed;
+                }
+                return null;
+            };
+            const pickMetricText = (...values) => {
+                for (const value of values) {
+                    if (hasMetricValue(value)) return value;
+                }
+                return '--';
+            };
+
             // Update signal history chart
             if (typeof updateSignalChart === 'function') {
-                const rsrp = res.Z5g_rsrp != null ? res.Z5g_rsrp : (res.lte_rsrp != null ? res.lte_rsrp : null);
-                const sinr = res.Nr_snr != null ? res.Nr_snr : (res.Lte_snr != null ? res.Lte_snr : null);
-                const rsrq = res.nr_rsrq != null ? res.nr_rsrq : (res.lte_rsrq != null ? res.lte_rsrq : null);
-                const rssi = res.lte_rssi != null ? res.lte_rssi : null;
+                const rsrp = pickMetricNumber(res.Z5g_rsrp, res.lte_rsrp);
+                const sinr = pickMetricNumber(res.Nr_snr, res.Lte_snr);
+                const rsrq = pickMetricNumber(res.nr_rsrq, res.lte_rsrq);
+                const rssi = pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi);
                 updateSignalChart(rsrp, sinr, rsrq, rssi);
             }
 
             // Update cell info strip (Band / EARFCN / BW / PCI / Cell ID)
             {
                 const hasNrData = [res.Nr_bands, res.Nr_fcn, res.Nr_pci, res.Z5g_rsrp, res.Nr_snr, res.nr_rsrq]
-                    .some(v => v != null && v !== '');
+                    .some(hasMetricValue);
                 const is5g = hasNrData || res.network_type === '20' || String(res.network_type || '').toUpperCase().includes('5G');
                 const band  = is5g
-                    ? (res.Nr_bands != null && res.Nr_bands !== '' ? 'N' + res.Nr_bands : (res.Lte_bands != null ? 'B' + res.Lte_bands : '--'))
-                    : (res.Lte_bands != null ? 'B' + res.Lte_bands : '--');
-                const freq  = is5g ? (res.Nr_fcn ?? res.Lte_fcn ?? '--') : (res.Lte_fcn ?? res.Nr_fcn ?? '--');
-                const bw    = is5g ? (res.Nr_bands_widths ?? res.Lte_bands_widths ?? '--') : (res.Lte_bands_widths ?? res.Nr_bands_widths ?? '--');
-                const pci   = is5g ? (res.Nr_pci ?? res.Lte_pci ?? '--') : (res.Lte_pci ?? res.Nr_pci ?? '--');
-                const cellId = is5g ? (res.Nr_cell_id ?? res.Lte_cell_id ?? '--') : (res.Lte_cell_id ?? res.Nr_cell_id ?? '--');
+                    ? (hasMetricValue(res.Nr_bands) ? 'N' + res.Nr_bands : (hasMetricValue(res.Lte_bands) ? 'B' + res.Lte_bands : '--'))
+                    : (hasMetricValue(res.Lte_bands) ? 'B' + res.Lte_bands : '--');
+                const freq  = is5g ? pickMetricText(res.Nr_fcn, res.Lte_fcn) : pickMetricText(res.Lte_fcn, res.Nr_fcn);
+                const bw    = is5g ? pickMetricText(res.Nr_bands_widths, res.Lte_bands_widths) : pickMetricText(res.Lte_bands_widths, res.Nr_bands_widths);
+                const pci   = is5g ? pickMetricText(res.Nr_pci, res.Lte_pci) : pickMetricText(res.Lte_pci, res.Nr_pci);
+                const cellId = is5g ? pickMetricText(res.Nr_cell_id, res.Lte_cell_id) : pickMetricText(res.Lte_cell_id, res.Nr_cell_id);
 
                 const elBand = document.getElementById('ci-band');
                 const elFreq = document.getElementById('ci-freq');
@@ -1181,9 +1201,9 @@ function main_func() {
                 const ccSinrFill = document.getElementById('cc-sinr-fill');
                 const ccRsrqFill = document.getElementById('cc-rsrq-fill');
 
-                const rsrpVal = res.Z5g_rsrp != null ? parseFloat(res.Z5g_rsrp) : (res.lte_rsrp != null ? parseFloat(res.lte_rsrp) : null);
-                const sinrVal = res.Nr_snr != null ? parseFloat(res.Nr_snr) : (res.Lte_snr != null ? parseFloat(res.Lte_snr) : null);
-                const rsrqVal = res.nr_rsrq != null ? parseFloat(res.nr_rsrq) : (res.lte_rsrq != null ? parseFloat(res.lte_rsrq) : null);
+                const rsrpVal = pickMetricNumber(res.Z5g_rsrp, res.lte_rsrp);
+                const sinrVal = pickMetricNumber(res.Nr_snr, res.Lte_snr);
+                const rsrqVal = pickMetricNumber(res.nr_rsrq, res.lte_rsrq);
 
                 // RSRP: -125 to -81 dBm range
                 if (ccRsrp) ccRsrp.textContent = rsrpVal != null ? rsrpVal + ' dBm' : '--';
@@ -1215,7 +1235,7 @@ function main_func() {
                 // RSSI: -110 to -25 dBm range
                 const ccRssi = document.getElementById('cc-rssi');
                 const ccRssiFill = document.getElementById('cc-rssi-fill');
-                const rssiVal = res.nr_rssi != null ? parseFloat(res.nr_rssi) : (res.lte_rssi != null ? parseFloat(res.lte_rssi) : null);
+                const rssiVal = pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi);
                 if (ccRssi) ccRssi.textContent = rssiVal != null ? rssiVal + ' dBm' : '--';
                 if (ccRssiFill) {
                     const rssiPct = rssiVal != null ? Math.min(100, Math.max(0, ((rssiVal + 110) / 85) * 100)) : 0;
