@@ -496,15 +496,15 @@ fun InputUI(
             ) {
                 // Title
                 Text(
-                    text = "Service stopped\nService has stopped",
-                    fontSize = 18.sp,
+                    text = "Service Stopped",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Router management IP\nRouter management IP",
+                    text = "Router Management IP",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
@@ -521,7 +521,7 @@ fun InputUI(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Login Token (default: admin)\nLogin Token (default: admin)",
+                    text = "Login Token (default: admin)",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
@@ -534,7 +534,7 @@ fun InputUI(
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Not Change/Not Change") }
+                    placeholder = { Text("Leave blank to keep current") }
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 // Switch group
@@ -544,7 +544,7 @@ fun InputUI(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Auto IP\nAuto IP",fontSize = 12.sp)
+                        Text("Auto IP", fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isAutoCheckIp,
@@ -552,7 +552,7 @@ fun InputUI(
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Login Token\nLogin Token",fontSize = 12.sp)
+                        Text("Login Token", fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isTokenEnabled,
@@ -566,7 +566,7 @@ fun InputUI(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Debug logs\nDebug logs",fontSize = 12.sp)
+                        Text("Debug Logs", fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isDebug,
@@ -574,7 +574,7 @@ fun InputUI(
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Wake Lock\nWake Lock",fontSize = 12.sp)
+                        Text("Wake Lock", fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = isWkLock,
@@ -590,7 +590,7 @@ fun InputUI(
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Start/Start", textAlign = TextAlign.Center)
+                    Text("Start Server", textAlign = TextAlign.Center)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 HyperlinkText(
@@ -636,37 +636,37 @@ fun ServerUI(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Server is running\nServer is running",
-                    fontSize = 18.sp,
+                    text = "Server is Running",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 HyperlinkText(
-                    "Frontend link/Link: $serverAddress",
+                    "Frontend: $serverAddress",
                     serverAddress,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     url = serverAddress,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 HyperlinkText(
-                    "Gateway/Gateway: $gatewayIP",
+                    "Gateway: $gatewayIP",
                     gatewayIP,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     url = "http://$gatewayIP",
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                Text("Click to stop the service and change the gateway and password (default: admin)\nClick to stop the service and change the gateway and password (default: admin)",
-                    fontSize = 10.sp,
+                Text("Stop to change gateway or password",
+                    fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = onStopServer) {
-                    Text("Stop Server/Stop Server")
+                    Text("Stop Server")
                 }
                 Spacer(modifier = Modifier.height(32.dp))
                 HyperlinkText(

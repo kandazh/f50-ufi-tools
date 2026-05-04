@@ -38,6 +38,7 @@ class ADBService : Service() {
     private lateinit var handlerThread: HandlerThread
     private lateinit var handler: Handler
     private val adbExecutor = Executors.newSingleThreadExecutor()
+    private val adbWakeSignal = Object()
     private val iperfExecutor = Executors.newSingleThreadExecutor()
     private var disableFOTATimes = 3
 
@@ -73,10 +74,11 @@ class ADBService : Service() {
             //Subscribe to battery event receiver
             registerBatteryReceiver()
 
-            // When a client first connects after idle, run SMB immediately
+            // When a client first connects after idle, run SMB and wake ADB loop
             ClientActivityTracker.onFirstConnect = {
                 handler.removeCallbacks(runnableSMB)
                 handler.post(runnableSMB)
+                synchronized(adbWakeSignal) { adbWakeSignal.notifyAll() }
             }
         }
 
@@ -260,7 +262,7 @@ class ADBService : Service() {
                         HotboxLog.d(TAG, "No active client, ADB keep-alive sleeping...")
                         adbIsReady = false
                         ClientActivityTracker.checkIdle() // Release wake lock if idle
-                        Thread.sleep(30_000)
+                        synchronized(adbWakeSignal) { adbWakeSignal.wait(30_000) }
                         continue
                     }
                     val isDebugEnabled = isUsbDebuggingEnabled(context)
@@ -336,8 +338,8 @@ class ADBService : Service() {
                             }
                         }
                     }
-                    // Poll every 11 seconds
-                    Thread.sleep(11_000)
+                    // Poll interval — interruptible so client connect wakes it immediately
+                    synchronized(adbWakeSignal) { adbWakeSignal.wait(11_000) }
                 }
             } catch (e: Exception) {
                 HotboxLog.e(TAG, "ADB Keep-alive thread exception", e)

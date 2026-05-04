@@ -63,6 +63,16 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
             var jsonResult = """{"result":"Execution successful<br>Execution successful!"}"""
 
             if (enabled == "1") {
+                // Wait for ADB keep-alive loop to connect (up to 30s)
+                if (!adbIsReady) {
+                    HotboxLog.d(TAG, "ADB not ready, waiting for background loop to connect...")
+                    repeat(60) {
+                        if (adbIsReady) return@repeat
+                        Thread.sleep(500)
+                    }
+                    HotboxLog.d(TAG, "After waiting, adbIsReady=$adbIsReady")
+                }
+
                 // Remove immutable flag first (may fail if no root yet, but needed for re-enable)
                 val unlockCmd = "chattr -i /data/samba/etc/smb.conf 2>/dev/null; chmod 777 /data/samba/etc/smb.conf 2>/dev/null"
                 sendShellCmd(unlockCmd, 3)
@@ -145,11 +155,19 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
 
                 if(!queryShellIsDone && !queryAdbIsDone){
                     if(adbIsReady){
-                        throw Exception("Enable advanced featuresfailed (config file not changed or does not exist), please factory reset and reinstall<br>Failed to enable advanced features (conf not changed or does not exist), please reset your device to factory")
+                        throw Exception("Config write failed. The firmware may block updating /data/samba/etc/smb.conf.<br>Failed to enable advanced features (smb.conf unchanged even with ADB)")
                     }else {
-                        throw Exception("Enable advanced featuresfailed (config file not changed or does not exist), please enable network ADB and retry<br>Failed to enable advanced features (conf not changed or does not exist), please enable ADB")
+                        throw Exception("Config write failed. Please enable Network ADB and retry.<br>Failed to enable advanced features (conf not changed), please enable ADB")
                     }
                 }
+
+                // Restart Samba so it picks up the new config with the hook
+                val restartCmd = "settings put global samba_enable 0; sleep 1; settings put global samba_enable 1"
+                sendShellCmd(restartCmd, 5)
+                if(adbIsReady) {
+                    ShellHotbox.runShellCommand("${outFileAdb.absolutePath} -s localhost shell $restartCmd", context = context)
+                }
+                Thread.sleep(2000)
 
                 jsonResult = """{"result":"Execution successful, please wait 1-2 minutes to take effect!<br>Execution successful, please wait 1-2 minutes for it to take effect!"}"""
             } else {
