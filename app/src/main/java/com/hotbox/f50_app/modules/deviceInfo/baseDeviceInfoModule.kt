@@ -23,7 +23,10 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -38,15 +41,124 @@ data class MyStorageInfo(
     val path: String, val totalBytes: Long, val availableBytes: Long
 )
 
+@Serializable
+private data class BaseDeviceInfoResponse(
+    val app_ver: String,
+    val app_ver_code: String,
+    val build_timestamp: String,
+    val model: String,
+    val battery: String? = null,
+    val daily_data: Long? = null,
+    val monthly_data: Long? = null,
+    val internal_available_storage: Long? = null,
+    val internal_used_storage: Long? = null,
+    val internal_total_storage: Long? = null,
+    val external_total_storage: Long? = null,
+    val external_used_storage: Long? = null,
+    val external_available_storage: Long? = null,
+    val cpu_temp_list: JsonElement? = null,
+    val cpu_temp: Int? = null,
+    val client_ip: String? = null,
+    val cpu_usage: Double? = null,
+    val mem_usage: Double? = null,
+    val cpuFreqInfo: JsonElement? = null,
+    val cpuUsageInfo: JsonElement? = null,
+    val memInfo: JsonElement? = null,
+    val current_now: Int? = null,
+    val voltage_now: Int? = null,
+)
+
+private data class DeviceStorageSnapshot(
+    val dailyData: Long? = null,
+    val monthlyData: Long? = null,
+    val availableSize: Long? = null,
+    val usedSize: Long? = null,
+    val totalSize: Long? = null,
+    val externalTotal: Long? = null,
+    val externalUsed: Long? = null,
+    val externalAvailable: Long? = null,
+    val timestamp: Long,
+)
+
+private data class DeviceBatterySnapshot(
+    val batteryLevel: Int? = null,
+    val currentNow: Int? = null,
+    val voltageNow: Int? = null,
+    val timestamp: Long,
+)
+
 // Cache for frequently polled device metrics (CPU/thermal/memory)
 private data class DeviceMetricsCache(
-    val cpuTempRes: String?, val cpuTempMax: String?,
-    val cpuFreqInfo: String?, val cpuUsageInfo: String?, val memInfo: String?,
+    val cpuTempList: JsonElement?, val cpuTempMax: Int?,
+    val cpuFreqInfo: JsonElement?, val cpuUsageInfo: JsonElement?, val memInfo: JsonElement?,
     val cpuUsageRes: Double?, val memUsageRes: Double?,
     val timestamp: Long
 )
 @Volatile private var metricsCache: DeviceMetricsCache? = null
+@Volatile private var storageCache: DeviceStorageSnapshot? = null
+@Volatile private var batteryCache: DeviceBatterySnapshot? = null
 private const val CACHE_TTL_MS = 3000L // 3 second cache — reduces /proc/sys reads on low-RAM devices
+
+private fun parseJsonElementOrNull(value: String?): JsonElement? {
+    if (value.isNullOrBlank()) return null
+    return try {
+        Json.parseToJsonElement(value)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun readStorageSnapshot(context: Context, tag: String, timestamp: Long): DeviceStorageSnapshot {
+    return try {
+        val internalStorage = context.filesDir
+        val statFs = StatFs(internalStorage.absolutePath)
+        val totalSize = statFs.blockSizeLong * statFs.blockCountLong
+        val availableSize = statFs.blockSizeLong * statFs.availableBlocksLong
+        val usedSize = totalSize - availableSize
+        val dailyData = HotboxUtils.getCachedTodayUsage(context)
+        val monthlyData = HotboxUtils.getCachedMonthlyUsage(context)
+        val removableStorageInfo = HotboxUtils.getCachedRemovableStorageInfo(context)
+        val externalTotal = removableStorageInfo?.totalBytes ?: 0L
+        val externalAvailable = removableStorageInfo?.availableBytes ?: 0L
+
+        DeviceStorageSnapshot(
+            dailyData = dailyData,
+            monthlyData = monthlyData,
+            availableSize = availableSize,
+            usedSize = usedSize,
+            totalSize = totalSize,
+            externalTotal = externalTotal,
+            externalUsed = externalTotal - externalAvailable,
+            externalAvailable = externalAvailable,
+            timestamp = timestamp,
+        )
+    } catch (e: Exception) {
+        HotboxLog.d(tag, "Error getting storage & daily data: ${e.message}")
+        DeviceStorageSnapshot(timestamp = timestamp)
+    }
+}
+
+private suspend fun readBatterySnapshot(context: Context, tag: String, timestamp: Long): DeviceBatterySnapshot {
+    return try {
+        val batteryLevel = HotboxUtils.getBatteryPercentage(context)
+        val batteryStatus = try {
+            readBatteryStatus()
+        } catch (e: Exception) {
+            HotboxLog.d(tag, "Error getting battery status: ${e.message}")
+            null
+        }
+
+        DeviceBatterySnapshot(
+            batteryLevel = batteryLevel.takeIf { it >= 0 },
+            currentNow = batteryStatus?.current_uA,
+            voltageNow = batteryStatus?.voltage_uV,
+            timestamp = timestamp,
+        )
+    } catch (e: Exception) {
+        HotboxLog.d(tag, "Error getting battery info: ${e.message}")
+        DeviceBatterySnapshot(timestamp = timestamp)
+    }
+}
 
 fun Route.baseDeviceInfoModule(context: Context) {
     val TAG = "[$BASE_TAG]_baseDeviceInfoModule"
@@ -81,19 +193,24 @@ fun Route.baseDeviceInfoModule(context: Context) {
                 val mem = getMemoryUsage()
                 val (maxTemp, temp) = readThermalZones()
 
+                val usageJson = parseJsonElementOrNull(usage)
+                val freqJson = parseJsonElementOrNull(freq)
+                val memJson = parseJsonElementOrNull(mem)
+                val tempJson = parseJsonElementOrNull(temp)
+
                 val cpuUsageRes = try {
-                    Json.parseToJsonElement(usage).jsonObject["cpu"]?.jsonPrimitive?.double
+                    usageJson?.jsonObject?.get("cpu")?.jsonPrimitive?.double
                 } catch (_: Exception) { null }
                 val memUsageRes = try {
-                    Json.parseToJsonElement(mem).jsonObject["mem_usage_percent"]?.jsonPrimitive?.double
+                    memJson?.jsonObject?.get("mem_usage_percent")?.jsonPrimitive?.double
                 } catch (_: Exception) { null }
 
                 val result = DeviceMetricsCache(
-                    cpuTempRes = temp.replace("\n", ""),
-                    cpuTempMax = maxTemp.toString(),
-                    cpuFreqInfo = freq,
-                    cpuUsageInfo = usage,
-                    memInfo = mem,
+                    cpuTempList = tempJson,
+                    cpuTempMax = maxTemp.takeIf { it >= 0 },
+                    cpuFreqInfo = freqJson,
+                    cpuUsageInfo = usageJson,
+                    memInfo = memJson,
                     cpuUsageRes = cpuUsageRes,
                     memUsageRes = memUsageRes,
                     timestamp = now
@@ -106,60 +223,39 @@ fun Route.baseDeviceInfoModule(context: Context) {
             }
         }
 
-        // Storage info
-        var dailyData: Long? = null; var monthlyData: Long? = null
-        var availableSize: Long? = null; var usedSize: Long? = null; var totalSize: Long? = null
-        var externalTotal: Long? = null; var externalUsed: Long? = null; var externalAvailable: Long? = null
-        try {
-            val internalStorage = context.filesDir
-            val statFs = StatFs(internalStorage.absolutePath)
-            totalSize = statFs.blockSizeLong * statFs.blockCountLong
-            availableSize = statFs.blockSizeLong * statFs.availableBlocksLong
-            usedSize = totalSize!! - availableSize!!
-            dailyData = HotboxUtils.getCachedTodayUsage(context)
-            monthlyData = HotboxUtils.getCachedMonthlyUsage(context)
-            val exStorageInfo = HotboxUtils.getCachedRemovableStorageInfo(context)
-            externalTotal = exStorageInfo?.totalBytes ?: 0
-            externalAvailable = exStorageInfo?.availableBytes ?: 0
-            externalUsed = externalTotal!! - externalAvailable!!
-        } catch (e: Exception) {
-            HotboxLog.d(TAG, "Error getting storage & daily data:  ${e.message}")
-        }
+        val storage = storageCache?.takeIf { (now - it.timestamp) < CACHE_TTL_MS }
+            ?: readStorageSnapshot(context, TAG, now).also { storageCache = it }
 
-        // Battery info — hardcoded: device has no battery (always powered)
-        val batteryLevel: Int = 100
-        val currentNow: Int? = null
-        val voltageNow: Int? = null
+        val battery = batteryCache?.takeIf { (now - it.timestamp) < CACHE_TTL_MS }
+            ?: readBatterySnapshot(context, TAG, now).also { batteryCache = it }
 
-        val jsonResult = """
-            {
-                "app_ver": "${AppMeta.versionName}",
-                "app_ver_code": "${AppMeta.versionCode}",
-                "build_timestamp": "${AppMeta.buildTimestamp}",
-                "model": "${AppMeta.model}",
-                "battery": "$batteryLevel",
-                "daily_data": $dailyData,
-                "monthly_data": $monthlyData,
-                "internal_available_storage": $availableSize,
-                "internal_used_storage": $usedSize,
-                "internal_total_storage": $totalSize,
-                "external_total_storage": $externalTotal,
-                "external_used_storage": $externalUsed,
-                "external_available_storage": $externalAvailable,
-                "cpu_temp_list":${metrics.cpuTempRes},
-                "cpu_temp":${metrics.cpuTempMax},
-                "client_ip":"$ipRes",
-                "cpu_usage":${metrics.cpuUsageRes},
-                "mem_usage":${metrics.memUsageRes},
-                "cpuFreqInfo":${metrics.cpuFreqInfo},
-                "cpuUsageInfo":${metrics.cpuUsageInfo},
-                "memInfo":${metrics.memInfo},
-                "current_now":$currentNow,
-                "voltage_now":$voltageNow
-            }
-        """.trimIndent()
+        val response = BaseDeviceInfoResponse(
+            app_ver = AppMeta.versionName,
+            app_ver_code = AppMeta.versionCode.toString(),
+            build_timestamp = AppMeta.buildTimestamp,
+            model = AppMeta.model,
+            battery = battery.batteryLevel?.toString(),
+            daily_data = storage.dailyData,
+            monthly_data = storage.monthlyData,
+            internal_available_storage = storage.availableSize,
+            internal_used_storage = storage.usedSize,
+            internal_total_storage = storage.totalSize,
+            external_total_storage = storage.externalTotal,
+            external_used_storage = storage.externalUsed,
+            external_available_storage = storage.externalAvailable,
+            cpu_temp_list = metrics.cpuTempList,
+            cpu_temp = metrics.cpuTempMax,
+            client_ip = ipRes,
+            cpu_usage = metrics.cpuUsageRes,
+            mem_usage = metrics.memUsageRes,
+            cpuFreqInfo = metrics.cpuFreqInfo,
+            cpuUsageInfo = metrics.cpuUsageInfo,
+            memInfo = metrics.memInfo,
+            current_now = battery.currentNow,
+            voltage_now = battery.voltageNow,
+        )
         call.response.headers.append("Access-Control-Allow-Origin", "*")
-        call.respondText(jsonResult, ContentType.Application.Json)
+        call.respondText(Json.encodeToString(response), ContentType.Application.Json)
     }
 
     get("/api/connInfo"){

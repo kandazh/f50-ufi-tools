@@ -16,11 +16,39 @@ import java.util.Locale
 // Data class
 data class CpuStat(val cpu: String, val total: Long, val idle: Long)
 data class ThermalZone(val type: String, val temp: Int)
+private data class ProcMemInfo(
+    val total: Long,
+    val available: Long,
+    val swapTotal: Long,
+    val swapFree: Long,
+)
+
+private data class SwapBreakdown(
+    val zramTotal: Long = 0L,
+    val zramUsed: Long = 0L,
+    val diskSwapTotal: Long = 0L,
+    val diskSwapUsed: Long = 0L,
+) {
+    val total: Long
+        get() = zramTotal + diskSwapTotal
+
+    val used: Long
+        get() = zramUsed + diskSwapUsed
+}
+
 data class MemoryInfo(
     val total: Long,
     val available: Long,
     val used: Long,
     val usagePercent: Double,
+    val zramTotal: Long,
+    val zramFree: Long,
+    val zramUsed: Long,
+    val zramUsagePercent: Double,
+    val diskSwapTotal: Long,
+    val diskSwapFree: Long,
+    val diskSwapUsed: Long,
+    val diskSwapUsagePercent: Double,
     val swapTotal: Long,
     val swapFree: Long,
     val swapUsed: Long,
@@ -155,34 +183,58 @@ private fun readProcStat(): Map<String, CpuStat> {
 }
 
 suspend fun getMemoryUsage(): String = withContext(Dispatchers.IO) {
-    val memInfo = readProcMeminfo()
+    val procMemInfo = readProcMeminfo()
+    val swapBreakdown = readProcSwaps()
 
     // Calculate memory usage
-    val used = memInfo.total - memInfo.available
-    val usagePercent = if (memInfo.total > 0) {
-        used.toDouble() * 100 / memInfo.total
+    val used = procMemInfo.total - procMemInfo.available
+    val usagePercent = if (procMemInfo.total > 0) {
+        used.toDouble() * 100 / procMemInfo.total
     } else 0.0
 
-    // Calculate swap space usage
-    val swapUsed = memInfo.swapTotal - memInfo.swapFree
-    val swapUsagePercent = if (memInfo.swapTotal > 0) {
-        swapUsed.toDouble() * 100 / memInfo.swapTotal
+    val zramFree = (swapBreakdown.zramTotal - swapBreakdown.zramUsed).coerceAtLeast(0L)
+    val zramUsagePercent = if (swapBreakdown.zramTotal > 0) {
+        swapBreakdown.zramUsed.toDouble() * 100 / swapBreakdown.zramTotal
+    } else 0.0
+
+    val diskSwapFree = (swapBreakdown.diskSwapTotal - swapBreakdown.diskSwapUsed).coerceAtLeast(0L)
+    val diskSwapUsagePercent = if (swapBreakdown.diskSwapTotal > 0) {
+        swapBreakdown.diskSwapUsed.toDouble() * 100 / swapBreakdown.diskSwapTotal
+    } else 0.0
+
+    val swapTotal = if (swapBreakdown.total > 0) swapBreakdown.total else procMemInfo.swapTotal
+    val swapUsed = if (swapBreakdown.total > 0) swapBreakdown.used else (procMemInfo.swapTotal - procMemInfo.swapFree)
+    val swapFree = if (swapBreakdown.total > 0) {
+        (swapTotal - swapUsed).coerceAtLeast(0L)
+    } else {
+        procMemInfo.swapFree
+    }
+    val swapUsagePercent = if (swapTotal > 0) {
+        swapUsed.toDouble() * 100 / swapTotal
     } else 0.0
 
     // Build JSON
     return@withContext buildJsonObject {
-        put("mem_total_kb", memInfo.total)
-        put("mem_available_kb", memInfo.available)
+        put("mem_total_kb", procMemInfo.total)
+        put("mem_available_kb", procMemInfo.available)
         put("mem_used_kb", used)
         put("mem_usage_percent", "%.1f".format(usagePercent))
-        put("swap_total_kb", memInfo.swapTotal)
-        put("swap_free_kb", memInfo.swapFree)
+        put("zram_total_kb", swapBreakdown.zramTotal)
+        put("zram_free_kb", zramFree)
+        put("zram_used_kb", swapBreakdown.zramUsed)
+        put("zram_usage_percent", "%.1f".format(zramUsagePercent))
+        put("disk_swap_total_kb", swapBreakdown.diskSwapTotal)
+        put("disk_swap_free_kb", diskSwapFree)
+        put("disk_swap_used_kb", swapBreakdown.diskSwapUsed)
+        put("disk_swap_usage_percent", "%.1f".format(diskSwapUsagePercent))
+        put("swap_total_kb", swapTotal)
+        put("swap_free_kb", swapFree)
         put("swap_used_kb", swapUsed)
         put("swap_usage_percent", "%.1f".format(swapUsagePercent))
     }.toString()
 }
 
-private fun readProcMeminfo(): MemoryInfo {
+private fun readProcMeminfo(): ProcMemInfo {
     var total = 0L
     var available = 0L
     var swapTotal = 0L
@@ -199,7 +251,43 @@ private fun readProcMeminfo(): MemoryInfo {
         }
     }
 
-    return MemoryInfo(total, available, 0, 0.0, swapTotal, swapFree, 0, 0.0)
+    return ProcMemInfo(total, available, swapTotal, swapFree)
+}
+
+private fun readProcSwaps(): SwapBreakdown {
+    val swapsFile = File("/proc/swaps")
+    if (!swapsFile.exists()) return SwapBreakdown()
+
+    var zramTotal = 0L
+    var zramUsed = 0L
+    var diskSwapTotal = 0L
+    var diskSwapUsed = 0L
+
+    swapsFile.bufferedReader().useLines { lines ->
+        lines.drop(1).forEach { line ->
+            val parts = line.trim().split("\\s+".toRegex())
+            if (parts.size < 5) return@forEach
+
+            val fileName = parts[0]
+            val sizeKb = parts[2].toLongOrNull() ?: 0L
+            val usedKb = parts[3].toLongOrNull() ?: 0L
+
+            if (fileName.contains("zram", ignoreCase = true)) {
+                zramTotal += sizeKb
+                zramUsed += usedKb
+            } else {
+                diskSwapTotal += sizeKb
+                diskSwapUsed += usedKb
+            }
+        }
+    }
+
+    return SwapBreakdown(
+        zramTotal = zramTotal,
+        zramUsed = zramUsed,
+        diskSwapTotal = diskSwapTotal,
+        diskSwapUsed = diskSwapUsed,
+    )
 }
 
 private fun parseMemValue(line: String): Long {

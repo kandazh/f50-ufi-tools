@@ -492,6 +492,13 @@
         const free = 100 - used;
         const swapUsed = Math.round(v.swap_usage_percent);
         const swapFree = 100 - swapUsed;
+        const combinedTotal = Number(v.swap_total_kb || 0);
+        const combinedUsed = Number(v.swap_used_kb || 0);
+        const zramTotal = Number(v.zram_total_kb ?? v.swap_total_kb ?? 0);
+        const zramUsed = Number(v.zram_used_kb ?? v.swap_used_kb ?? 0);
+        const diskSwapTotal = Number(v.disk_swap_total_kb ?? 0);
+        const diskSwapUsed = Number(v.disk_swap_used_kb ?? 0);
+        const compactSummary = (usedValue, total) => `${fmtBytes(usedValue)} / ${fmtBytes(total)}`;
         if (ramDonut) {
             ramDonut.data.datasets[0].data = [used, free];
             ramDonut.data.datasets[1].data = [swapUsed, swapFree];
@@ -502,9 +509,9 @@
         $('dash-ram-total') && ($('dash-ram-total').textContent = fmtBytes(v.mem_total_kb));
         $('dash-ram-avail') && ($('dash-ram-avail').textContent = fmtBytes(v.mem_available_kb));
         $('dash-ram-used') && ($('dash-ram-used').textContent = fmtBytes(v.mem_used_kb) + ' (' + used + '%)');
-        $('dash-swap-total') && ($('dash-swap-total').textContent = fmtBytes(v.swap_total_kb));
-        $('dash-swap-used') && ($('dash-swap-used').textContent = fmtBytes(v.swap_used_kb) + ' (' + Math.round(v.swap_usage_percent) + '%)');
-        $('dash-swap-avail') && ($('dash-swap-avail').textContent = fmtBytes(v.swap_free_kb));
+        $('dash-swap-combined') && ($('dash-swap-combined').textContent = compactSummary(combinedUsed, combinedTotal));
+        $('dash-zram-summary') && ($('dash-zram-summary').textContent = compactSummary(zramUsed, zramTotal));
+        $('dash-disk-swap-summary') && ($('dash-disk-swap-summary').textContent = diskSwapTotal > 0 ? compactSummary(diskSwapUsed, diskSwapTotal) : 'none');
     }
 
     // --- Thermal Zones Grid ---
@@ -621,22 +628,45 @@
     })();
 
     window.updateBatteryCard = function(res) {
-        const bat = parseInt(res.battery) || 0;
-        const charging = res.battery_charging == '1';
+        const hasBatteryData = res?.has_battery_data === true
+            || (res?.battery !== null && res?.battery !== undefined && res?.battery !== '')
+            || (res?.current_now !== null && res?.current_now !== undefined)
+            || (res?.voltage_now !== null && res?.voltage_now !== undefined);
+        const parsedBattery = Number.parseInt(res.battery, 10);
+        const bat = Number.isFinite(parsedBattery)
+            ? Math.max(0, Math.min(100, parsedBattery))
+            : null;
+        const chargeState = res.battery_charging === '1'
+            ? 'charging'
+            : res.battery_charging === '0'
+                ? 'discharging'
+                : 'unknown';
         const current = res.current_now != null ? (res.current_now / 1000).toFixed(0) + ' mA' : '--';
         const voltage = res.voltage_now != null ? (res.voltage_now / 1000000).toFixed(3) + ' V' : '--';
-        const color = bat > 50 ? '#34d399' : bat > 20 ? '#fbbf24' : '#f87171';
+        const color = bat == null
+            ? '#94a3b8'
+            : bat > 50
+                ? '#34d399'
+                : bat > 20
+                    ? '#fbbf24'
+                    : '#f87171';
 
         if (batteryGauge) {
-            batteryGauge.data.datasets[0].data = [bat, 100 - bat];
+            batteryGauge.data.datasets[0].data = bat == null ? [0, 100] : [bat, 100 - bat];
             batteryGauge.data.datasets[0].backgroundColor[0] = color;
-            centerTexts.get(batteryGauge).text = bat + '%';
+            centerTexts.get(batteryGauge).text = bat == null ? '--' : bat + '%';
             centerTexts.get(batteryGauge).color = color;
             batteryGauge.update('none');
         }
         const $ = (id) => document.getElementById(id);
-        if ($('dash-bat-level')) $('dash-bat-level').textContent = bat + '%';
-        if ($('dash-bat-status')) $('dash-bat-status').textContent = charging ? '⚡ Charging' : 'Discharging';
+        if ($('dash-bat-level')) $('dash-bat-level').textContent = bat == null ? '--' : bat + '%';
+        if ($('dash-bat-status')) {
+            $('dash-bat-status').textContent = chargeState === 'charging'
+                ? '⚡ Charging'
+                : chargeState === 'discharging' && hasBatteryData
+                    ? 'Discharging'
+                    : '--';
+        }
         if ($('dash-bat-current')) $('dash-bat-current').textContent = current;
         if ($('dash-bat-voltage')) $('dash-bat-voltage').textContent = voltage;
     };

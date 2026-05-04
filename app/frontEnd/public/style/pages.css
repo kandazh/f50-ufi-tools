@@ -1058,8 +1058,8 @@
 }
 
 .cc-progress-fill.level-strong {
-  background: linear-gradient(90deg, #22c55e, #86efac);
-  box-shadow: 0 0 8px rgba(34,197,94,0.4);
+  background: linear-gradient(90deg, #166534, #16a34a);
+  box-shadow: 0 0 8px rgba(22,163,74,0.35);
 }
 
 .cc-progress-fill.level-medium {

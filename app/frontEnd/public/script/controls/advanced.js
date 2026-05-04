@@ -8,7 +8,7 @@
 
   document.addEventListener('ctrl-panel-show', function (e) {
     if (e.detail.tab === 'firewall') loadLanSections();
-    if (e.detail.tab === 'advanced') loadAdvanced();
+    if (e.detail.tab === 'advanced' || e.detail.tab === 'network_tools') loadAdvanced();
   });
 
   var panel = document.querySelector('[data-ctrl-panel="advanced"]');
@@ -31,8 +31,9 @@
     advLoaded = true;
     initAdvSwitches();
     loadFotaSettings();
-    loadDeviceOptions();
-    bindSaveButton();
+    loadQuickSwitches();
+    bindAdvancedSaveButton();
+    bindNetworkToolsSaveButton();
   }
 
   /* --- Toggle switches --- */
@@ -55,8 +56,9 @@
     });
     switches.fotaRoam = createToggle('ADV_FOTA_ROAM_SWITCH');
     switches.zteUpdate = createToggle('ADV_ZTE_UPDATE_SWITCH');
+    switches.roam = createToggle('ADV_ROAM_SWITCH');
+    switches.samba = createToggle('ADV_SAMBA_SWITCH');
     switches.light = createToggle('ADV_LIGHT_SWITCH');
-    switches.perf = createToggle('ADV_PERF_SWITCH');
   }
 
   function createToggle(containerId, onChange) {
@@ -223,23 +225,40 @@
     } catch (e) { console.warn('[Advanced] Failed to load FOTA settings:', e); }
   }
 
-  /* --- Device Options --- */
-  async function loadDeviceOptions() {
+  /* --- Quick Switches --- */
+  async function loadQuickSwitches() {
     try {
-      var data = await getData(new URLSearchParams({ cmd: 'indicator_light_switch,performance_mode', multi_data: '1' }));
+      var data = await getData(new URLSearchParams({
+        cmd: 'roam_setting_option,dial_roam_setting_option,samba_switch,indicator_light_switch',
+        multi_data: '1'
+      }));
       if (!data) return;
+      var roamEnabled = data.dial_roam_setting_option === 'on' || data.roam_setting_option === 'on';
+      if (switches.roam) switches.roam.set(roamEnabled);
+      if (switches.samba) switches.samba.set(data.samba_switch === '1');
       if (switches.light) switches.light.set(data.indicator_light_switch === '1');
-      if (switches.perf) switches.perf.set(data.performance_mode === '1');
-    } catch (e) { console.warn('[Advanced] Failed to load device options:', e); }
+    } catch (e) { console.warn('[Advanced] Failed to load quick switches:', e); }
   }
 
   /* --- Save all --- */
-  function bindSaveButton() {
+  function bindAdvancedSaveButton() {
     bindCtrlSave('ADV_SAVE_BTN', async function (cookie) {
       var interval = document.getElementById('ADV_FOTA_INTERVAL');
       await postData(cookie, { goformId: 'SetUpgAutoSetting', UpgMode: switches.fota.get() ? '1' : '0', UpgIntervalDay: interval ? interval.value : '7', UpgRoamPermission: switches.fotaRoam.get() ? '1' : '0', zte_update_enabled: switches.zteUpdate.get() ? '1' : '0' });
       await postData(cookie, { goformId: 'INDICATOR_LIGHT_SETTING', indicator_light_switch: switches.light.get() ? '1' : '0' });
-      await postData(cookie, { goformId: 'PERFORMANCE_MODE_SETTING', performance_mode: switches.perf.get() ? '1' : '0' });
+    });
+  }
+
+  function bindNetworkToolsSaveButton() {
+    bindCtrlSave('NETWORK_TOOLS_SAVE_BTN', async function (cookie) {
+      var roamValue = switches.roam.get() ? 'on' : 'off';
+      await postData(cookie, {
+        goformId: 'SET_CONNECTION_MODE',
+        ConnectionMode: 'auto_dial',
+        roam_setting_option: roamValue,
+        dial_roam_setting_option: roamValue
+      });
+      await postData(cookie, { goformId: 'SAMBA_SETTING', samba_switch: switches.samba.get() ? '1' : '0' });
     });
   }
 

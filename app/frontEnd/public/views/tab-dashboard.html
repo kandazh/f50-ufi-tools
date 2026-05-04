@@ -3,19 +3,6 @@
                 <button class="qt-btn" id="qt-data" data-i18n="cellular" onclick="window.qtToggle('data')">
                     <span class="qt-dot"></span><span class="qt-label">Mobile Data</span>
                 </button>
-                <button class="qt-btn" id="qt-roam" data-i18n="network_roam" onclick="window.qtToggle('roam')">
-                    <span class="qt-dot"></span><span class="qt-label">Roaming</span>
-                </button>
-                <button class="qt-btn" id="qt-perf" data-i18n="performance_mode" onclick="window.qtToggle('perf')">
-                    <span class="qt-dot"></span><span class="qt-label">Perf Mode</span>
-                </button>
-
-                <button class="qt-btn" id="qt-smb" data-i18n="file_sharing" onclick="window.qtToggle('smb')">
-                    <span class="qt-dot"></span><span class="qt-label">File Share</span>
-                </button>
-                <button class="qt-btn" id="qt-light" data-i18n="indicator" onclick="window.qtToggle('light')">
-                    <span class="qt-dot"></span><span class="qt-label">LED</span>
-                </button>
             </div>
 
             <!-- Live Tracking Charts -->
@@ -118,9 +105,9 @@
                             <div class="info-row"><span class="info-label">Total Memory</span><span class="info-value" id="dash-ram-total">--</span></div>
                             <div class="info-row"><span class="info-label">Used</span><span class="info-value" id="dash-ram-used">--</span></div>
                             <div class="info-row"><span class="info-label">Available</span><span class="info-value" id="dash-ram-avail">--</span></div>
-                            <div class="info-row info-row--sep"><span class="info-label">Total SWAP</span><span class="info-value" id="dash-swap-total">--</span></div>
-                            <div class="info-row"><span class="info-label">Used</span><span class="info-value" id="dash-swap-used">--</span></div>
-                            <div class="info-row"><span class="info-label">Available</span><span class="info-value" id="dash-swap-avail">--</span></div>
+                            <div class="info-row info-row--sep"><span class="info-label">Combined</span><span class="info-value" id="dash-swap-combined">--</span></div>
+                            <div class="info-row"><span class="info-label">ZRAM</span><span class="info-value" id="dash-zram-summary">--</span></div>
+                            <div class="info-row"><span class="info-label">Disk SWAP</span><span class="info-value" id="dash-disk-swap-summary">--</span></div>
                         </div>
                     </div>
                 </div>
@@ -162,7 +149,7 @@
                         </div>
                         <div class="signal-legend" id="signal-legend">
                             <span class="signal-legend-item"><span class="signal-dot" style="background:#f87171"></span><span class="signal-lbl">RSRP</span><b id="sig-rsrp-val">--</b></span>
-                            <span class="signal-legend-item"><span class="signal-dot" style="background:#34d399"></span><span class="signal-lbl">SINR</span><b id="sig-sinr-val">--</b></span>
+                            <span class="signal-legend-item"><span class="signal-dot" style="background:#16a34a"></span><span class="signal-lbl">SINR</span><b id="sig-sinr-val">--</b></span>
                             <span class="signal-legend-item"><span class="signal-dot" style="background:#60a5fa"></span><span class="signal-lbl">RSRQ</span><b id="sig-rsrq-val">--</b></span>
                             <span class="signal-legend-item"><span class="signal-dot" style="background:#fb923c"></span><span class="signal-lbl">RSSI</span><b id="sig-rssi-val">--</b></span>
                         </div>

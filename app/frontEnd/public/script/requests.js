@@ -310,6 +310,42 @@ const getSmsInfo = async (page = 0, pageSize = 500) => {
     return await res.json()
 }
 
+const BASE_DEVICE_INFO_TTL_MS = 3000
+let baseDeviceInfoCache = {
+    data: null,
+    expiresAt: 0,
+    inflight: null,
+}
+
+const getBaseDeviceInfo = async (signal) => {
+    const now = Date.now()
+    if (baseDeviceInfoCache.data && now < baseDeviceInfoCache.expiresAt) {
+        return baseDeviceInfoCache.data
+    }
+
+    if (baseDeviceInfoCache.inflight) {
+        return await baseDeviceInfoCache.inflight
+    }
+
+    const staleData = baseDeviceInfoCache.data
+    baseDeviceInfoCache.inflight = fetch(`${HOTBOX_baseURL}/baseDeviceInfo`, {
+        headers: { ...common_headers },
+        signal,
+    })
+        .then(r => r.json())
+        .then(data => {
+            baseDeviceInfoCache.data = data
+            baseDeviceInfoCache.expiresAt = Date.now() + BASE_DEVICE_INFO_TTL_MS
+            return data
+        })
+        .catch(() => staleData || {})
+        .finally(() => {
+            baseDeviceInfoCache.inflight = null
+        })
+
+    return await baseDeviceInfoCache.inflight
+}
+
 const getUFIData = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
@@ -318,7 +354,7 @@ const getUFIData = async () => {
         const params = new URLSearchParams();
         params.append('_', Date.now().toString());
 
-        const cmd = 'usb_port_switch,battery_charging,sms_received_flag,sms_unread_num,sms_sim_unread_num,sim_msisdn,data_volume_limit_switch,battery_value,battery_vol_percent,network_signalbar,network_rssi,cr_version,iccid,imei,imsi,wan_ipaddr,ipv6_wan_ipaddr,lan_ipaddr,mac_address,msisdn,network_information,Lte_ca_status,rssi,Z5g_rsrp,lte_rsrp,wifi_access_sta_num,loginfo,data_volume_alert_percent,data_volume_limit_size,realtime_rx_thrpt,realtime_tx_thrpt,realtime_time,monthly_tx_bytes,monthly_rx_bytes,monthly_time,network_type,network_provider,ppp_status,performance_mode,indicator_light_switch,samba_switch,roam_setting_option,dial_roam_setting_option';
+        const cmd = 'usb_port_switch,battery_charging,sms_received_flag,sms_unread_num,sms_sim_unread_num,sim_msisdn,data_volume_limit_switch,battery_value,battery_vol_percent,network_signalbar,network_rssi,cr_version,iccid,imei,imsi,wan_ipaddr,ipv6_wan_ipaddr,lan_ipaddr,mac_address,msisdn,network_information,Lte_ca_status,rssi,Z5g_rsrp,Nr_snr,nr_rsrq,nr_rssi,Nr_bands,Nr_fcn,Nr_bands_widths,Nr_pci,Nr_cell_id,lte_rsrp,Lte_snr,lte_rsrq,lte_rssi,Lte_bands,Lte_fcn,Lte_bands_widths,Lte_pci,Lte_cell_id,wifi_access_sta_num,loginfo,data_volume_alert_percent,data_volume_limit_size,realtime_rx_thrpt,realtime_tx_thrpt,realtime_time,monthly_tx_bytes,monthly_rx_bytes,monthly_time,network_type,network_provider,ppp_status,performance_mode,indicator_light_switch,samba_switch,roam_setting_option,dial_roam_setting_option';
 
         // Fetch goform data and device info in parallel
         const [goformRes, deviceInfoRes] = await Promise.all([
@@ -329,11 +365,19 @@ const getUFIData = async () => {
                 },
                 signal: controller.signal
             }),
-            fetch(`${HOTBOX_baseURL}/baseDeviceInfo`, { headers: { ...common_headers }, signal: controller.signal }).then(r => r.json()).catch(() => ({}))
+            getBaseDeviceInfo(controller.signal)
         ]);
 
         const resData = await goformRes.json()
         let deviceInfo = deviceInfoRes
+
+        const isPresent = (value) => value !== undefined && value !== null && value !== ''
+        const battery = isPresent(resData?.battery_value)
+            ? resData.battery_value
+            : isPresent(resData?.battery_vol_percent)
+                ? resData.battery_vol_percent
+                : deviceInfo?.battery
+        const hasBatteryData = [battery, deviceInfo?.current_now, deviceInfo?.voltage_now].some(isPresent)
 
 
         // Handle U30Air compatibility
@@ -344,8 +388,11 @@ const getUFIData = async () => {
         return {
             ...resData,
             ...deviceInfo,
-            // U30Air battery compat
-            battery: resData?.battery_value ? resData.battery_value : resData?.battery_vol_percent ? resData.battery_vol_percent : deviceInfo.battery,
+            // U30Air battery compat + stable fallback when goform battery fields are absent
+            battery,
+            battery_value: isPresent(resData?.battery_value) ? resData.battery_value : battery,
+            battery_vol_percent: isPresent(resData?.battery_vol_percent) ? resData.battery_vol_percent : battery,
+            has_battery_data: hasBatteryData,
         }
     } catch (error) {
         if (error.name === 'AbortError') {

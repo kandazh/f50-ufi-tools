@@ -72,6 +72,12 @@ class ADBService : Service() {
             // executor.execute(runnableRPT)
             //Subscribe to battery event receiver
             registerBatteryReceiver()
+
+            // When a client first connects after idle, run SMB immediately
+            ClientActivityTracker.onFirstConnect = {
+                handler.removeCallbacks(runnableSMB)
+                handler.post(runnableSMB)
+            }
         }
 
         //Start scheduled tasks

@@ -441,6 +441,13 @@ function main_func() {
         return isReadable && isIncludeInShowList(dicName)
     }
 
+    function hasBatteryData(res) {
+        return res?.has_battery_data === true
+            || (res?.battery !== null && res?.battery !== undefined && res?.battery !== '')
+            || (res?.current_now !== null && res?.current_now !== undefined && res?.current_now !== '')
+            || (res?.voltage_now !== null && res?.voltage_now !== undefined && res?.voltage_now !== '')
+    }
+
     // Init all buttons
     const initRenderMethod = async () => {
         initScheduledTask()
@@ -457,7 +464,6 @@ function main_func() {
         initROAMStatus()
         initSimCardType()
         initLightStatus()
-        initBandForm()
         initUSBNetworkType()
         initNFCSwitch()
         initWIFISwitch()
@@ -669,13 +675,10 @@ function main_func() {
     const qtUpdateAll = () => {
         const d = window.UFI_DATA || {}
         qtSet('data', d.ppp_status && d.ppp_status !== 'ppp_disconnected')
-        qtSet('perf', d.performance_mode === '1')
-        qtSet('light', d.indicator_light_switch === '1')
-        qtSet('smb', d.samba_switch === '1')
-        qtSet('roam', d.roam_setting_option === 'on' || d.dial_roam_setting_option === 'on')
     }
 
     const qtToggle = async (id) => {
+        if (id !== 'data') return
         if (!(await initRequestData())) {
             createToast(t('toast_please_login'), 'red'); return
         }
@@ -684,67 +687,10 @@ function main_func() {
             const cookie = await login()
             if (!cookie) { createToast(t('toast_login_failed_check_network'), 'red'); return }
             const d = window.UFI_DATA || {}
-            switch (id) {
-                case 'data': {
-                    const on = d.ppp_status && d.ppp_status !== 'ppp_disconnected'
-                    await (await postData(cookie, { goformId: on ? 'DISCONNECT_NETWORK' : 'CONNECT_NETWORK' })).json()
-                    d.ppp_status = on ? 'ppp_disconnected' : 'ppp_connected'
-                    qtSet('data', !on)
-                    break
-                }
-                case 'perf': {
-                    const on = d.performance_mode === '1'
-                    await (await postData(cookie, { goformId: 'PERFORMANCE_MODE_SETTING', performance_mode: on ? '0' : '1' })).json()
-                    // Poll baseDeviceInfo to verify cores actually changed
-                    const expectCores = on ? 4 : 8
-                    for (let attempt = 0; attempt < 10; attempt++) {
-                        await new Promise(r => setTimeout(r, 1000))
-                        try {
-                            const info = await (await fetchWithTimeout(`${HOTBOX_baseURL}/baseDeviceInfo`, {
-                                headers: { ...common_headers }
-                            }, 5000)).json()
-                            const usage = info.cpuUsageInfo || {}
-                            let coreCount = 0
-                            for (let i = 0; i < 8; i++) {
-                                if (usage['cpu' + i] !== undefined && usage['cpu' + i] !== null) coreCount++
-                            }
-                            if (coreCount >= expectCores) break
-                        } catch {}
-                    }
-                    d.performance_mode = on ? '0' : '1'
-                    qtSet('perf', !on)
-                    break
-                }
-                case 'light': {
-                    const on = d.indicator_light_switch === '1'
-                    await (await postData(cookie, { goformId: 'INDICATOR_LIGHT_SETTING', indicator_light_switch: on ? '0' : '1' })).json()
-                    d.indicator_light_switch = on ? '0' : '1'
-                    qtSet('light', !on)
-                    break
-                }
-                case 'smb': {
-                    const on = d.samba_switch === '1'
-                    await (await postData(cookie, { goformId: 'SAMBA_SETTING', samba_switch: on ? '0' : '1' })).json()
-                    d.samba_switch = on ? '0' : '1'
-                    qtSet('smb', !on)
-                    break
-                }
-                case 'roam': {
-                    const roamVal = d.dial_roam_setting_option || d.roam_setting_option
-                    const on = roamVal === 'on'
-                    const newVal = on ? 'off' : 'on'
-                    await (await postData(cookie, {
-                        goformId: 'SET_CONNECTION_MODE',
-                        ConnectionMode: 'auto_dial',
-                        roam_setting_option: newVal,
-                        dial_roam_setting_option: newVal
-                    })).json()
-                    d.roam_setting_option = newVal
-                    d.dial_roam_setting_option = newVal
-                    qtSet('roam', !on)
-                    break
-                }
-            }
+            const on = d.ppp_status && d.ppp_status !== 'ppp_disconnected'
+            await (await postData(cookie, { goformId: on ? 'DISCONNECT_NETWORK' : 'CONNECT_NETWORK' })).json()
+            d.ppp_status = on ? 'ppp_disconnected' : 'ppp_connected'
+            qtSet('data', !on)
             createToast(t('toast_oprate_success'), 'green')
         } catch {
             createToast(t('toast_oprate_failed'), 'red')
@@ -1178,12 +1124,16 @@ function main_func() {
 
             // Update cell info strip (Band / EARFCN / BW / PCI / Cell ID)
             {
-                const is5g = res.Nr_bands != null && res.Nr_bands !== '';
-                const band  = is5g ? 'N' + res.Nr_bands : (res.Lte_bands != null ? 'B' + res.Lte_bands : '--');
-                const freq  = is5g ? (res.Nr_fcn ?? '--') : (res.Lte_fcn ?? '--');
-                const bw    = is5g ? (res.Nr_bands_widths ?? '--') : (res.Lte_bands_widths ?? '--');
-                const pci   = is5g ? (res.Nr_pci ?? '--') : (res.Lte_pci ?? '--');
-                const cellId = is5g ? (res.Nr_cell_id ?? '--') : (res.Lte_cell_id ?? '--');
+                const hasNrData = [res.Nr_bands, res.Nr_fcn, res.Nr_pci, res.Z5g_rsrp, res.Nr_snr, res.nr_rsrq]
+                    .some(v => v != null && v !== '');
+                const is5g = hasNrData || res.network_type === '20' || String(res.network_type || '').toUpperCase().includes('5G');
+                const band  = is5g
+                    ? (res.Nr_bands != null && res.Nr_bands !== '' ? 'N' + res.Nr_bands : (res.Lte_bands != null ? 'B' + res.Lte_bands : '--'))
+                    : (res.Lte_bands != null ? 'B' + res.Lte_bands : '--');
+                const freq  = is5g ? (res.Nr_fcn ?? res.Lte_fcn ?? '--') : (res.Lte_fcn ?? res.Nr_fcn ?? '--');
+                const bw    = is5g ? (res.Nr_bands_widths ?? res.Lte_bands_widths ?? '--') : (res.Lte_bands_widths ?? res.Nr_bands_widths ?? '--');
+                const pci   = is5g ? (res.Nr_pci ?? res.Lte_pci ?? '--') : (res.Lte_pci ?? res.Nr_pci ?? '--');
+                const cellId = is5g ? (res.Nr_cell_id ?? res.Lte_cell_id ?? '--') : (res.Lte_cell_id ?? res.Nr_cell_id ?? '--');
 
                 const elBand = document.getElementById('ci-band');
                 const elFreq = document.getElementById('ci-freq');
@@ -1231,9 +1181,9 @@ function main_func() {
                 const ccSinrFill = document.getElementById('cc-sinr-fill');
                 const ccRsrqFill = document.getElementById('cc-rsrq-fill');
 
-                const rsrpVal = res.lte_rsrp != null ? parseFloat(res.lte_rsrp) : null;
+                const rsrpVal = res.Z5g_rsrp != null ? parseFloat(res.Z5g_rsrp) : (res.lte_rsrp != null ? parseFloat(res.lte_rsrp) : null);
                 const sinrVal = res.Nr_snr != null ? parseFloat(res.Nr_snr) : (res.Lte_snr != null ? parseFloat(res.Lte_snr) : null);
-                const rsrqVal = res.lte_rsrq != null ? parseFloat(res.lte_rsrq) : null;
+                const rsrqVal = res.nr_rsrq != null ? parseFloat(res.nr_rsrq) : (res.lte_rsrq != null ? parseFloat(res.lte_rsrq) : null);
 
                 // RSRP: -125 to -81 dBm range
                 if (ccRsrp) ccRsrp.textContent = rsrpVal != null ? rsrpVal + ' dBm' : '--';
@@ -1265,7 +1215,7 @@ function main_func() {
                 // RSSI: -110 to -25 dBm range
                 const ccRssi = document.getElementById('cc-rssi');
                 const ccRssiFill = document.getElementById('cc-rssi-fill');
-                const rssiVal = res.lte_rssi != null ? parseFloat(res.lte_rssi) : null;
+                const rssiVal = res.nr_rssi != null ? parseFloat(res.nr_rssi) : (res.lte_rssi != null ? parseFloat(res.lte_rssi) : null);
                 if (ccRssi) ccRssi.textContent = rssiVal != null ? rssiVal + ' dBm' : '--';
                 if (ccRssiFill) {
                     const rssiPct = rssiVal != null ? Math.min(100, Math.max(0, ((rssiVal + 110) / 85) * 100)) : 0;
@@ -1286,47 +1236,6 @@ function main_func() {
             try { adbQuery() } catch(e) {}
             isNotLoginOnce = false
             let html = ''
-            try {
-                const current_cell = document.querySelector('#CURRENT_CELL')
-                const select_current_cell_btn = document.querySelector('#SELECT_CURRENT_CELL_BTN')
-
-                const PCI = notNullOrundefinedOrIsShow(res, 'Nr_pci') ? res.Nr_pci : (notNullOrundefinedOrIsShow(res, 'Lte_pci') ? res.Lte_pci : '')
-                const FCN = notNullOrundefinedOrIsShow(res, 'Nr_fcn') ? res.Nr_fcn : (notNullOrundefinedOrIsShow(res, 'Lte_fcn') ? res.Lte_fcn : '')
-                const BAND_STR = notNullOrundefinedOrIsShow(res, 'Nr_bands') ? "N" + res.Nr_bands : (notNullOrundefinedOrIsShow(res, 'Lte_bands') ? "B" + res.Lte_bands : '')
-                const RSRP = notNullOrundefinedOrIsShow(res, 'Z5g_rsrp') ? res.Z5g_rsrp : (notNullOrundefinedOrIsShow(res, 'lte_rsrp') ? res.lte_rsrp : '')
-                const SINR = notNullOrundefinedOrIsShow(res, 'Nr_snr') ? res.Nr_snr : (notNullOrundefinedOrIsShow(res, 'Lte_snr') ? res.Lte_snr : '')
-                const RSRQ = notNullOrundefinedOrIsShow(res, 'nr_rsrq') ? res.nr_rsrq : (notNullOrundefinedOrIsShow(res, 'lte_rsrq') ? res.lte_rsrq : '')
-
-                if (!PCI || !FCN) {
-                    if (current_cell) {
-                        current_cell.innerHTML = `<tr><td colspan="6" style="opacity:.66;text-align:center;color:var(--dark-text-color)">${t('no_cell_connected')}</td></tr>`
-                    }
-                    if (select_current_cell_btn) {
-                        select_current_cell_btn.onclick = () => {
-                            createToast(t('no_cell_connected'), 'pink')
-                        }
-                    }
-                }
-
-                if (select_current_cell_btn) {
-                    select_current_cell_btn.onclick = () => onSelectCellRow(PCI, FCN)
-                }
-
-                if (current_cell) {
-                    current_cell.innerHTML = `
-            <tr onclick="onSelectCellRow(${PCI},${FCN})" style="cursor: pointer;">
-                <td>${BAND_STR}</td>
-                <td>${FCN}</td>
-                <td>${PCI}</td>
-                <td>${hotbox_parseSignalBar(RSRP)}</td>
-                <td>${hotbox_parseSignalBar(SINR, -10, 30, 13, 0)}</td>
-                <td>${hotbox_parseSignalBar(RSRQ, -20, -3, -9, -12)}</td>
-            </tr>
-            `
-                }
-            } catch (e) {
-                console.error("render PCI blocks fail:", e);
-            }
 
             try {
                 if (QORS_MESSAGE) {
@@ -1346,7 +1255,7 @@ function main_func() {
                 QORS_MESSAGE: `${notNullOrundefinedOrIsShow(res, "QORS_MESSAGE") ? `<strong onclick="copyText(event)"  class="green">${QORS_MESSAGE}</strong>` : ''}`,
                 network_type: `${notNullOrundefinedOrIsShow(res, 'network_type') ? `<strong onclick="copyText(event)"  class="green">${t('network_status')}：${res.network_provider} ${res.network_type == '20' ? '5G' : res.network_type == '13' ? '4G' : res.network_type}</strong>` : ''}`,
                 wifi_access_sta_num: `${notNullOrundefinedOrIsShow(res, 'wifi_access_sta_num') ? `<strong onclick="copyText(event)"  class="blue">${t('wifi_client_num')}：${res.wifi_access_sta_num}</strong>` : ''}`,
-                battery: `${notNullOrundefinedOrIsShow(res, 'battery') && (res.battery_value != '' || res.battery_vol_percent != '') ? `<strong onclick="copyText(event)"  class="green">${res.battery_charging == "1" ? `${t('charging')}` : `${t('battery_level')}`}：${hotbox_parseSignalBar(res.battery, 1, 100, 50, 10, undefined, " %")}</strong>` : ''}`,
+                battery: `${notNullOrundefinedOrIsShow(res, 'battery') && hasBatteryData(res) ? `<strong onclick="copyText(event)"  class="green">${res.battery_charging == "1" ? `${t('charging')}` : `${t('battery_level')}`}：${hotbox_parseSignalBar(res.battery, 1, 100, 50, 10, undefined, " %")}</strong>` : ''}`,
                 rssi: `${notNullOrundefinedOrIsShow(res, 'rssi') || notNullOrundefinedOrIsShow(res, 'network_signalbar', true) ? `<strong onclick="copyText(event)"  class="green">${t('rssi')}：${hotbox_getSignalEmoji(notNullOrundefinedOrIsShow(res, 'rssi') ? res.rssi : res.network_signalbar)}</strong>` : ''}`,
                 cpu_temp: `${notNullOrundefinedOrIsShow(res, 'cpu_temp') ? `<strong onclick="copyText(event)"  class="blue">${t('cpu_temp')}：<span style="text-align:center;display:inline-block;width: 8ch;">${String(Number(res.cpu_temp / 1000).toFixed(2)).padStart(5, ' ')} ℃</span></strong>` : ''}`,
                 cpu_usage: `${notNullOrundefinedOrIsShow(res, 'cpu_usage') ? `<strong onclick="copyText(event)"  class="blue">${t('cpu_usage')}：<span style="text-align:center;display:inline-block;width: 8ch;">${String(Number(res.cpu_usage).toFixed(2)).padStart(5, ' ')} %</span></strong>` : ''}`,
@@ -1358,8 +1267,8 @@ function main_func() {
                     return limit_size.split('_')[0] * limit_size.split('_')[1] * Math.pow(1024, 2)
                 })()) : ''}</strong>` : ''}`,
                 daily_data: `${notNullOrundefinedOrIsShow(res, 'daily_data') ? `<strong onclick="copyText(event)"  class="blue">${t('daily_data')}：${formatBytes(res.daily_data)}${res.monthly_data ? ` / ${t('monthly_data')}：${formatBytes(res.monthly_data)}` : ''}</strong>` : ''}`,
-                current_now: `${notNullOrundefinedOrIsShow(res, 'current_now') && (res.battery_value != '' || res.battery_vol_percent != '') ? `<strong onclick="copyText(event)"  class="blue">${t('battery_current')}：<span style="width: 9ch;text-align:center">${res.current_now / 1000} mA</span></strong>` : ''}`,
-                voltage_now: `${notNullOrundefinedOrIsShow(res, 'voltage_now') && (res.battery_value != '' || res.battery_vol_percent != '') ? `<strong onclick="copyText(event)"  class="blue">${t('battery_voltage')}：${(res.voltage_now / 1000000).toFixed(3)} V</strong>` : ''}`,
+                current_now: `${notNullOrundefinedOrIsShow(res, 'current_now') && hasBatteryData(res) ? `<strong onclick="copyText(event)"  class="blue">${t('battery_current')}：<span style="width: 9ch;text-align:center">${res.current_now / 1000} mA</span></strong>` : ''}`,
+                voltage_now: `${notNullOrundefinedOrIsShow(res, 'voltage_now') && hasBatteryData(res) ? `<strong onclick="copyText(event)"  class="blue">${t('battery_voltage')}：${(res.voltage_now / 1000000).toFixed(3)} V</strong>` : ''}`,
                 realtime_rx_thrpt: `${notNullOrundefinedOrIsShow(res, 'realtime_tx_thrpt') || notNullOrundefinedOrIsShow(res, 'realtime_rx_thrpt') ? `<strong onclick="copyText(event)" class="blue">${t("current_network_speed")}: <span style="text-align:center;white-space:nowrap;overflow:hidden;display:inline-block;width: 14ch;">⬇️&nbsp;${formatBytes(Number((res.realtime_rx_thrpt)))}/S</span><span style="white-space:nowrap;overflow:hidden;text-align:center;display:inline-block;width: 14ch;font-weight:bolder">⬆️&nbsp;${formatBytes(Number((res.realtime_tx_thrpt)))}/S</span></strong>` : ''}`,
             }
             let statusHtml_net = {
@@ -1544,7 +1453,10 @@ function main_func() {
 
     let initNetworktype = async () => {
         const selectEl = document.querySelector('#NET_TYPE')
-        if (!(await initRequestData()) || !selectEl) {
+        if (!selectEl) {
+            return null
+        }
+        if (!(await initRequestData())) {
             selectEl.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             selectEl.disabled = true
             return null
@@ -1552,14 +1464,16 @@ function main_func() {
         selectEl.style.backgroundColor = ''
         selectEl.disabled = false
         let res = await getData(new URLSearchParams({
-            cmd: 'net_select'
+            cmd: 'current_network_mode,m_netselect_save,net_select_mode,m_netselect_contents,net_select,ppp_status,modem_main_state',
+            multi_data: '1'
         }))
-        if (!selectEl || !res || res.net_select == null || res.net_select == undefined) {
+        const selectedType = res && res.net_select != null ? res.net_select : res && res.current_network_mode != null ? res.current_network_mode : null
+        if (!res || selectedType == null) {
             return
         }
 
         [...selectEl.children].forEach((item) => {
-            if (item.value == res.net_select) {
+            if (item.value == selectedType) {
                 item.selected = true
             }
         })
@@ -1576,8 +1490,11 @@ function main_func() {
     }
     initNetworktype()
 
-    const changeNetwork = async (e, silent = false) => {
-        const value = e.target.value.trim()
+    const changeNetwork = async (e = null, silent = false) => {
+        const selectEl = document.querySelector('#NET_TYPE')
+        const eventValue = e && e.target && typeof e.target.value === 'string' ? e.target.value.trim() : ''
+        const selectedValue = selectEl && typeof selectEl.value === 'string' ? selectEl.value.trim() : ''
+        const value = eventValue || selectedValue
         if (!(await initRequestData()) || !value) {
             return null
         }
@@ -1606,7 +1523,10 @@ function main_func() {
 
     let initUSBNetworkType = async () => {
         const selectEl = document.querySelector('#USB_TYPE')
-        if (!(await initRequestData()) || !selectEl) {
+        if (!selectEl) {
+            return null
+        }
+        if (!(await initRequestData())) {
             selectEl.style.backgroundColor = 'var(--dark-btn-disabled-color)'
             selectEl.disabled = true
             return null
@@ -1614,21 +1534,24 @@ function main_func() {
         selectEl.style.backgroundColor = ''
         selectEl.disabled = false
         let res = await getData(new URLSearchParams({
-            cmd: 'usb_network_protocal'
+            cmd: 'usb_port_switch'
         }))
-        if (!selectEl || !res || res.usb_network_protocal == null || res.usb_network_protocal == undefined) {
+        if (!res || res.usb_port_switch == null || res.usb_port_switch == undefined) {
             return
         }
         [...selectEl.children].forEach((item) => {
-            if (item.value == res.usb_network_protocal) {
+            if (item.value == res.usb_port_switch) {
                 item.selected = true
             }
         })
     }
     initUSBNetworkType()
 
-    let changeUSBNetwork = async (e) => {
-        const value = e.target.value.trim()
+    let changeUSBNetwork = async (e = null) => {
+        const selectEl = document.querySelector('#USB_TYPE')
+        const eventValue = e && e.target && typeof e.target.value === 'string' ? e.target.value.trim() : ''
+        const selectedValue = selectEl && typeof selectEl.value === 'string' ? selectEl.value.trim() : ''
+        const value = eventValue || selectedValue
         if (!(await initRequestData()) || !value) {
             return null
         }
@@ -1641,11 +1564,11 @@ function main_func() {
                 return null
             }
             let res = await (await postData(cookie, {
-                goformId: 'SET_USB_NETWORK_PROTOCAL',
-                usb_network_protocal: value.trim()
+                goformId: 'USB_PORT_SETTING',
+                usb_port_switch: value.trim()
             })).json()
             if (res.result == 'success') {
-                createToast(t('toast_oprate_success_reboot'), 'green')
+                createToast(t('toast_oprate_success'), 'green')
             } else {
                 createToast(t('toast_oprate_failed'), 'red')
             }
@@ -1869,301 +1792,6 @@ function main_func() {
         el.style.backgroundColor = res.indicator_light_switch == '1' ? 'var(--dark-btn-color-active)' : ''
     }
     initLightStatus()
-
-    const initBandForm = async () => {
-        const el = document.querySelector('#bandsForm')
-        if (!(await initRequestData()) || !el) {
-            return null
-        }
-        let res = await getData(new URLSearchParams({
-            cmd: 'lte_band_lock,nr_band_lock'
-        }))
-
-        if (!res) return null
-
-        if (res['lte_band_lock']) {
-            const bands = res['lte_band_lock'].split(',')
-            if (bands && bands.length) {
-                for (let band of bands) {
-                    //  data-type="4G" data-band="5"
-                    const el = document.querySelector(`#bandsForm input[type="checkbox"][data-band="${band}"][data-type="4G"]`)
-                    if (el) el.checked = true
-                }
-            }
-        }
-        if (res['nr_band_lock']) {
-            const bands = res['nr_band_lock'].split(',')
-            if (bands && bands.length) {
-                for (let band of bands) {
-                    //  data-type="5G" data-band="5"
-                    const el = document.querySelector(`#bandsForm input[type="checkbox"][data-band="${band}"][data-type="5G"]`)
-                    if (el) el.checked = true
-                }
-            }
-        }
-        checkBandSelect()
-    }
-    initBandForm()
-
-    // Network stack toggle
-    const networkStackSwitch = async (flag) => {
-        await executeATCommand(flag ? "AT+SFUN=4" : "AT+SFUN=5")
-    }
-
-    const submitBandForm = async (e) => {
-        e.preventDefault()
-        if (!(await initRequestData())) {
-            out()
-            return null
-        }
-        const form = e.target
-        const bands = form.querySelectorAll('input[type="checkbox"]:checked')
-        const lte_bands = []
-        const nr_bands = []
-        // Collect selected data
-        if (bands && bands.length) {
-            for (let band of bands) {
-                const type = band.getAttribute('data-type')
-                const b = band.getAttribute('data-band')
-                if (type && b) {
-                    if (type == '4G') lte_bands.push(b)
-                    if (type == '5G') nr_bands.push(b)
-                }
-            }
-        }
-        const cookie = await login()
-        if (!cookie) {
-            createToast(t('toast_login_failed_check_network'), 'red')
-            out()
-            return null
-        }
-        try {
-            const res = await (await Promise.all([
-                (await postData(cookie, {
-                    goformId: 'LTE_BAND_LOCK',
-                    lte_band_lock: lte_bands.join(',')
-                })).json(),
-                (await postData(cookie, {
-                    goformId: 'NR_BAND_LOCK',
-                    nr_band_lock: nr_bands.join(',')
-                })).json(),
-            ]))
-            if (res[0].result == 'success' || res[1].result == 'success') {
-                createToast(t('toast_set_band_success'), 'green')
-                // Reboot network stack
-                await networkStackSwitch(false)
-                await wait(300)
-                await networkStackSwitch(true)
-                // const netType = document.querySelector('#NET_TYPE')
-                // if (netType) {
-                //     const options = document.querySelectorAll('#NET_TYPE option')
-                //     const curValue = netType.value
-                //     // Switch to different network
-                //     if (options.length) {
-                //         const net = Array.from(options).find(el => el.value != curValue)
-                //         if (net) {
-                //             // Switch network
-                //             createToast(t("toast_changing"))
-                //             await changeNetwork({ target: { value: net.value } }, true)
-                //             await new Promise(resolve => setTimeout(resolve, 800))
-                //             // switch back
-                //             await changeNetwork({ target: { value: curValue } })
-                //         }
-                //     }
-                // }
-            }
-            else {
-                createToast(t('toast_set_band_failed'), 'red')
-            }
-        } catch {
-            createToast(t('toast_set_band_failed'), 'red')
-        } finally {
-            await initBandForm()
-        }
-    }
-
-    // Unlock all bands
-    const unlockAllBand = () => {
-        // Manually select all bands, click lock
-        toggleAllBandBox(true)
-        selectAllBand.checked = true
-        const lockBandBtn = document.querySelector('#lockBandBtn')
-        if (lockBandBtn) {
-            lockBandBtn.click()
-        }
-    }
-
-    //Lock Cell
-    let initCellInfo = async (onlyRefreshLockedInfoList = false) => {
-        try {
-            // Locked cell info
-            // Cell info
-            const { neighbor_cell_info, locked_cell_info } = await getData(new URLSearchParams({
-                cmd: 'neighbor_cell_info,locked_cell_info'
-            }))
-
-            if (neighbor_cell_info && !onlyRefreshLockedInfoList) {
-                const cellBodyEl = document.querySelector('#cellForm tbody')
-                if (neighbor_cell_info.length <= 0) {
-                    cellBodyEl.innerHTML = `<tr><td colspan="6" style="opacity:.66;text-align:center;color:var(--dark-text-color)">${t('no_neighbour_cell')}</td></tr>`
-                } else {
-                    cellBodyEl.innerHTML = neighbor_cell_info.map(item => {
-                        const { band, earfcn, pci, rsrp, rsrq, sinr } = item
-                        return `
-                    <tr onclick="onSelectCellRow(${pci},${earfcn})">
-                        <td>${band}</td>
-                        <td>${earfcn}</td>
-                        <td>${pci}</td>
-                        <td>${hotbox_parseSignalBar(rsrp)}</td>
-                        <td>${hotbox_parseSignalBar(sinr, -10, 30, 13, 0)}</td>
-                        <td>${hotbox_parseSignalBar(rsrq, -20, -3, -9, -12)}</td>
-                    </tr>
-                `
-                    }).join('')
-                }
-            }
-            if (locked_cell_info) {
-                const lockedCellBodyEl = document.querySelector('#LOCKED_CELL_FORM tbody')
-                if (locked_cell_info.length <= 0) {
-                    lockedCellBodyEl.innerHTML = `<tr><td colspan="3" style="opacity:.66;text-align:center;color:var(--dark-text-color)">${t('no_locked_cell')}</td></tr>`
-                } else {
-                    lockedCellBodyEl.innerHTML = locked_cell_info.map(item => {
-                        const { earfcn, pci, rat } = item
-                        return `
-                    <tr>
-                        <td>${rat == '12' ? '4G' : '5G'}</td>
-                        <td>${pci}</td>
-                        <td>${earfcn}</td>
-                    </tr>
-                `
-                    }).join('')
-                }
-            }
-        } catch (e) {
-            // createToast(e.message)
-        }
-    }
-
-    let cellInfoRequestTimer = null
-    initCellInfo()
-
-    const toggleLkcellOpen = (isOpen = false) => {
-        const lkCellRefreshBtn = document.querySelector('#lkCellRefreshBtn')
-        if (!lkCellRefreshBtn) return
-        if (isOpen) {
-            cellInfoRequestTimer && cellInfoRequestTimer()
-            cellInfoRequestTimer = requestInterval(() => initCellInfo(), REFRESH_TIME + 1500)
-            lkCellRefreshBtn.dataset.toggle = "1"
-            lkCellRefreshBtn.innerHTML = t('stop_refresh')
-        } else {
-            cellInfoRequestTimer && cellInfoRequestTimer()
-            lkCellRefreshBtn.dataset.toggle = "0"
-            cellInfoRequestTimer = null
-            lkCellRefreshBtn.innerHTML = t('start_refresh')
-        }
-    }
-
-    const toggleCellInfoRefresh = (e) => {
-        const target = e.target
-        if (target) {
-            const data = e.target.dataset.toggle
-            if (data != "1") {
-                toggleLkcellOpen(true)
-            } else {
-                toggleLkcellOpen(false)
-            }
-        }
-    }
-
-    let onSelectCellRow = (pci, earfcn) => {
-        let pci_t = document.querySelector('#PCI')
-        let earfcn_t = document.querySelector('#EARFCN')
-        if (pci_t && earfcn_t && isNaN(pci) == false && isNaN(earfcn) == false) {
-            pci_t.value = pci
-            earfcn_t.value = earfcn
-            createToast(`${t('toast_has_selected')}: ${pci},${earfcn}`, 'green')
-        }
-    }
-
-    //Lock Cell
-    const submitCellForm = async (e) => {
-        e.preventDefault()
-        if (!(await initRequestData())) {
-            out()
-            return null
-        }
-        try {
-            const cookie = await login()
-            if (!cookie) {
-                createToast(t('toast_login_failed_check_network'), 'red')
-                out()
-                return null
-            }
-
-            const ratEl = e.target.querySelector('input[name="RAT"]:checked')
-            const pciEl = e.target.querySelector('#PCI')
-            const earfcnEl = e.target.querySelector('#EARFCN')
-
-            if (!ratEl || !pciEl || !earfcnEl) return
-
-            const form = {
-                pci: pciEl.value.trim(),
-                earfcn: earfcnEl.value.trim(),
-                rat: ratEl.value.trim()
-            }
-
-            if (!form.pci || !form.earfcn) {
-                createToast(t('toast_data_not_filling_done'), 'red')
-                return
-            }
-
-            const res = await (await postData(cookie, {
-                goformId: 'CELL_LOCK',
-                ...form
-            })).json()
-
-            if (res.result == 'success') {
-                pciEl.value = ''
-                earfcnEl.value = ''
-                createToast(t('toast_set_cell_success'), 'green')
-                // Refresh cell list
-                initCellInfo(true)
-            } else {
-                throw t('toast_set_cell_failed')
-            }
-        } catch (e) {
-            createToast(t('toast_set_cell_failed'), 'red')
-        }
-    }
-
-    let unlockAllCell = async () => {
-        if (!(await initRequestData())) {
-            out()
-            return null
-        }
-        try {
-            const cookie = await login()
-            if (!cookie) {
-                createToast(t('toast_login_failed_check_network'), 'red')
-                out()
-                return null
-            }
-
-            const res = await (await postData(cookie, {
-                goformId: 'UNLOCK_ALL_CELL',
-            })).json()
-
-            if (res.result == 'success') {
-                createToast(t('toast_unlock_cell_success'), 'green')
-                // Refresh cell list
-                initCellInfo(true)
-            } else {
-                throw t('toast_unlock_cell_failed')
-            }
-        } catch {
-            createToast(t('toast_unlock_cell_failed'), 'red')
-        }
-    }
 
     let rebootBtnCount = 1
     let rebootTimer = null
@@ -3971,23 +3599,6 @@ function main_func() {
     // Expand/collapse
     // Config observer: basic status
     collapseGen("#collapse_status_btn", "#collapse_status", "collapse_status")
-
-    // Expand/collapse
-    // Config observer: lock band
-    collapseGen("#collapse_lkband_btn", "#collapse_lkband", "collapse_lkband")
-
-    // Config observer: lock cell
-    collapseGen("#collapse_lkcell_btn", "#collapse_lkcell", "collapse_lkcell", (isOpen) => {
-        if (isOpen == 'open') {
-            toggleLkcellOpen(true)
-        } else {
-            toggleLkcellOpen(false)
-        }
-    })
-
-    // Expand/collapse
-    const collapse_lkcell_stor = localStorage.getItem('collapse_lkcell') || 'open'
-    collapse_lkcell_stor == 'open' ? toggleLkcellOpen(true) : toggleLkcellOpen(false)
 
     // ADB polling
     const adbQuery = async () => {
@@ -7379,7 +6990,6 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         togglePort,
         toggleTTYD,
         toggleADBIP,
-        unlockAllBand,
         handleForceIMEI,
         handlePluginStoreSearchInput,
         installPluginFromStore,
@@ -7417,7 +7027,6 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         changeUSBNetwork,
         changeSimCard,
         changeWIFISwitch,
-        unlockAllCell,
         onTokenConfirm,
         sendSMS,
         deleteSMS,
@@ -7431,8 +7040,6 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         handleATFormSubmit,
         handleChangePassword,
         handleShowPassword,
-        submitBandForm,
-        submitCellForm,
         initClientManagementModal,
         closeClientManager,
         disableButtonWhenExecuteFunc,
@@ -7444,8 +7051,6 @@ echo ${flag ? '1' : '0'} > /sys/devices/system/cpu/cpu3/online
         handleSambaPath,
         handleAT,
         setOrRemoveDeviceFromBlackList,
-        onSelectCellRow,
-        toggleCellInfoRefresh,
         toggleLoginLogout,
         updateLoginIcon,
         togglePowerMenu,

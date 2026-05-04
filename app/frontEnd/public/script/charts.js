@@ -51,12 +51,29 @@ const chartUpdater = (prop, value) => {
             if (value) {
                 const memInfo = document.querySelector('#memInfo')
                 if (memInfo) {
+                const zramTotal = Number(value['zram_total_kb'] ?? value['swap_total_kb'] ?? 0)
+                const zramUsed = Number(value['zram_used_kb'] ?? value['swap_used_kb'] ?? 0)
+                const zramFree = Number(value['zram_free_kb'] ?? value['swap_free_kb'] ?? 0)
+                const zramUsage = Number(value['zram_usage_percent'] ?? value['swap_usage_percent'] ?? 0)
+                const diskSwapTotal = Number(value['disk_swap_total_kb'] ?? 0)
+                const diskSwapUsed = Number(value['disk_swap_used_kb'] ?? 0)
+                const diskSwapFree = Number(value['disk_swap_free_kb'] ?? 0)
+                const diskSwapUsage = Number(value['disk_swap_usage_percent'] ?? 0)
                 memInfo.innerHTML = `<div>${t('ram_all')}：${formatBytes(value['mem_total_kb'] * 1024)}</div>
                 <div>${t('ram_available')}：${formatBytes(value['mem_available_kb'] * 1024)}</div>
                 <div>${t('ram_used')}：${formatBytes(value['mem_used_kb'] * 1024)}(${Math.round(value['mem_usage_percent'])}%)</div>
-                <div>${t('all_swap')}：${formatBytes(value['swap_total_kb'] * 1024)}</div>
-                <div>${t('swap_used')}：${formatBytes(value['swap_used_kb'] * 1024)}(${Math.round(value['swap_usage_percent'])}%)</div>
-                <div>${t('swap_available')}：${formatBytes(value['swap_free_kb'] * 1024)}</div>`
+                <div style="margin-top:6px"><strong>Combined Swap</strong></div>
+                <div>Total：${formatBytes(value['swap_total_kb'] * 1024)}</div>
+                <div>Used：${formatBytes(value['swap_used_kb'] * 1024)}(${Math.round(value['swap_usage_percent'])}%)</div>
+                <div>Available：${formatBytes(value['swap_free_kb'] * 1024)}</div>
+                <div style="margin-top:6px"><strong>ZRAM</strong></div>
+                <div>Total：${formatBytes(zramTotal * 1024)}</div>
+                <div>Used：${formatBytes(zramUsed * 1024)}(${Math.round(zramUsage)}%)</div>
+                <div>Available：${formatBytes(zramFree * 1024)}</div>
+                <div style="margin-top:6px"><strong>Disk Swap</strong></div>
+                <div>Total：${formatBytes(diskSwapTotal * 1024)}</div>
+                <div>Used：${formatBytes(diskSwapUsed * 1024)}(${Math.round(diskSwapUsage)}%)</div>
+                <div>Available：${formatBytes(diskSwapFree * 1024)}</div>`
                 }
             }
             break

@@ -20,6 +20,10 @@ object ClientActivityTracker {
     /** How long after last request before we consider the app "idle" */
     private const val IDLE_TIMEOUT_MS = 2 * 60 * 1000L // 2 minutes
 
+    /** Callback fired once when transitioning from idle → active */
+    @Volatile
+    var onFirstConnect: (() -> Unit)? = null
+
     /** Initialize with PowerManager reference and user's wake lock preference */
     fun init(pm: PowerManager, enabled: Boolean) {
         powerManager = pm
@@ -28,7 +32,11 @@ object ClientActivityTracker {
 
     /** Call on every HTTP request from a client */
     fun markActive() {
+        val wasIdle = !isActive
         lastRequestTimestamp = System.currentTimeMillis()
+        if (wasIdle) {
+            onFirstConnect?.invoke()
+        }
         if (wakeLockEnabled && !wakeLockHeld) {
             powerManager?.let {
                 WakeLock.execWakeLock(it)

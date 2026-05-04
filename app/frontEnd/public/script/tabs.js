@@ -15,6 +15,10 @@ function switchTab(tabName, save) {
     if (save !== false) {
         try { localStorage.setItem(TAB_KEY, tabName); } catch (e) { }
     }
+    if (typeof window.dispatchCtrlLayoutActivePanels === 'function') {
+        const activePanel = document.querySelector(`.tab-panel[data-tab="${tabName}"]`);
+        window.dispatchCtrlLayoutActivePanels(activePanel);
+    }
 }
 
 // Restore last tab or default to dashboard
