@@ -49,6 +49,71 @@ validate_ip_or_cidr() {
   return 1
 }
 
+harden_firewall() {
+  log "Applying firewall hardening (default-deny INPUT policy)"
+
+  # === IPv4 INPUT hardening ===
+  # Allow replies to outbound connections (AGH upstream, NTP, etc.)
+  $iptables_w -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || \
+    $iptables_w -I INPUT 1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+  # Allow loopback (internal process communication)
+  $iptables_w -C INPUT -i lo -j ACCEPT 2>/dev/null || \
+    $iptables_w -I INPUT 2 -i lo -j ACCEPT
+  # Allow all LAN traffic (WiFi clients can reach all device services)
+  $iptables_w -C INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null || \
+    $iptables_w -I INPUT 3 -i "$lan_interface" -j ACCEPT
+  # Allow DHCP replies from carrier (broadcast-based, may not match conntrack)
+  $iptables_w -C INPUT -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null || \
+    $iptables_w -I INPUT 4 -p udp --sport 67 --dport 68 -j ACCEPT
+  # Default deny: drop everything not matched above (WAN/cellular side)
+  $iptables_w -P INPUT DROP
+  log "IPv4 INPUT: ESTABLISHED + loopback + LAN + DHCP allowed, all else dropped"
+
+  # === IPv6 INPUT hardening ===
+  # Allow replies to outbound connections
+  $ip6tables_w -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+  # Allow loopback
+  $ip6tables_w -C INPUT -i lo -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 2 -i lo -j ACCEPT
+  # Allow all LAN traffic
+  $ip6tables_w -C INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 3 -i "$lan_interface" -j ACCEPT
+  # Allow link-local (required for IPv6 neighbor discovery on LAN)
+  $ip6tables_w -C INPUT -s fe80::/10 -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 4 -s fe80::/10 -j ACCEPT
+  # Allow ICMPv6 (mandatory for IPv6: neighbor solicitation, router adverts, PMTU)
+  $ip6tables_w -C INPUT -p icmpv6 -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 5 -p icmpv6 -j ACCEPT
+  # Allow DHCPv6 replies from carrier (UDP port 546)
+  $ip6tables_w -C INPUT -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 6 -p udp --sport 547 --dport 546 -j ACCEPT
+  # Default deny: drop everything not matched above (public IPv6 internet)
+  $ip6tables_w -P INPUT DROP
+  log "IPv6 INPUT: ESTABLISHED + loopback + LAN + link-local + ICMPv6 + DHCPv6 allowed, all else dropped"
+}
+
+remove_hardening() {
+  log "Removing firewall hardening (reverting to ACCEPT policy)"
+  log "WARNING: Device will be exposed to inbound connections from WAN/IPv6!"
+  # Revert policies first (safe order: open policy before removing allow rules)
+  $iptables_w -P INPUT ACCEPT
+  $ip6tables_w -P INPUT ACCEPT
+  # Remove IPv4 hardening rules
+  $iptables_w -D INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null
+  $iptables_w -D INPUT -i lo -j ACCEPT 2>/dev/null
+  $iptables_w -D INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null
+  $iptables_w -D INPUT -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null
+  # Remove IPv6 hardening rules
+  $ip6tables_w -D INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i lo -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -s fe80::/10 -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -p icmpv6 -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null
+  log "Firewall hardening removed"
+}
+
 enable_iptables() {
   if $iptables_w -t nat -L ADGUARD_REDIRECT_DNS >/dev/null 2>&1; then
     log "ADGUARD_REDIRECT_DNS chain already exists, skipping creation"
@@ -150,15 +215,26 @@ enable_iptables() {
     $iptables_w -t nat -I PREROUTING -i "$lan_interface" -s "$subnet" -p tcp --dport 53 -j ACCEPT
   done
 
-  # Block WAN access to AGH DNS and web UI ports (prevent open resolver / remote admin)
+}
+
+# Separate function for WAN-specific port blocking (only needed when hardening is OFF)
+# When hardening is ON, policy DROP already blocks everything from WAN.
+apply_wan_firewall() {
   log "Adding WAN firewall rules to block external access on interface: $wan_interface"
-  $iptables_w -I INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP
-  $iptables_w -I INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP
-  $iptables_w -I INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP
+  # Use -C to check first (idempotent — safe to call on re-runs)
+  $iptables_w -C INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP 2>/dev/null || \
+    $iptables_w -I INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP
+  $iptables_w -C INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null || \
+    $iptables_w -I INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP
+  $iptables_w -C INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP 2>/dev/null || \
+    $iptables_w -I INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP
   # Also block on IPv6 WAN
-  $ip6tables_w -I INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP 2>/dev/null
-  $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null
-  $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP 2>/dev/null
+  $ip6tables_w -C INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP 2>/dev/null || \
+    $ip6tables_w -I INPUT -i "$wan_interface" -p udp --dport "$redir_port" -j DROP 2>/dev/null
+  $ip6tables_w -C INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null || \
+    $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport "$redir_port" -j DROP 2>/dev/null
+  $ip6tables_w -C INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP 2>/dev/null || \
+    $ip6tables_w -I INPUT -i "$wan_interface" -p tcp --dport 3000 -j DROP 2>/dev/null
   log "Applied WAN firewall rules (IPv4 + IPv6)"
 }
 
@@ -376,6 +452,16 @@ del_block_ipv6_dns() {
 
 case "$1" in
 enable)
+  if [ "$enable_firewall_hardening" = true ]; then
+    harden_firewall || {
+      log "Failed to apply firewall hardening"
+      exit 1
+    }
+  else
+    # Without hardening, apply targeted WAN blocks for AGH ports
+    apply_wan_firewall
+  fi
+
   log "Enabling iptables"
   enable_iptables || {
     log "Failed to enable iptables"
@@ -412,9 +498,15 @@ disable)
   del_block_ipv6_dns
   log "Cleaning up IPv6 DNS redirect (if active)"
   disable_ipv6_iptables
+  # NOTE: Hardening is NOT removed on disable for security.
+  # The device stays protected even when AGH is stopped.
+  # Use 'unharden' to explicitly remove if needed.
+  ;;
+unharden)
+  remove_hardening
   ;;
 *)
-  echo "Usage: $0 {enable|disable}"
+  echo "Usage: $0 {enable|disable|unharden}"
   exit 1
   ;;
 esac
