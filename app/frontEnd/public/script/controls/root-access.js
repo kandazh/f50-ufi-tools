@@ -230,6 +230,23 @@
     return data.result || 'Removed';
   }
 
+  async function cleanupRootFiles() {
+    // Remove boot/schedule scripts, logs, flags, mount dirs, unlock scripts
+    await runShellWithRoot([
+      'rm -f /sdcard/ufi_tools_boot.sh',
+      'rm -f /sdcard/ufi_tools_schedule.sh',
+      'rm -f /sdcard/unlock_samba.sh',
+      'rm -f /sdcard/smb_log.log',
+      'rm -f /cache/unlock_samba.sh',
+      'rm -f /data/local/tmp/boot_once.flag',
+      'rm -rf /data/local/tmp/hotbox_mc',
+      'rm -rf /data/SAMBA_SHARE',
+    ].join('; '));
+    // Kill socat/ttyd processes last (since we use socat for the commands above)
+    // Use background kill with delay so the response can be sent before socat dies
+    await runShellWithRoot('pkill -f ttyd 2>/dev/null; (sleep 1; pkill -f "socat.*hotbox_root_shell") &');
+  }
+
   async function verifyRemoved() {
     try {
       var res = await checkAdvancedFunc();
@@ -313,6 +330,13 @@
       updateLastStep(result, 'ok', res);
     } catch (e) {
       updateLastStep(result, 'fail', e.message || 'Failed');
+    }
+    appendStep(result, 'Cleaning up root files...', 'running');
+    try {
+      await cleanupRootFiles();
+      updateLastStep(result, 'ok', 'Cleaned');
+    } catch (e) {
+      updateLastStep(result, 'fail', e.message || 'Cleanup failed');
     }
     appendStep(result, 'Verifying removal...', 'running');
     try {

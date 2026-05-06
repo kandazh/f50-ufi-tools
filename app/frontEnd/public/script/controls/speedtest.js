@@ -66,8 +66,9 @@
       function doPing() {
         var start = performance.now();
         fetch(HOTBOX_baseURL + '/speedtest?ckSize=0&cors=1&_t=' + Date.now(), { cache: 'no-store' })
-          .then(function () {
+          .then(function (res) {
             pings.push(performance.now() - start);
+            if (res.body) res.body.cancel().catch(function(){});
             count++;
             if (count < 3) { doPing(); }
             else {

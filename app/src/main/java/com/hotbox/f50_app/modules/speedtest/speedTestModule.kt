@@ -43,6 +43,20 @@ fun Route.speedTestModule(context: Context) {
 
     //Speed test
     get("/api/speedtest") {
+        val parms = call.request.queryParameters
+        val enableCors = parms.contains("cors")
+
+        // ckSize=0 is a ping probe — respond immediately without semaphore or data
+        val ckSizeRaw = parms["ckSize"]?.toIntOrNull() ?: 0
+        if (ckSizeRaw <= 0) {
+            if (enableCors) {
+                call.response.headers.append("Access-Control-Allow-Origin", "*")
+                call.response.headers.append("Access-Control-Allow-Methods", "GET, POST")
+            }
+            call.respondText("{\"ok\":true}", ContentType.Application.Json, HttpStatusCode.OK)
+            return@get
+        }
+
         if (!speedTestLimiter.tryAcquire()) {
             call.respond(HttpStatusCode.TooManyRequests, "Too many speed test requests, try later")
             return@get
@@ -50,9 +64,7 @@ fun Route.speedTestModule(context: Context) {
         try {
             withContext(SpeedTestDispatchers.dispatcher) {
                 HotboxLog.d(TAG, "Current thread: ${Thread.currentThread().name}")
-                val parms = call.request.queryParameters
-                val totalChunks = HotboxUtils.getChunkCount(parms["ckSize"]).coerceIn(1, 1024)
-                val enableCors = parms.contains("cors")
+                val totalChunks = ckSizeRaw.coerceIn(1, 1024)
                 val buffer = SpeedTestCache.buffer
 
                 if (enableCors) {

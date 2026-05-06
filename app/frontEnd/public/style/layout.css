@@ -592,7 +592,7 @@
   position: fixed;
   z-index: 4;
   right: 0.6rem;
-  bottom: 28px;
+  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
 }
 
 .toolbar .refresh,
@@ -729,7 +729,7 @@
     flex-direction: row;
     justify-content: center;
     border-radius: 0;
-    padding: 6px 0;
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
     z-index: 100;
     border-top: 1px solid var(--glass-border);
     border-left: none;
@@ -746,7 +746,7 @@
   }
   .content-panel {
     margin-left: 0;
-    padding-bottom: 56px;
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
   .main-title {
     flex-direction: column;

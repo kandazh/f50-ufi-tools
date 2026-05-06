@@ -1286,7 +1286,7 @@ app.post('/api/speedtest_upload', (req, res) => {
     const elapsed = Date.now() - startTime;
     const delay = Math.max(0, expectedTime - elapsed);
     setTimeout(() => {
-      res.json({ result: 'success', bytes_received: size });
+      res.json({ bytes: size });
     }, delay);
   });
 });

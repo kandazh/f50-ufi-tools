@@ -230,11 +230,11 @@
       log('Removing boot entry...');
       await runShellWithRoot("sed -i '/agh.*boot.sh/d' " + BOOT_SH_FILE);
       log('Stopping service...');
-      var res = await runShellWithRoot('/data/agh/action.sh stop');
+      var res = await runShellWithRoot('/data/agh/action.sh stop 2>/dev/null');
       log(res.content || '');
-      log('Removing files...');
-      await runShellWithRoot('/data/agh/uninstall.sh');
-      log('=== Uninstall complete ===');
+      log('Removing AdGuard files...');
+      await runShellWithRoot('rm -rf /data/agh /data/agh_update_tmp /data/AdGuardHome_linux_arm64.tar.gz');
+      log('=== Uninstall & cleanup complete ===');
       showCtrlToast('AdGuard Home uninstalled');
       refreshStatus();
     } finally { busy = false; }
