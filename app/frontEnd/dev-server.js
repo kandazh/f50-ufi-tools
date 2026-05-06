@@ -1291,6 +1291,28 @@ app.post('/api/speedtest_upload', (req, res) => {
   });
 });
 
+// APK upload mock endpoint
+app.post('/api/upload_apk', (req, res) => {
+  let size = 0;
+  req.on('data', (chunk) => { size += chunk.length; });
+  req.on('end', () => {
+    console.log(`[mock] APK uploaded: ${(size / 1048576).toFixed(1)} MB`);
+    res.json({ result: 'uploaded', path: '/data/data/com.hotbox.f50_app/files/downloaded_app.apk' });
+  });
+});
+
+// APK install mock endpoint
+app.post('/api/install_apk', (req, res) => {
+  let body = '';
+  req.on('data', (chunk) => { body += chunk; });
+  req.on('end', () => {
+    console.log('[mock] APK install triggered');
+    setTimeout(() => {
+      res.json({ result: 'success' });
+    }, 2000);
+  });
+});
+
 app.use('/api', createProxyMiddleware({
   target: 'http://192.168.0.1:2333/api',
   changeOrigin: false,

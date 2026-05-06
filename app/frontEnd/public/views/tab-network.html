@@ -138,11 +138,23 @@
                                 </div>
                                 <div class="ctrl-field">
                                     <span class="ctrl-label">Limit Size (GB)</span>
-                                    <input type="number" class="ctrl-input" id="dm_limit_size" placeholder="e.g. 50" min="1" step="1">
+                                    <div class="ctrl-stepper">
+                                        <input type="number" class="ctrl-input ctrl-stepper-input" id="dm_limit_size" placeholder="e.g. 50" min="1" step="1">
+                                        <div class="ctrl-stepper-arrows">
+                                            <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                            <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="ctrl-field">
                                     <span class="ctrl-label">Alert at (%)</span>
-                                    <input type="number" class="ctrl-input" id="dm_alert_percent" placeholder="e.g. 90" min="1" max="100">
+                                    <div class="ctrl-stepper">
+                                        <input type="number" class="ctrl-input ctrl-stepper-input" id="dm_alert_percent" placeholder="e.g. 90" min="1" max="100">
+                                        <div class="ctrl-stepper-arrows">
+                                            <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                            <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="ctrl-field">
                                     <span class="ctrl-label">Auto Clear Monthly</span>
@@ -152,7 +164,13 @@
                                 </div>
                                 <div class="ctrl-field">
                                     <span class="ctrl-label">Billing Cycle Day</span>
-                                    <input type="number" class="ctrl-input" id="dm_clear_date" placeholder="1-28" min="1" max="28">
+                                    <div class="ctrl-stepper">
+                                        <input type="number" class="ctrl-input ctrl-stepper-input" id="dm_clear_date" placeholder="1-28" min="1" max="28">
+                                        <div class="ctrl-stepper-arrows">
+                                            <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                            <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -257,11 +275,23 @@
                                 <div class="ctrl-form">
                                     <label class="ctrl-field">
                                         <span class="ctrl-label">MTU <span class="ctrl-required">*</span></span>
-                                        <input class="ctrl-input" name="mtu" type="number" min="1300" max="1500" placeholder="1500" required>
+                                        <div class="ctrl-stepper">
+                                            <input class="ctrl-input ctrl-stepper-input" name="mtu" type="number" min="1300" max="1500" placeholder="1500" required>
+                                            <div class="ctrl-stepper-arrows">
+                                                <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                                <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                            </div>
+                                        </div>
                                     </label>
                                     <label class="ctrl-field">
                                         <span class="ctrl-label">MSS <span class="ctrl-required">*</span></span>
-                                        <input class="ctrl-input" name="tcp_mss" type="number" min="1260" max="1460" placeholder="1460" required>
+                                        <div class="ctrl-stepper">
+                                            <input class="ctrl-input ctrl-stepper-input" name="tcp_mss" type="number" min="1260" max="1460" placeholder="1460" required>
+                                            <div class="ctrl-stepper-arrows">
+                                                <button type="button" class="ctrl-stepper-btn" data-step="1" aria-label="Increase">&#x25B2;</button>
+                                                <button type="button" class="ctrl-stepper-btn" data-step="-1" aria-label="Decrease">&#x25BC;</button>
+                                            </div>
+                                        </div>
                                     </label>
                                 </div>
                             </div>

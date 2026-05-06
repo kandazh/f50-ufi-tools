@@ -12,6 +12,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.http.content.streamProvider
+import io.ktor.server.request.receiveMultipart
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.header
 import io.ktor.server.response.respondOutputStream
@@ -161,6 +165,57 @@ fun Route.otaModule(context: Context) {
         }
     }
 
+    // Upload APK from local device (WiFi install)
+    post("/api/upload_apk") {
+        try {
+            val multipart = call.receiveMultipart()
+            var savedPath: String? = null
+
+            multipart.forEachPart { part ->
+                when (part) {
+                    is PartData.FileItem -> {
+                        val outputFile = File(context.getExternalFilesDir(null), "downloaded_app.apk")
+                        if (outputFile.exists()) outputFile.delete()
+
+                        part.streamProvider().use { input ->
+                            outputFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        savedPath = outputFile.absolutePath
+                    }
+                    else -> {}
+                }
+                part.dispose()
+            }
+
+            if (savedPath != null) {
+                ApkState.downloadResultPath = savedPath
+                ApkState.downloadInProgress = false
+                ApkState.downloadError = null
+                ApkState.download_percent = 100
+
+                HotboxLog.d(TAG, "APK uploaded successfully: $savedPath")
+                call.response.headers.append("Access-Control-Allow-Origin", "*")
+                call.respondText(
+                    """{"result":"uploaded","path":"$savedPath"}""",
+                    ContentType.Application.Json,
+                    HttpStatusCode.OK
+                )
+            } else {
+                throw Exception("No APK file received")
+            }
+        } catch (e: Exception) {
+            HotboxLog.d(TAG, "Upload APK error: ${e.message}")
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText(
+                """{"error":"${e.message ?: "Upload failed"}"}""",
+                ContentType.Application.Json,
+                HttpStatusCode.InternalServerError
+            )
+        }
+    }
+
     //Download progress
     get("/api/download_apk_status") {
         val status = when {
@@ -209,11 +264,29 @@ fun Route.otaModule(context: Context) {
                     val shellScript = """
                 #!/system/bin/sh
                 nohup sh -c '
+                echo "${'$'}(date) Starting install..." >> /sdcard/ufi_tools_update.log
                 pm install -r -g "${ApkState.downloadResultPath}" >> /sdcard/ufi_tools_update.log 2>&1
+                INSTALL_RC=${'$'}?
+                echo "${'$'}(date) pm install exit code: ${'$'}INSTALL_RC" >> /sdcard/ufi_tools_update.log
+                if [ ${'$'}INSTALL_RC -ne 0 ]; then
+                    echo "${'$'}(date) Install FAILED" >> /sdcard/ufi_tools_update.log
+                    exit 1
+                fi
+                sleep 1
                 dumpsys activity start-activity -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                sleep 3
+                # Verify app is running, retry if not
+                if ! pidof com.hotbox.f50_app > /dev/null 2>&1; then
+                    echo "${'$'}(date) App not running, retrying start..." >> /sdcard/ufi_tools_update.log
+                    am start -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                    sleep 3
+                fi
+                if pidof com.hotbox.f50_app > /dev/null 2>&1; then
+                    echo "${'$'}(date) App is running. Install complete!" >> /sdcard/ufi_tools_update.log
+                else
+                    echo "${'$'}(date) WARNING: App may not have started" >> /sdcard/ufi_tools_update.log
+                fi
                 sync
-                sync
-                echo "${'$'}(date)install and sync complete!" >> /sdcard/ufi_tools_update.log
                 ' >/dev/null 2>&1 &
                 """.trimIndent()
 
@@ -252,11 +325,28 @@ fun Route.otaModule(context: Context) {
                     // Create and copy shell script
                     val scriptText = """
                     #!/system/bin/sh
+                    echo "${'$'}(date) Starting install (Plan B)..." >> /sdcard/ufi_tools_update.log
                     pm install -r -g /sdcard/ufi_tools_latest.apk >> /sdcard/ufi_tools_update.log 2>&1
+                    INSTALL_RC=${'$'}?
+                    echo "${'$'}(date) pm install exit code: ${'$'}INSTALL_RC" >> /sdcard/ufi_tools_update.log
+                    if [ ${'$'}INSTALL_RC -ne 0 ]; then
+                        echo "${'$'}(date) Install FAILED" >> /sdcard/ufi_tools_update.log
+                        exit 1
+                    fi
+                    sleep 1
                     dumpsys activity start-activity -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                    sleep 3
+                    if ! pidof com.hotbox.f50_app > /dev/null 2>&1; then
+                        echo "${'$'}(date) App not running, retrying start..." >> /sdcard/ufi_tools_update.log
+                        am start -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                        sleep 3
+                    fi
+                    if pidof com.hotbox.f50_app > /dev/null 2>&1; then
+                        echo "${'$'}(date) App is running. Install complete!" >> /sdcard/ufi_tools_update.log
+                    else
+                        echo "${'$'}(date) WARNING: App may not have started" >> /sdcard/ufi_tools_update.log
+                    fi
                     sync
-                    sync
-                    echo "$(date)install and sync complete!" >> /sdcard/ufi_tools_update.log
                 """.trimIndent()
 
                     val scriptFile =

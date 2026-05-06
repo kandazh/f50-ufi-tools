@@ -20,6 +20,7 @@
                         <button class="ctrl-nav-btn" data-ctrl-tab="changepwd"><span class="ctrl-nav-icon">🔑</span><span>Change Password</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="schedule_reboot"><span class="ctrl-nav-icon">🔄</span><span>Scheduling</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="advanced"><span class="ctrl-nav-icon">⚙️</span><span>Advanced</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="apk_install"><span class="ctrl-nav-icon">📦</span><span>APK Install</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="clean_all"><span class="ctrl-nav-icon">🧹</span><span>Clean All</span></button>
                     </div>
                 </div>
@@ -838,7 +839,13 @@ uptime</pre>
                         <div class="ctrl-section">
                             <div class="ctrl-section-title"><span class="ctrl-section-icon">📐</span> Swap Size</div>
                             <div class="ctrl-row" style="align-items:center;gap:10px;">
-                                <input type="number" id="swap_size_input" class="ctrl-input" value="1536" min="256" max="4096" step="256" style="width:100px;text-align:center;">
+                                <div class="ctrl-stepper">
+                                    <input type="number" id="swap_size_input" class="ctrl-input ctrl-stepper-input" value="1536" min="256" max="4096" step="256" style="width:80px;text-align:center;">
+                                    <div class="ctrl-stepper-arrows">
+                                        <button type="button" class="ctrl-stepper-btn" data-step="256" aria-label="Increase">&#x25B2;</button>
+                                        <button type="button" class="ctrl-stepper-btn" data-step="-256" aria-label="Decrease">&#x25BC;</button>
+                                    </div>
+                                </div>
                                 <span style="color:rgba(226,232,240,0.6);font-size:13px;">MB</span>
                                 <button class="ctrl-btn ctrl-btn-sm" id="swap_save_size_btn">Save</button>
                             </div>
@@ -1065,6 +1072,35 @@ uptime</pre>
                         <!-- Save button for router settings -->
                         <div class="ctrl-actions">
                             <button type="button" class="ctrl-submit-btn" id="ADV_SAVE_BTN">Save</button>
+                        </div>
+                    </div>
+
+                    <!-- APK Install Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="apk_install" style="display:none">
+                        <div class="ctrl-panel-title">APK Install</div>
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📦</span> Upload & Install</div>
+                            <p class="plugin-desc">Select an APK file from your device and install it wirelessly over WiFi. Requires root access.</p>
+
+                            <div class="ctrl-row" style="flex-direction:column;align-items:flex-start;gap:12px">
+                                <label class="ctrl-submit-btn" style="cursor:pointer;display:inline-block" id="apk_install_label">
+                                    Choose APK File
+                                    <input type="file" accept=".apk" id="apk_install_file" style="display:none">
+                                </label>
+                                <div id="apk_install_filename" style="font-size:12px;color:rgba(148,163,184,0.7);word-break:break-all"></div>
+
+                                <div id="apk_install_progress_wrap" style="display:none">
+                                    <div style="background:rgba(30,41,59,0.5);border-radius:6px;overflow:hidden;height:8px;margin-bottom:6px">
+                                        <div id="apk_install_progress_bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.3s"></div>
+                                    </div>
+                                    <div id="apk_install_progress_text" style="font-size:11px;color:rgba(148,163,184,0.6)">Uploading...</div>
+                                </div>
+
+                                <div class="swap-log-output" id="apk_install_log" style="display:none"></div>
+                            </div>
+                        </div>
+                        <div class="ctrl-actions">
+                            <button type="button" class="ctrl-submit-btn" id="apk_install_btn" disabled>Install</button>
                         </div>
                     </div>
 

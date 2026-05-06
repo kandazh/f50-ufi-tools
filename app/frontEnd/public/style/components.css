@@ -298,6 +298,14 @@
 }
 
 /* Custom number stepper — vertical arrows */
+.ctrl-input[type="number"] {
+  -moz-appearance: textfield;
+}
+.ctrl-input[type="number"]::-webkit-inner-spin-button,
+.ctrl-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 .ctrl-stepper {
   display: inline-flex;
   align-items: stretch;
