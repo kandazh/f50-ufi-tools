@@ -9,14 +9,12 @@
   var timeInput = document.getElementById('task_time');
   var actionSelect = document.getElementById('task_action');
 
-  // Time stepper (12hr AM/PM)
+  // Time stepper (12hr AM/PM) — number input style
   (function () {
-    var hourDisp = document.getElementById('task_hour_display');
-    var minDisp = document.getElementById('task_min_display');
+    var hourInput = document.getElementById('task_hour_input');
+    var minInput = document.getElementById('task_min_input');
     var ampmToggle = document.getElementById('task_ampm_toggle');
-    if (!hourDisp || !minDisp || !ampmToggle) return;
-
-    var selHour = 3, selMin = 0, selAmPm = 'AM';
+    if (!hourInput || !minInput || !ampmToggle) return;
 
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
@@ -25,37 +23,37 @@
       return h12 === 12 ? 12 : h12 + 12;
     }
 
-    function sync() {
-      hourDisp.textContent = pad(selHour);
-      minDisp.textContent = pad(selMin);
-      var h24 = to24(selHour, selAmPm);
-      timeInput.value = pad(h24) + ':' + pad(selMin);
-      ampmToggle.querySelectorAll('.ctrl-ampm-btn').forEach(function (b) {
-        b.classList.toggle('selected', b.dataset.val === selAmPm);
-      });
+    function getAmPm() {
+      var sel = ampmToggle.querySelector('.ctrl-ampm-btn.selected');
+      return sel ? sel.dataset.val : 'AM';
     }
 
-    document.getElementById('task_hour_up').addEventListener('click', function () {
-      selHour = selHour >= 12 ? 1 : selHour + 1;
-      sync();
-    });
-    document.getElementById('task_hour_down').addEventListener('click', function () {
-      selHour = selHour <= 1 ? 12 : selHour - 1;
-      sync();
-    });
-    document.getElementById('task_min_up').addEventListener('click', function () {
-      selMin = selMin >= 59 ? 0 : selMin + 1;
-      sync();
-    });
-    document.getElementById('task_min_down').addEventListener('click', function () {
-      selMin = selMin <= 0 ? 59 : selMin - 1;
-      sync();
-    });
+    function clamp(val, min, max) {
+      if (val < min) return max;
+      if (val > max) return min;
+      return val;
+    }
+
+    function sync() {
+      var h = clamp(parseInt(hourInput.value) || 1, 1, 12);
+      var m = clamp(parseInt(minInput.value) || 0, 0, 59);
+      hourInput.value = h;
+      minInput.value = m;
+      var h24 = to24(h, getAmPm());
+      timeInput.value = pad(h24) + ':' + pad(m);
+    }
+
+    hourInput.addEventListener('input', sync);
+    hourInput.addEventListener('change', sync);
+    minInput.addEventListener('input', sync);
+    minInput.addEventListener('change', sync);
 
     ampmToggle.addEventListener('click', function (e) {
       var btn = e.target.closest('.ctrl-ampm-btn');
       if (!btn) return;
-      selAmPm = btn.dataset.val;
+      ampmToggle.querySelectorAll('.ctrl-ampm-btn').forEach(function (b) {
+        b.classList.toggle('selected', b === btn);
+      });
       sync();
     });
 

@@ -3,8 +3,40 @@ AGH_DIR="$MODPATH/agh"
 . $AGH_DIR/settings.conf
 . $AGH_DIR/scripts/base.sh
 
-iptables_w="iptables -w 64"
-ip6tables_w="ip6tables -w 64"
+resolve_xtables_binary() {
+  local name="$1"
+  local candidate
+
+  for candidate in "/system/bin/$name" "/system/xbin/$name"; do
+    if [ -x "$candidate" ]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  candidate=$(command -v "$name" 2>/dev/null)
+  if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+    echo "$candidate"
+    return 0
+  fi
+
+  return 1
+}
+
+IPTABLES_BIN=$(resolve_xtables_binary iptables) || {
+  log "iptables binary not found"
+  exit 1
+}
+IP6TABLES_BIN=$(resolve_xtables_binary ip6tables) || {
+  log "ip6tables binary not found"
+  exit 1
+}
+
+iptables_w="$IPTABLES_BIN -w 64"
+ip6tables_w="$IP6TABLES_BIN -w 64"
+
+log "Using iptables binary: $IPTABLES_BIN"
+log "Using ip6tables binary: $IP6TABLES_BIN"
 
 # Auto-detect WAN interface (cellular data interface)
 # Falls back to sipa_eth0 if detection fails
@@ -59,8 +91,66 @@ is_ipv6() {
   echo "$1" | grep -qE '^[0-9a-fA-F:]+(/[0-9]{1,3})?$'
 }
 
+verify_firewall_hardening() {
+  $iptables_w -C INPUT -m state --state INVALID -j DROP >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv4 INVALID drop rule"
+    return 1
+  }
+  $iptables_w -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv4 ESTABLISHED,RELATED accept rule"
+    return 1
+  }
+  $iptables_w -C INPUT -i lo -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv4 loopback accept rule"
+    return 1
+  }
+  $iptables_w -C INPUT -i "$lan_interface" -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv4 LAN accept rule"
+    return 1
+  }
+  $iptables_w -C INPUT -i "$wan_interface" -p udp --sport 67 --dport 68 -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv4 DHCP accept rule"
+    return 1
+  }
+  $iptables_w -C INPUT -i "$wan_interface" -j DROP >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv4 WAN drop rule"
+    return 1
+  }
+
+  $ip6tables_w -C INPUT -m state --state INVALID -j DROP >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 INVALID drop rule"
+    return 1
+  }
+  $ip6tables_w -C INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 ESTABLISHED,RELATED accept rule"
+    return 1
+  }
+  $ip6tables_w -C INPUT -i lo -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 loopback accept rule"
+    return 1
+  }
+  $ip6tables_w -C INPUT -i "$lan_interface" -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 LAN accept rule"
+    return 1
+  }
+  $ip6tables_w -C INPUT -p icmpv6 -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 ICMPv6 accept rule"
+    return 1
+  }
+  $ip6tables_w -C INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 DHCPv6 accept rule"
+    return 1
+  }
+  $ip6tables_w -C INPUT -i "$wan_interface" -j DROP >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 WAN drop rule"
+    return 1
+  }
+
+  return 0
+}
+
 harden_firewall() {
-  log "Applying firewall hardening (default-deny INPUT policy)"
+  log "Applying firewall hardening (explicit WAN DROP + INPUT policy DROP)"
 
   # === IPv4 INPUT hardening ===
   # Drop invalid packets early
@@ -78,9 +168,13 @@ harden_firewall() {
   # Allow DHCP replies from carrier (broadcast-based, may not match conntrack)
   $iptables_w -C INPUT -i "$wan_interface" -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null || \
     $iptables_w -I INPUT 5 -i "$wan_interface" -p udp --sport 67 --dport 68 -j ACCEPT
-  # Default deny: drop everything not matched above (WAN/cellular side)
-  $iptables_w -P INPUT DROP
-  log "IPv4 INPUT: INVALID dropped, ESTABLISHED + loopback + LAN + DHCP allowed, all else dropped"
+  # Drop unsolicited WAN traffic before OEM catch-all ACCEPT rules.
+  $iptables_w -C INPUT -i "$wan_interface" -j DROP 2>/dev/null || \
+    $iptables_w -I INPUT 6 -i "$wan_interface" -j DROP
+  # Keep the policy strict too when the firmware allows it.
+  $iptables_w -P INPUT DROP 2>/dev/null || \
+    log "Unable to set IPv4 INPUT policy to DROP, relying on explicit WAN DROP rule"
+  log "IPv4 INPUT: INVALID dropped, ESTABLISHED + loopback + LAN + DHCP allowed, WAN dropped"
 
   # === IPv6 INPUT hardening ===
   # Drop invalid packets early
@@ -101,9 +195,13 @@ harden_firewall() {
   # Allow DHCPv6 replies from carrier (scoped to WAN interface)
   $ip6tables_w -C INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null || \
     $ip6tables_w -I INPUT 6 -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT
-  # Default deny: drop everything not matched above (public IPv6 internet)
-  $ip6tables_w -P INPUT DROP
-  log "IPv6 INPUT: INVALID dropped, ESTABLISHED + loopback + LAN + ICMPv6 + DHCPv6 allowed, all else dropped"
+  # Drop unsolicited WAN traffic before OEM catch-all ACCEPT rules.
+  $ip6tables_w -C INPUT -i "$wan_interface" -j DROP 2>/dev/null || \
+    $ip6tables_w -I INPUT 7 -i "$wan_interface" -j DROP
+  # Keep the policy strict too when the firmware allows it.
+  $ip6tables_w -P INPUT DROP 2>/dev/null || \
+    log "Unable to set IPv6 INPUT policy to DROP, relying on explicit WAN DROP rule"
+  log "IPv6 INPUT: INVALID dropped, ESTABLISHED + loopback + LAN + ICMPv6 + DHCPv6 allowed, WAN dropped"
 }
 
 remove_hardening() {
@@ -118,6 +216,7 @@ remove_hardening() {
   $iptables_w -D INPUT -i lo -j ACCEPT 2>/dev/null
   $iptables_w -D INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null
   $iptables_w -D INPUT -i "$wan_interface" -p udp --sport 67 --dport 68 -j ACCEPT 2>/dev/null
+  $iptables_w -D INPUT -i "$wan_interface" -j DROP 2>/dev/null
   # Remove IPv6 hardening rules
   $ip6tables_w -D INPUT -m state --state INVALID -j DROP 2>/dev/null
   $ip6tables_w -D INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null
@@ -125,6 +224,7 @@ remove_hardening() {
   $ip6tables_w -D INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -p icmpv6 -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -j DROP 2>/dev/null
   log "Firewall hardening removed"
 }
 
@@ -160,11 +260,7 @@ enable_iptables() {
   log "Created ADGUARD_REDIRECT_DNS chain"
 
   log "Adding iptables rules, excluding AdGuardHome itself"
-  # Use uid+gid match so only AGH bypasses the redirect.
-  # NOTE: AGH uses DoT/DoH (port 853/443) for upstreams, so its traffic
-  # never hits port-53 rules anyway. This is a safety net in case
-  # someone configures plain DNS upstreams. On this device AGH runs
-  # with supplementary group net_raw via sgid on the binary.
+  # Keep the owner bypass first in the custom chain, ahead of redirect rules.
   $iptables_w -t nat -A ADGUARD_REDIRECT_DNS -m owner --uid-owner "$adg_user" --gid-owner "$adg_group" -j RETURN || {
     log "Failed to add iptables rules"
     return 1
@@ -574,6 +670,10 @@ enable)
   if [ "$enable_firewall_hardening" = true ]; then
     harden_firewall || {
       log "Failed to apply firewall hardening"
+      exit 1
+    }
+    verify_firewall_hardening || {
+      log "Firewall hardening verification failed"
       exit 1
     }
   else

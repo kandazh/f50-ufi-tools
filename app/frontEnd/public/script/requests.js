@@ -65,6 +65,7 @@ const originFetch = window.fetch;
             ...init,
             headers,
         };
+
         return of(input, newInit);
     };
 })();
@@ -467,6 +468,26 @@ async function getDataUsage() {
         return res
     } catch {
         return null
+    }
+}
+
+// Get WAN interface stats (actual cellular data usage, excludes local WiFi traffic)
+// Reads byte counters from the WAN network interface (sipa_eth0 / rmnet_data0 etc)
+async function getWanInterfaceStats() {
+    try {
+        var res = await runShellWithRoot(
+            'for iface in sipa_eth0 rmnet_data0 wwan0 pdp0 ccmni0 seth_lte0; do ' +
+            'if [ -d "/sys/class/net/$iface" ]; then ' +
+            'echo "$iface $(cat /sys/class/net/$iface/statistics/rx_bytes) $(cat /sys/class/net/$iface/statistics/tx_bytes)"; exit 0; ' +
+            'fi; done; echo "none 0 0"',
+            5000
+        );
+        if (!res.success || !res.content) return null;
+        var parts = res.content.trim().split(/\s+/);
+        if (parts[0] === 'none') return null;
+        return { iface: parts[0], rx: Number(parts[1] || 0), tx: Number(parts[2] || 0) };
+    } catch {
+        return null;
     }
 }
 

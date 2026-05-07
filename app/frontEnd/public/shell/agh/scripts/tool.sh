@@ -68,8 +68,23 @@ start_adguardhome() {
     echo "$adg_pid" >"$PID_FILE"
     # check if iptables is enabled
     if [ "$enable_iptables" = true ]; then
-      $SCRIPT_DIR/iptables.sh enable
-      log "started PID: $adg_pid iptables: enabled"
+      if $SCRIPT_DIR/iptables.sh enable; then
+        log "started PID: $adg_pid iptables: enabled"
+      else
+        log "Failed to enable iptables, stopping AdGuardHome"
+        $SCRIPT_DIR/iptables.sh disable >/dev/null 2>&1
+        kill "$adg_pid" 2>/dev/null
+        i=0
+        while [ $i -lt 5 ] && kill -0 "$adg_pid" 2>/dev/null; do
+          sleep 1
+          i=$((i + 1))
+        done
+        if kill -0 "$adg_pid" 2>/dev/null; then
+          kill -9 "$adg_pid" 2>/dev/null
+        fi
+        rm -f "$PID_FILE"
+        exit 1
+      fi
     else
       log "started PID: $adg_pid iptables: disabled"
     fi

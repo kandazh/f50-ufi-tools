@@ -38,11 +38,21 @@
       var res = await getDataUsage();
       if (!res) return;
 
-      var rx = Number(res.monthly_rx_bytes || 0);
-      var tx = Number(res.monthly_tx_bytes || 0);
-      totalEl.textContent = formatBytes(rx + tx);
-      dlEl.textContent = formatBytes(rx);
-      ulEl.textContent = formatBytes(tx);
+      // Try to get WAN interface stats (actual cellular data, excludes local WiFi traffic)
+      var wanStats = await getWanInterfaceStats();
+      var dl, ul;
+      if (wanStats) {
+        dl = wanStats.rx; // WAN rx = data received from internet = user download
+        ul = wanStats.tx; // WAN tx = data sent to internet = user upload
+      } else {
+        // Fallback to firmware counters (includes local WiFi traffic - less accurate)
+        dl = Number(res.monthly_tx_bytes || 0); // LAN tx = sent to client = download
+        ul = Number(res.monthly_rx_bytes || 0); // LAN rx = received from client = upload
+      }
+
+      totalEl.textContent = formatBytes(dl + ul);
+      dlEl.textContent = formatBytes(dl);
+      ulEl.textContent = formatBytes(ul);
       timeEl.textContent = formatTime(res.monthly_time || 0);
 
       // Fill settings

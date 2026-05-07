@@ -19,6 +19,7 @@ import com.hotbox.f50_app.utils.HotboxLog
 import com.hotbox.f50_app.utils.HotboxReport.Companion.reportToServer
 import com.hotbox.f50_app.utils.HotboxUtils
 import com.hotbox.f50_app.utils.HotboxUtils.Companion.isUsbDebuggingEnabled
+import com.hotbox.f50_app.utils.RootShell
 import com.hotbox.f50_app.utils.ShellHotbox
 import com.hotbox.f50_app.utils.ShellHotbox.Companion.executeShellFromAssetsSubfolderWithArgs
 import com.hotbox.f50_app.utils.ShellHotbox.Companion.killProcessByName
@@ -40,6 +41,7 @@ class ADBService : Service() {
     private val adbExecutor = Executors.newSingleThreadExecutor()
     private val adbWakeSignal = Object()
     private val iperfExecutor = Executors.newSingleThreadExecutor()
+    private val aghWatchdogExecutor = Executors.newSingleThreadExecutor()
     private var disableFOTATimes = 3
 
     private  val TAG = "UFI_TOOLS_LOG_ADBService"
@@ -84,6 +86,10 @@ class ADBService : Service() {
 
         //Start scheduled tasks
         TaskSchedulerManager.init(applicationContext)
+
+        // Start AGH watchdog (checks every 5 minutes, restarts if crashed)
+        startAghWatchdog()
+
         return START_STICKY
     }
 
@@ -347,12 +353,52 @@ class ADBService : Service() {
         }
     }
 
+    private fun startAghWatchdog() {
+        aghWatchdogExecutor.execute {
+            try {
+                // Initial delay — let boot.sh finish first
+                Thread.sleep(120_000)
+                while (!Thread.currentThread().isInterrupted) {
+                    try {
+                        val pidFile = java.io.File("/data/agh/agh/bin/agh.pid")
+                        val binary = java.io.File("/data/agh/agh/bin/AdGuardHome")
+                        val socketPath = java.io.File(applicationContext.filesDir, "hotbox_root_shell.sock")
+                        // Only restart on crash: PID file exists but process is dead.
+                        // If no PID file, AGH was intentionally stopped or never started — don't interfere.
+                        if (binary.exists() && pidFile.exists() && socketPath.exists()) {
+                            val checkResult = RootShell.sendCommandToSocket(
+                                "kill -0 \$(cat /data/agh/agh/bin/agh.pid) 2>/dev/null && echo ALIVE",
+                                socketPath.absolutePath,
+                                5000
+                            )
+                            if (checkResult != null && !checkResult.contains("ALIVE")) {
+                                HotboxLog.w(TAG, "AGH watchdog: process crashed, restarting")
+                                RootShell.sendCommandToSocket(
+                                    "rm -f /data/agh/agh/bin/agh.pid; sh /data/agh/agh/scripts/tool.sh start",
+                                    socketPath.absolutePath,
+                                    30000
+                                )
+                                HotboxLog.d(TAG, "AGH watchdog: restart triggered")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        HotboxLog.e(TAG, "AGH watchdog check error", e)
+                    }
+                    Thread.sleep(300_000) // Check every 5 minutes
+                }
+            } catch (_: InterruptedException) {
+                HotboxLog.d(TAG, "AGH watchdog stopped")
+            }
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         handlerThread.quitSafely()
         handler.removeCallbacksAndMessages(null)
         adbExecutor.shutdownNow()
         iperfExecutor.shutdownNow()
+        aghWatchdogExecutor.shutdownNow()
         batteryReceiver?.let {
             try { unregisterReceiver(it) } catch (_: Exception) {}
         }

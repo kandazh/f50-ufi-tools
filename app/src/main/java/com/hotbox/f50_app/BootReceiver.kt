@@ -7,6 +7,7 @@ import android.util.Log
 import com.hotbox.f50_app.configs.AppMeta
 import com.hotbox.f50_app.utils.DeviceModelChecker
 import com.hotbox.f50_app.utils.HotboxUtils
+import com.hotbox.f50_app.utils.RootShell
 import com.hotbox.f50_app.utils.ShellHotbox
 import com.hotbox.f50_app.utils.UniqueDeviceIDManager
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +58,32 @@ class BootReceiver : BroadcastReceiver() {
                 //Activate network ADB etc.
                 ShellHotbox.runADB(context)
                 Log.d("UFI_TOOLS_LOG", "Activate network ADB")
+
+                // Auto-start AdGuardHome if installed
+                try {
+                    val aghBinary = java.io.File("/data/agh/agh/bin/AdGuardHome")
+                    if (aghBinary.exists()) {
+                        val socketPath = java.io.File(context.filesDir, "hotbox_root_shell.sock")
+                        // Wait up to 30s for root socket (socat may not be ready yet at early boot)
+                        var waited = 0
+                        while (!socketPath.exists() && waited < 30) {
+                            Thread.sleep(2000)
+                            waited += 2
+                        }
+                        if (socketPath.exists()) {
+                            Log.d("UFI_TOOLS_LOG", "AGH binary found, triggering boot.sh via root socket")
+                            RootShell.sendCommandToSocket(
+                                "sh /data/agh/boot.sh &",
+                                socketPath.absolutePath,
+                                5000
+                            )
+                        } else {
+                            Log.d("UFI_TOOLS_LOG", "AGH binary found but root socket not ready after 30s, watchdog will handle")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("UFI_TOOLS_LOG", "Failed to start AGH on boot", e)
+                }
             }
         }
     }
