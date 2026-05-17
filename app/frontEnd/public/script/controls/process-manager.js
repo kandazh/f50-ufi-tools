@@ -212,7 +212,7 @@
       return;
     }
     var html = '<div class="pm-table-scroll"><div class="pm-list-inner">';
-    html += '<div class="pm-table-head"><div>PID</div><div>CPU%</div><div>RSS</div><div>USER</div><div>NAME</div><div style="text-align:right">ACTION</div></div>';
+    html += '<div class="pm-table-head"><div>PID</div><div>CPU%</div><div>MEM</div><div>USER</div><div>NAME</div><div style="text-align:right">ACTION</div></div>';
     state.filtered.forEach(function (item) {
       html += '<div class="pm-row">';
       html += '<div class="pm-col">' + escapeHtml(String(item.pid)) + '</div>';

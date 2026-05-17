@@ -362,6 +362,21 @@
                         const t = Number(value / 1000).toFixed(1);
                         pushValue(tempChart, parseFloat(t));
                         if (tempLive) tempLive.textContent = t + '°C';
+                        // Dynamic color based on temperature
+                        if (tempChart) {
+                            const tc = parseFloat(t);
+                            const newColor = tc < 45 ? colors.green : tc <= 55 ? colors.amber : { line: '#f87171', fill: 'rgba(248, 113, 113, 0.12)' };
+                            const ds = tempChart.chart.data.datasets[0];
+                            if (ds.borderColor !== newColor.line) {
+                                ds.borderColor = newColor.line;
+                                ds.pointHoverBackgroundColor = newColor.line;
+                                ds.backgroundColor = makeGradient(
+                                    tempChart.chart.ctx,
+                                    tempChart.chart.canvas,
+                                    newColor
+                                );
+                            }
+                        }
                     }
                     break;
                 case 'cpu_usage':
