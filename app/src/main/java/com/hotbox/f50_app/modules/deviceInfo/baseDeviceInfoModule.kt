@@ -275,6 +275,45 @@ fun Route.baseDeviceInfoModule(context: Context) {
         }
     }
 
+    // Get current month cellular stats (rx/tx separately, pure internet - no local traffic)
+    get("/api/cellular_stats") {
+        try {
+            val networkStatsManager =
+                context.getSystemService(Context.NETWORK_STATS_SERVICE) as android.app.usage.NetworkStatsManager
+            val cal = java.util.Calendar.getInstance()
+            cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            cal.set(java.util.Calendar.MINUTE, 0)
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.MILLISECOND, 0)
+            val startTime = cal.timeInMillis
+            val endTime = System.currentTimeMillis()
+
+            val summary = networkStatsManager.querySummaryForDevice(
+                android.net.ConnectivityManager.TYPE_MOBILE, null, startTime, endTime
+            )
+
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText(
+                JSONObject().apply {
+                    put("rx_bytes", summary.rxBytes)
+                    put("tx_bytes", summary.txBytes)
+                    put("start_time", startTime)
+                    put("end_time", endTime)
+                }.toString(),
+                ContentType.Application.Json
+            )
+        } catch (e: Exception) {
+            HotboxLog.d(TAG, "Error getting cellular stats: ${e.message}")
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText(
+                """{"error":"${e.message}"}""",
+                ContentType.Application.Json,
+                HttpStatusCode.InternalServerError
+            )
+        }
+    }
+
     //Get data usage (time range)
     get("/api/cellularUsage") {
         try {

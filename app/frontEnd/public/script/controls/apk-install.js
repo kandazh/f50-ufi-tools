@@ -74,7 +74,12 @@
           });
           xhr.addEventListener('error', function () { reject(new Error('Upload network error')); });
           xhr.open('POST', HOTBOX_baseURL + '/upload_apk');
-          xhr.setRequestHeader('token', localStorage.getItem('token') || '');
+          var _token = common_headers.authorization || localStorage.getItem('hotbox_sms_token') || '';
+          if (_token) xhr.setRequestHeader('authorization', _token);
+          var _t = Date.now();
+          var _sig = hmacSignature('hotbox_kOyXz0Ciz4V7wR0IeKmJFYFQ20jd', 'hotboxPOST/api/upload_apk' + _t);
+          xhr.setRequestHeader('hotbox-t', _t);
+          xhr.setRequestHeader('hotbox-sign', _sig);
           xhr.send(formData);
         });
 

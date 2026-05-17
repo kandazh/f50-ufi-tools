@@ -1,0 +1,52 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- WiFi arc large -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M37,37 A24,24 0 0,1 71,37"/>
+
+    <!-- WiFi arc medium -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M42,42 A17,17 0 0,1 66,42"/>
+
+    <!-- WiFi arc small -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M47,47 A10,10 0 0,1 61,47"/>
+
+    <!-- WiFi dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"/>
+
+    <!-- Router body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,62 h48 a4,4 0 0,1 4,4 v12 a4,4 0 0,1 -4,4 H30 a4,4 0 0,1 -4,-4 V66 a4,4 0 0,1 4,-4 Z"/>
+
+    <!-- LED indicators (punched out of router body) -->
+    <path
+        android:fillColor="#0f172a"
+        android:pathData="M39,70 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0"/>
+    <path
+        android:fillColor="#4ade80"
+        android:pathData="M48,70 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0"/>
+    <path
+        android:fillColor="#60a5fa"
+        android:pathData="M57,70 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0"/>
+
+</vector>

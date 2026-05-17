@@ -227,6 +227,7 @@
     <script src="/script/controls/plugin.js"></script>
     <script src="/script/controls/virtual-memory.js"></script>
     <script src="/script/controls/adguard-home.js"></script>
+    <script src="/script/controls/process-manager.js"></script>
     <script src="/script/controls/apk-install.js"></script>
     <script src="/script/controls/clean-all.js"></script>
     <script src="/script/controls/ttyd.js"></script>

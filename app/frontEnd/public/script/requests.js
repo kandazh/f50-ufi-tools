@@ -11,24 +11,24 @@ let loginMethod = localStorage.getItem('login_method') == "1" ? "1" : "0"; // 1=
 
 const originFetch = window.fetch;
 
+function hmacSignature(secret, data) {
+    const hmacMd5 = CryptoJS.HmacMD5(data, secret);
+    const hmacMd5Bytes = CryptoJS.enc.Hex.parse(hmacMd5.toString());
+
+    const mid = Math.floor(hmacMd5Bytes.sigBytes / 2);
+    const part1 = CryptoJS.lib.WordArray.create(hmacMd5Bytes.words.slice(0, mid / 4), mid);
+    const part2 = CryptoJS.lib.WordArray.create(hmacMd5Bytes.words.slice(mid / 4), mid);
+
+    const sha1 = CryptoJS.SHA256(part1);
+    const sha2 = CryptoJS.SHA256(part2);
+    const finalHash = CryptoJS.SHA256(sha1.concat(sha2));
+
+    return finalHash.toString(CryptoJS.enc.Hex);
+}
+
 // Wrap fetch
 (() => {
     const of = window.fetch;
-
-    function hmacSignature(secret, data) {
-        const hmacMd5 = CryptoJS.HmacMD5(data, secret);
-        const hmacMd5Bytes = CryptoJS.enc.Hex.parse(hmacMd5.toString());
-
-        const mid = Math.floor(hmacMd5Bytes.sigBytes / 2);
-        const part1 = CryptoJS.lib.WordArray.create(hmacMd5Bytes.words.slice(0, mid / 4), mid);
-        const part2 = CryptoJS.lib.WordArray.create(hmacMd5Bytes.words.slice(mid / 4), mid);
-
-        const sha1 = CryptoJS.SHA256(part1);
-        const sha2 = CryptoJS.SHA256(part2);
-        const finalHash = CryptoJS.SHA256(sha1.concat(sha2));
-
-        return finalHash.toString(CryptoJS.enc.Hex);
-    }
 
     window.fetch = async (input, init = {}) => {
         const headers = new Headers(init.headers || {});

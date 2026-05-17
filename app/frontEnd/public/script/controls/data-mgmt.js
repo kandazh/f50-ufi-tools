@@ -38,17 +38,16 @@
       var res = await getDataUsage();
       if (!res) return;
 
-      // Try to get WAN interface stats (actual cellular data, excludes local WiFi traffic)
-      var wanStats = await getWanInterfaceStats();
-      var dl, ul;
-      if (wanStats) {
-        dl = wanStats.rx; // WAN rx = data received from internet = user download
-        ul = wanStats.tx; // WAN tx = data sent to internet = user upload
-      } else {
-        // Fallback to firmware counters (includes local WiFi traffic - less accurate)
-        dl = Number(res.monthly_tx_bytes || 0); // LAN tx = sent to client = download
-        ul = Number(res.monthly_rx_bytes || 0); // LAN rx = received from client = upload
-      }
+      // Use Android NetworkStats API for pure cellular (internet-only) data
+      var dl = 0, ul = 0;
+      try {
+        var statsRes = await fetch('/api/cellular_stats', { headers: common_headers });
+        if (statsRes.ok) {
+          var stats = await statsRes.json();
+          dl = Number(stats.rx_bytes || 0);
+          ul = Number(stats.tx_bytes || 0);
+        }
+      } catch (e) { /* silent */ }
 
       totalEl.textContent = formatBytes(dl + ul);
       dlEl.textContent = formatBytes(dl);

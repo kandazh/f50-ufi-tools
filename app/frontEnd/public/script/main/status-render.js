@@ -81,9 +81,10 @@ let handlerStatusRender = async (flag = false) => {
                         status_login_try_times += 1
                     }
                     if (res) {
+                        status_login_try_times = 0
                         window.initRenderMethod()
                     }
-                    if (status_login_try_times >= 3) {
+                    if (status_login_try_times >= 10) {
                         createToast(t('toast_login_expired'), 'red')
                         window.out()
                         isFirstRender = true
@@ -100,6 +101,9 @@ let handlerStatusRender = async (flag = false) => {
                 }
             } catch (e) { }
         }
+
+        // Data loaded successfully, reset login failure counter
+        status_login_try_times = 0
 
         // If advanced enabled and IMEI hidden after change, use force query to show IMEI
         if (!res.imei || res.imei.length === 0) {
