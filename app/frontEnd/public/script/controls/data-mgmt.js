@@ -38,16 +38,9 @@
       var res = await getDataUsage();
       if (!res) return;
 
-      // Use Android NetworkStats API for pure cellular (internet-only) data
-      var dl = 0, ul = 0;
-      try {
-        var statsRes = await fetch('/api/cellular_stats', { headers: common_headers });
-        if (statsRes.ok) {
-          var stats = await statsRes.json();
-          dl = Number(stats.rx_bytes || 0);
-          ul = Number(stats.tx_bytes || 0);
-        }
-      } catch (e) { /* silent */ }
+      // Use firmware's monthly counters (same as original ZTE traffic_alert page)
+      var dl = Number(res.monthly_rx_bytes || 0);
+      var ul = Number(res.monthly_tx_bytes || 0);
 
       totalEl.textContent = formatBytes(dl + ul);
       dlEl.textContent = formatBytes(dl);

@@ -1,6 +1,6 @@
 {
-    "name": "UFI-TOOLS",
-    "short_name": "UFI-TOOLS",
+    "name": "Hotbox",
+    "short_name": "Hotbox",
     "start_url": "/",
     "display": "standalone",
     "orientation": "portrait",

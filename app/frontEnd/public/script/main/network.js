@@ -447,7 +447,7 @@ handlerCecullarStatus()
 const loadTitle = async () => {
     try {
         const { app_ver, build_timestamp, model, nickname } = await (await fetch(`${HOTBOX_baseURL}/version_info`, { headers: common_headers })).json()
-        const displayName = (model == nickname || !nickname) ? model : `${model} (${nickname})`;
+        const displayName = 'Hotbox ' + ((model == nickname || !nickname) ? model : `${model} (${nickname})`);
         MODEL.style.display = 'none';
         document.querySelector('#MAIN_TITLE').innerHTML =
             `<span class="device-badge">` +

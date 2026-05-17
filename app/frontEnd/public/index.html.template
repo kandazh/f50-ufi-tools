@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="icon" type="image/svg+xml" href="/favicon.webp">
-    <title id="TITLE">UFI-TOOLS-WEB</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title id="TITLE">Hotbox</title>
     <script>
         (() => {
             try {
@@ -57,7 +57,7 @@
         <div class="container">
             <!-- Header -->
             <div class="title main-title" style="align-items: end;">
-                <strong id="MAIN_TITLE" style="flex-shrink: 0;" onclick="enableTTYD()">UFI-TOOLS</strong>
+                <strong id="MAIN_TITLE" style="flex-shrink: 0;" onclick="enableTTYD()">Hotbox</strong>
                 <strong id="MODEL"
                     style="font-size: .8rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;box-shadow: none;text-shadow: none;max-width: 400px;"
                     onclick="nicknameSettingClick()"></strong>
