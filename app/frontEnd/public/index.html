@@ -570,6 +570,12 @@
                                         <div id="ADV_SAMBA_SWITCH"></div>
                                     </div>
                                 </div>
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="at_high_rail_mode">High-Speed Rail <span style="font-size:11px;opacity:0.55;font-weight:normal">(5G)</span></span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="HSR_SWITCH"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="ctrl-actions">
@@ -3391,9 +3397,6 @@ uptime</pre>
                                     <button class="btn" style="margin-top: 6px;"
                                         onclick="disableButtonWhenExecuteFunc(event,()=>handleAT('AT+CIMI'))"
                                         data-i18n="at_imsi">IMSI</button>
-                                    <button class="btn" style="margin-top: 6px;" id="highRailModeBtn"
-                                        onclick="disableButtonWhenExecuteFunc(event,()=>handleHighRailMode(event))"
-                                        data-i18n="at_high_rail_mode">High-Speed Rail Mode</button>
                                 </div>
                             </div>
                         </div>

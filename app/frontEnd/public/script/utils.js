@@ -199,22 +199,23 @@ function createToast(text, color, delay = 3000, fn = null) {
     try {
         const toastContainer = document.querySelector("#toastContainer")
         const toastEl = document.createElement('div')
-        toastEl.style.padding = '10px'
+        // Map color names to backgrounds matching showCtrlToast style
+        var bgMap = { red: 'rgba(239,68,68,0.9)', orange: 'rgba(249,115,22,0.9)', green: 'rgba(34,197,94,0.9)' };
+        var bg = bgMap[color] || bgMap.green;
+        toastEl.style.padding = '10px 24px'
         toastEl.style.fontSize = '13px'
         toastEl.style.width = "fit-content"
         toastEl.style.position = "relative"
-        toastEl.style.top = "0px"
-        toastEl.style.color = color || 'while'
-        toastEl.style.backgroundColor = 'var(--dark-card-bg)'
+        toastEl.style.bottom = "0px"
+        toastEl.style.color = '#fff'
+        toastEl.style.backgroundColor = bg
         toastEl.style.transform = `scale(1)`
         toastEl.style.transition = `all .3s ease`
         toastEl.style.opacity = `0`
         toastEl.style.transform = `scale(0)`
-        toastEl.style.transformOrigin = 'top center'
-        toastEl.style.boxShadow = '0 0 10px 0 #00000076'
-        toastEl.style.fontWeight = 'bold'
-        toastEl.style.backdropFilter = 'blur(10px)'
-        toastEl.style.borderRadius = '6px'
+        toastEl.style.transformOrigin = 'bottom center'
+        toastEl.style.fontWeight = '600'
+        toastEl.style.borderRadius = '8px'
         toastEl.innerHTML = text;
         const id = 'toasthotbox'
         toastEl.setAttribute('class', id);
@@ -227,7 +228,7 @@ function createToast(text, color, delay = 3000, fn = null) {
         setTimeout(() => {
             toastEl.style.opacity = `0`
             toastEl.style.transform = `scale(0)`
-            toastEl.style.top = '-' + toastEl.getBoundingClientRect().height + 'px'
+            toastEl.style.bottom = '-' + toastEl.getBoundingClientRect().height + 'px'
             clearTimeout(timer)
             timer = setTimeout(() => {
                 toastContainer.removeChild(toastEl)
@@ -250,21 +251,20 @@ function createFixedToast(_id, text, style = {}) {
         const toastContainer = document.querySelector("#toastContainer")
         const toastEl = document.createElement('div')
         toastEl.id = _id
-        toastEl.style.padding = '10px'
+        toastEl.style.padding = '10px 24px'
         toastEl.style.fontSize = '13px'
         toastEl.style.width = "fit-content"
         toastEl.style.position = "relative"
-        toastEl.style.top = "0px"
-        toastEl.style.backgroundColor = 'var(--dark-card-bg)'
+        toastEl.style.bottom = "0px"
+        toastEl.style.color = '#fff'
+        toastEl.style.backgroundColor = 'rgba(34,197,94,0.9)'
         toastEl.style.transform = `scale(1)`
         toastEl.style.transition = `all .3s ease`
         toastEl.style.opacity = `0`
         toastEl.style.transform = `scale(0)`
-        toastEl.style.transformOrigin = 'top center'
-        toastEl.style.boxShadow = '0 0 10px 0 #00000076'
-        toastEl.style.fontWeight = 'bold'
-        toastEl.style.backdropFilter = 'blur(10px)'
-        toastEl.style.borderRadius = '6px'
+        toastEl.style.transformOrigin = 'bottom center'
+        toastEl.style.fontWeight = '600'
+        toastEl.style.borderRadius = '8px'
         if (style && typeof style === 'object') {
             Object.entries(style).forEach(([key, value]) => {
                 if (toastEl.style[key]) {
@@ -286,7 +286,7 @@ function createFixedToast(_id, text, style = {}) {
             close: () => {
                 toastEl.style.opacity = `0`
                 toastEl.style.transform = `scale(0)`
-                toastEl.style.top = '-' + toastEl.getBoundingClientRect().height + 'px'
+                toastEl.style.bottom = '-' + toastEl.getBoundingClientRect().height + 'px'
                 clearTimeout(timer)
                 timer = setTimeout(() => {
                     toastEl.remove()

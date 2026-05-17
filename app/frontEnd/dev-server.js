@@ -588,6 +588,11 @@ app.use('/api/AT', (req, res) => {
     res.json({ result: '+CGDCONT: 1,"IP","cmnet","10.45.12.98",0,0,0,0\n+CGDCONT: 2,"IPV4V6","ims","",0,0,0,0 OK' });
   } else if (cmd.includes('QTEMP')) {
     res.json({ result: '+QTEMP: "mdm-modem0",38,"mdm-modem1",36,"soc_thermal",41 OK' });
+  } else if (cmd.includes('SP5GCMDS') && cmd.includes('GET NR SYNCH_PARAM')) {
+    res.json({ result: 'synch_param,44,' + (toggleState._hsrEnabled ? '1' : '0') + ' OK' });
+  } else if (cmd.includes('SP5GCMDS') && cmd.includes('SET NR PARAM')) {
+    toggleState._hsrEnabled = cmd.includes(',35,1');
+    res.json({ result: 'OK' });
   } else if (cmd.includes('SIM_SLOT') || cmd.includes('DUAL_SIM_SUPPORT')) {
     res.json({ sim_slot: '0', dual_sim_support: '0' });
   } else {

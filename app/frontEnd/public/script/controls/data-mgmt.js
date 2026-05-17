@@ -38,9 +38,9 @@
       var res = await getDataUsage();
       if (!res) return;
 
-      // Use firmware's monthly counters (same as original ZTE traffic_alert page)
-      var dl = Number(res.monthly_rx_bytes || 0);
-      var ul = Number(res.monthly_tx_bytes || 0);
+      // ZTE monthly counters use LAN perspective: tx = to clients (download), rx = from clients (upload)
+      var dl = Number(res.monthly_tx_bytes || 0);
+      var ul = Number(res.monthly_rx_bytes || 0);
 
       totalEl.textContent = formatBytes(dl + ul);
       dlEl.textContent = formatBytes(dl);

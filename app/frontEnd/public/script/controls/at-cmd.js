@@ -93,6 +93,7 @@
   // Preset buttons
   var presetBtns = document.querySelectorAll('.at-cmd-preset-btn');
   presetBtns.forEach(function (btn) {
+    if (!btn.dataset.cmd) return;
     btn.addEventListener('click', function () {
       sendCommand(btn.dataset.cmd);
     });

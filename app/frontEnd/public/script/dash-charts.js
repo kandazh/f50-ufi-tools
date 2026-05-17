@@ -731,7 +731,8 @@
     })();
 
     window.updateDataCard = function(res) {
-        const used = Number(res.monthly_tx_bytes || 0) + Number(res.monthly_rx_bytes || 0);
+        // Use Android NetworkStatsManager for both daily and monthly (consistent source)
+        const used = Number(res.monthly_data || 0);
         let limitBytes = 0;
         const limitSize = res.data_volume_limit_size || res.flux_data_volume_limit_size;
         const limitOn = res.flux_data_volume_limit_switch == '1' || res.data_volume_limit_switch == '1';

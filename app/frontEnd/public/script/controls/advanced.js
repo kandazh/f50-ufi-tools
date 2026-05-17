@@ -59,6 +59,11 @@
     switches.roam = createToggle('ADV_ROAM_SWITCH');
     switches.samba = createToggle('ADV_SAMBA_SWITCH');
     switches.light = createToggle('ADV_LIGHT_SWITCH');
+    switches.hsr = createToggle('HSR_SWITCH', async function (on) {
+      if (typeof executeATCommand === 'function') {
+        await executeATCommand('AT+SP5GCMDS="set nr param",35,' + (on ? '1' : '0'));
+      }
+    });
   }
 
   function createToggle(containerId, onChange) {
@@ -238,6 +243,15 @@
       if (switches.samba) switches.samba.set(data.samba_switch === '1');
       if (switches.light) switches.light.set(data.indicator_light_switch === '1');
     } catch (e) { console.warn('[Advanced] Failed to load quick switches:', e); }
+    // Load HSR state via AT command (separate from goform)
+    try {
+      if (switches.hsr && typeof executeATCommand === 'function') {
+        var atRes = await executeATCommand('AT+SP5GCMDS="get nr synch_param",44');
+        if (atRes && atRes.result && atRes.result.includes('synch_param,44,1')) {
+          switches.hsr.set(true);
+        }
+      }
+    } catch (e) { /* silent */ }
   }
 
   /* --- Save all --- */
