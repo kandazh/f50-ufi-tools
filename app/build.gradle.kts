@@ -129,7 +129,7 @@ android {
             variant.outputs.all {
                 val output = this as BaseVariantOutputImpl
 
-                val appName = "UFI-TOOLS_WEB"
+                val appName = "Hotbox"
                 val versionName = variant.versionName ?: variant.versionCode
                 val versionCode = variant.versionCode
                 val date = SimpleDateFormat("HHmm").format(Date())
