@@ -64,9 +64,9 @@ class BootReceiver : BroadcastReceiver() {
                     val aghBinary = java.io.File("/data/agh/agh/bin/AdGuardHome")
                     if (aghBinary.exists()) {
                         val socketPath = java.io.File(context.filesDir, "hotbox_root_shell.sock")
-                        // Wait up to 30s for root socket (socat may not be ready yet at early boot)
+                        // Wait up to 60s for root socket (socat may not be ready yet at early boot)
                         var waited = 0
-                        while (!socketPath.exists() && waited < 30) {
+                        while (!socketPath.exists() && waited < 60) {
                             Thread.sleep(2000)
                             waited += 2
                         }

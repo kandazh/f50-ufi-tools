@@ -356,8 +356,8 @@ class ADBService : Service() {
     private fun startAghWatchdog() {
         aghWatchdogExecutor.execute {
             try {
-                // Initial delay — let boot.sh finish first
-                Thread.sleep(120_000)
+                // Initial delay — wait briefly for root socket to be ready
+                Thread.sleep(15_000)
                 var isFirstCheck = true
                 while (!Thread.currentThread().isInterrupted) {
                     try {
