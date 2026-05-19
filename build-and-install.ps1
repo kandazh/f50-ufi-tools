@@ -13,19 +13,26 @@ $apk = Get-ChildItem "app\build\outputs\apk\release\*.apk" | Sort-Object LastWri
 if (-not $apk) { Write-Host "No APK found!" -ForegroundColor Red; exit 1 }
 Write-Host "`n=== APK: $($apk.Name) ($([math]::Round($apk.Length/1MB,2)) MB) ===" -ForegroundColor Green
 
-# 3. Check device connection
-$devices = & ".\platform-tools\adb.exe" devices | Select-String "device$"
+# 3. Ensure ADB connection (connect wirelessly if not already connected)
+$adb = ".\platform-tools\adb.exe"
+$devices = & $adb devices | Select-String "device$"
+if (-not $devices) {
+    Write-Host "`n=== No device found, trying wireless ADB... ===" -ForegroundColor Yellow
+    & $adb connect 192.168.0.1:5555 | Out-Null
+    Start-Sleep -Seconds 2
+    $devices = & $adb devices | Select-String "device$"
+}
 if (-not $devices) { Write-Host "No device connected!" -ForegroundColor Red; exit 1 }
 Write-Host "`n=== Device found ===" -ForegroundColor Cyan
 
 # 4. Install APK (uninstall first if signature mismatch)
 Write-Host "`n=== Installing ===" -ForegroundColor Cyan
-$installOutput = & ".\platform-tools\adb.exe" install -r "$($apk.FullName)" 2>&1 | Out-String
+$installOutput = & $adb install -r "$($apk.FullName)" 2>&1 | Out-String
 Write-Host $installOutput
 if ($installOutput -match "INSTALL_FAILED" -or $installOutput -match "Failure") {
     Write-Host "Signature mismatch or install failed - uninstalling old version..." -ForegroundColor Yellow
-    & ".\platform-tools\adb.exe" uninstall com.hotbox.f50_app
-    $installOutput = & ".\platform-tools\adb.exe" install "$($apk.FullName)" 2>&1 | Out-String
+    & $adb uninstall com.hotbox.f50_app
+    $installOutput = & $adb install "$($apk.FullName)" 2>&1 | Out-String
     Write-Host $installOutput
     if ($installOutput -notmatch "Success") { Write-Host "Install failed!" -ForegroundColor Red; exit 1 }
 }
@@ -33,7 +40,6 @@ if ($installOutput -match "INSTALL_FAILED" -or $installOutput -match "Failure") 
 Write-Host "`n=== Done! $($apk.Name) installed ===" -ForegroundColor Green
 
 $pkg = "com.hotbox.f50_app"
-$adb = ".\platform-tools\adb.exe"
 
 # 5. Grant runtime permissions
 Write-Host "`n=== Granting permissions ===" -ForegroundColor Cyan

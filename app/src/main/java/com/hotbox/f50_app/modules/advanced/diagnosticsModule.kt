@@ -17,6 +17,7 @@ import java.io.File
 
 fun Route.diagnosticsModule(context: Context) {
     val TAG = "[$BASE_TAG]_diagnosticsModule"
+    val curlBin = "${context.filesDir.absolutePath}/curl"
 
     // Allowed diagnostic tools and their command templates
     val allowedTools = mapOf(
@@ -33,25 +34,26 @@ fun Route.diagnosticsModule(context: Context) {
         "traceroute" to { target: String, opts: JSONObject ->
             val maxHops = opts.optInt("max_hops", 15).coerceIn(5, 30)
             val timeout = opts.optInt("timeout", 3).coerceIn(1, 10)
-            "traceroute -m $maxHops -w $timeout ${shellEscape(target)} 2>&1"
+            "toybox traceroute -m $maxHops -w $timeout ${shellEscape(target)} 2>&1"
         },
         "traceroute6" to { target: String, opts: JSONObject ->
             val maxHops = opts.optInt("max_hops", 15).coerceIn(5, 30)
             val timeout = opts.optInt("timeout", 3).coerceIn(1, 10)
-            "traceroute6 -m $maxHops -w $timeout ${shellEscape(target)} 2>&1"
+            "toybox traceroute6 -m $maxHops -w $timeout ${shellEscape(target)} 2>&1"
         },
         "nslookup" to { target: String, opts: JSONObject ->
             val server = opts.optString("server", "").trim()
             if (server.isNotEmpty()) {
-                "nslookup ${shellEscape(target)} ${shellEscape(server)} 2>&1"
+                // Query specific DNS server using ping to resolve + nc for raw DNS isn't practical
+                // Use ping-based resolution showing the IP, then try reverse too
+                "echo 'Server: ${shellEscape(server)}' && ping -c1 -W3 ${shellEscape(target)} 2>&1 | head -1 | sed 's/PING /Name: /;s/ (.*//' && ping -c1 -W3 ${shellEscape(target)} 2>&1 | head -1 | grep -oP '\\(\\K[^)]+' | sed 's/^/Address: /' 2>&1"
             } else {
-                "nslookup ${shellEscape(target)} 2>&1"
+                "echo 'Server: (system default)' && ping -c1 -W3 ${shellEscape(target)} 2>&1 | head -1 | sed 's/PING /Name: /;s/ (.*//' && ping -c1 -W3 ${shellEscape(target)} 2>&1 | head -1 | grep -oP '\\(\\K[^)]+' | sed 's/^/Address: /' 2>&1"
             }
         },
         "curl" to { target: String, opts: JSONObject ->
-            // HTTP HEAD request with timing info — no body download
             val timeout = opts.optInt("timeout", 10).coerceIn(1, 30)
-            "curl -sS -o /dev/null -w 'dns: %{time_namelookup}s\\nconnect: %{time_connect}s\\ntls: %{time_appconnect}s\\nttfb: %{time_starttransfer}s\\ntotal: %{time_total}s\\nhttp_code: %{http_code}\\nremote_ip: %{remote_ip}' --max-time $timeout -I ${shellEscape(target)} 2>&1"
+            "$curlBin -sS -o /dev/null -w 'dns: %{time_namelookup}s\\nconnect: %{time_connect}s\\ntls: %{time_appconnect}s\\nttfb: %{time_starttransfer}s\\ntotal: %{time_total}s\\nhttp_code: %{http_code}\\nremote_ip: %{remote_ip}' --max-time $timeout -I ${shellEscape(target)} 2>&1"
         }
     )
 
