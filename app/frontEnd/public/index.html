@@ -1279,6 +1279,8 @@
                         <button class="ctrl-nav-btn" data-ctrl-tab="at"><span class="ctrl-nav-icon">⌨️</span><span>AT Commands</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="swap_memory"><span class="ctrl-nav-icon">💾</span><span>Virtual Memory</span></button>
                         <button class="ctrl-nav-btn" data-ctrl-tab="plugin"><span class="ctrl-nav-icon">🧩</span><span>Plugins</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="diagnostics"><span class="ctrl-nav-icon">🔍</span><span>Diagnostics</span></button>
+                        <button class="ctrl-nav-btn" data-ctrl-tab="wireguard"><span class="ctrl-nav-icon">🔐</span><span>WireGuard VPN</span></button>
 
                         <div class="ctrl-nav-group-title">Messaging</div>
                         <button class="ctrl-nav-btn" data-ctrl-tab="sms"><span class="ctrl-nav-icon">💬</span><span>Messaging</span></button>
@@ -2350,6 +2352,167 @@ uptime</pre>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagnostics Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="diagnostics" style="display:none">
+                        <div class="ctrl-panel-title">
+                            <span>Network Diagnostics</span>
+                        </div>
+
+                        <!-- Tool Selection -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">🛠️</span> Tool</div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">Action</span>
+                                    <select class="select" id="DIAG_TOOL">
+                                        <option value="ping">Ping (IPv4)</option>
+                                        <option value="ping6">Ping (IPv6)</option>
+                                        <option value="traceroute">Traceroute (IPv4)</option>
+                                        <option value="traceroute6">Traceroute (IPv6)</option>
+                                        <option value="nslookup">DNS Lookup</option>
+                                        <option value="curl">HTTP Probe (curl)</option>
+                                    </select>
+                                </div>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Target</span>
+                                    <input class="ctrl-input" id="DIAG_TARGET" type="text" placeholder="1.1.1.1 or google.com or https://example.com">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">⚙️</span> Options</div>
+                            <div class="ctrl-form" id="DIAG_OPTIONS">
+                                <label class="ctrl-field" id="DIAG_OPT_COUNT_WRAP">
+                                    <span class="ctrl-label">Count</span>
+                                    <input class="ctrl-input" id="DIAG_OPT_COUNT" type="number" min="1" max="20" placeholder="1–20 (default: 4)" style="width:80px">
+                                </label>
+                                <label class="ctrl-field" id="DIAG_OPT_TIMEOUT_WRAP">
+                                    <span class="ctrl-label">Timeout (s)</span>
+                                    <input class="ctrl-input" id="DIAG_OPT_TIMEOUT" type="number" min="1" max="30" placeholder="1–30 (default: 5)" style="width:80px">
+                                </label>
+                                <label class="ctrl-field" id="DIAG_OPT_MAXHOPS_WRAP" style="display:none">
+                                    <span class="ctrl-label">Max Hops</span>
+                                    <input class="ctrl-input" id="DIAG_OPT_MAXHOPS" type="number" min="5" max="30" placeholder="5–30 (default: 15)" style="width:80px">
+                                </label>
+                                <label class="ctrl-field" id="DIAG_OPT_DNS_WRAP" style="display:none">
+                                    <span class="ctrl-label">DNS Server</span>
+                                    <input class="ctrl-input" id="DIAG_OPT_DNS" type="text" placeholder="(optional) 8.8.8.8">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Output -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📋</span> Output</div>
+                            <pre class="swap-log-output" id="DIAG_OUTPUT" style="white-space:pre-wrap;font-family:monospace;font-size:12px;min-height:120px;max-height:400px;overflow-y:auto"></pre>
+                        </div>
+
+                        <div class="ctrl-actions">
+                            <button type="button" class="ctrl-submit-btn" id="DIAG_RUN_BTN">Run</button>
+                            <button type="button" class="ctrl-submit-btn" id="DIAG_CLEAR_BTN" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- WireGuard VPN Panel -->
+                    <div class="ctrl-panel" data-ctrl-panel="wireguard" style="display:none">
+                        <div class="ctrl-panel-title">
+                            <span>WireGuard VPN</span>
+                            <span class="ctrl-adv-title-warn">⚠️ Requires root</span>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📡</span> Status</div>
+                            <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label">State</span>
+                                    <span id="WG_STATUS_BADGE" style="padding:3px 10px;border-radius:4px;font-size:12px;background:rgba(248,113,113,0.15);color:#fca5a5">Disconnected</span>
+                                </div>
+                                <div class="ctrl-field" id="WG_ACTIVE_INFO" style="display:none">
+                                    <span class="ctrl-label">Tunnel</span>
+                                    <span id="WG_ACTIVE_NAME" style="font-size:13px;color:#e2e8f0">—</span>
+                                </div>
+                                <div class="ctrl-field" id="WG_TRANSFER_INFO" style="display:none">
+                                    <span class="ctrl-label">Transfer</span>
+                                    <span id="WG_TRANSFER" style="font-size:12px;color:#94a3b8">—</span>
+                                </div>
+                            </div>
+                            <div class="ctrl-actions" style="margin-top:8px">
+                                <button type="button" class="ctrl-submit-btn" id="WG_CONNECT_BTN" style="display:none">Connect</button>
+                                <button type="button" class="ctrl-submit-btn" id="WG_DISCONNECT_BTN" style="display:none;background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#fca5a5">Disconnect</button>
+                            </div>
+                        </div>
+
+                        <!-- Saved Tunnels -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📂</span> Saved Tunnels</div>
+                            <div id="WG_TUNNEL_LIST" style="display:flex;flex-direction:column;gap:6px;min-height:32px">
+                                <span style="color:#64748b;font-size:12px">Loading...</span>
+                            </div>
+                        </div>
+
+                        <!-- Add New Tunnel -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">➕</span> Add Tunnel</div>
+                            <div class="ctrl-form">
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Name</span>
+                                    <input class="ctrl-input" id="WG_NEW_NAME" type="text" placeholder="my-vpn" maxlength="15">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Private Key</span>
+                                    <div style="display:flex;gap:6px;width:100%">
+                                        <input class="ctrl-input" id="WG_NEW_PRIVKEY" type="password" placeholder="Base64 private key" style="flex:1">
+                                        <button type="button" class="ctrl-submit-btn" id="WG_GENKEY_BTN" style="padding:6px 12px;font-size:11px;flex:0 0 auto">Generate</button>
+                                    </div>
+                                </label>
+                                <div class="ctrl-field" id="WG_PUBKEY_DISPLAY" style="display:none">
+                                    <span class="ctrl-label">Public Key</span>
+                                    <span id="WG_NEW_PUBKEY" style="font-size:11px;color:#94a3b8;word-break:break-all"></span>
+                                </div>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Address</span>
+                                    <input class="ctrl-input" id="WG_NEW_ADDR" type="text" placeholder="10.0.0.2/32">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">DNS</span>
+                                    <input class="ctrl-input" id="WG_NEW_DNS" type="text" placeholder="1.1.1.1 (optional)">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Peer Public Key</span>
+                                    <input class="ctrl-input" id="WG_NEW_PEER_PUBKEY" type="text" placeholder="Server's public key (Base64)">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Peer Endpoint</span>
+                                    <input class="ctrl-input" id="WG_NEW_PEER_ENDPOINT" type="text" placeholder="vpn.example.com:51820">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Allowed IPs</span>
+                                    <input class="ctrl-input" id="WG_NEW_ALLOWED_IPS" type="text" placeholder="0.0.0.0/0, ::/0" value="0.0.0.0/0, ::/0">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Preshared Key</span>
+                                    <input class="ctrl-input" id="WG_NEW_PSK" type="password" placeholder="(optional)">
+                                </label>
+                                <label class="ctrl-field">
+                                    <span class="ctrl-label">Keepalive (s)</span>
+                                    <input class="ctrl-input" id="WG_NEW_KEEPALIVE" type="number" min="0" max="600" value="25" style="width:80px">
+                                </label>
+                            </div>
+                            <div class="ctrl-actions" style="margin-top:8px">
+                                <button type="button" class="ctrl-submit-btn" id="WG_SAVE_BTN">Save Tunnel</button>
+                            </div>
+                        </div>
+
+                        <!-- Log -->
+                        <div class="ctrl-section">
+                            <div class="ctrl-section-title"><span class="ctrl-section-icon">📋</span> Log</div>
+                            <div class="swap-log-output" id="WG_LOG" style="min-height:60px"></div>
                         </div>
                     </div>
 
@@ -4058,6 +4221,8 @@ uptime</pre>
     <script src="/script/controls/changepwd.js"></script>
     <script src="/script/controls/schedule-reboot.js"></script>
     <script src="/script/controls/scheduled-task.js"></script>
+    <script src="/script/controls/diagnostics.js"></script>
+    <script src="/script/controls/wireguard.js"></script>
     <script src="/script/controls/plugin.js"></script>
     <script src="/script/controls/virtual-memory.js"></script>
     <script src="/script/controls/adguard-home.js"></script>

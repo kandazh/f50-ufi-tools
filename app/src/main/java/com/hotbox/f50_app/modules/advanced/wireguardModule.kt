@@ -29,7 +29,7 @@ fun Route.wireguardModule(context: Context) {
     fun rootExec(command: String, timeoutMs: Long = 15000): String? {
         val socketPath = getSocketPath()
         if (!socketPath.exists()) return null
-        return RootShell.sendCommandToSocket(command, socketPath.absolutePath, timeoutMs)
+        return RootShell.sendCommandToSocket(command, socketPath.absolutePath, timeoutMs.toInt())
     }
 
     fun ensureWgBinary(): Boolean {

@@ -102,10 +102,10 @@ fun Route.diagnosticsModule(context: Context) {
             }
 
             val output: String = if (hasRoot) {
-                RootShell.sendCommandToSocket(command, socketPath.absolutePath, timeoutMs)
+                RootShell.sendCommandToSocket(command, socketPath.absolutePath, timeoutMs.toInt())
                     ?: "Command timed out or returned null"
             } else {
-                val result = sendShellCmd(command, (timeoutMs / 1000).toInt())
+                val result = sendShellCmd(command, timeoutMs / 1000)
                 if (result.done) result.content else "Timeout: ${result.content}"
             }
 
