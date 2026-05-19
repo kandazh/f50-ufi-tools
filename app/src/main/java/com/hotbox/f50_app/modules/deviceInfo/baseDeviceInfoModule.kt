@@ -6,6 +6,7 @@ import com.hotbox.f50_app.configs.AppMeta
 import com.hotbox.f50_app.configs.AppMeta.isReadUseTerms
 import com.hotbox.f50_app.modules.BASE_TAG
 import com.hotbox.f50_app.modules.PREFS_NAME
+import com.hotbox.f50_app.utils.HostapdClient
 import com.hotbox.f50_app.utils.HotboxLog
 import com.hotbox.f50_app.utils.HotboxUtils
 import com.hotbox.f50_app.utils.UniqueDeviceIDManager
@@ -50,6 +51,8 @@ private data class BaseDeviceInfoResponse(
     val battery: String? = null,
     val daily_data: Long? = null,
     val monthly_data: Long? = null,
+    val monthly_download: Long? = null,
+    val monthly_upload: Long? = null,
     val internal_available_storage: Long? = null,
     val internal_used_storage: Long? = null,
     val internal_total_storage: Long? = null,
@@ -71,6 +74,8 @@ private data class BaseDeviceInfoResponse(
 private data class DeviceStorageSnapshot(
     val dailyData: Long? = null,
     val monthlyData: Long? = null,
+    val monthlyDownload: Long? = null,
+    val monthlyUpload: Long? = null,
     val availableSize: Long? = null,
     val usedSize: Long? = null,
     val totalSize: Long? = null,
@@ -116,14 +121,16 @@ private fun readStorageSnapshot(context: Context, tag: String, timestamp: Long):
         val availableSize = statFs.blockSizeLong * statFs.availableBlocksLong
         val usedSize = totalSize - availableSize
         val dailyData = HotboxUtils.getCachedTodayUsage(context)
-        val monthlyData = HotboxUtils.getCachedMonthlyUsage(context)
+        val monthlyBreakdown = HotboxUtils.getMonthlyDataBreakdown(context)
         val removableStorageInfo = HotboxUtils.getCachedRemovableStorageInfo(context)
         val externalTotal = removableStorageInfo?.totalBytes ?: 0L
         val externalAvailable = removableStorageInfo?.availableBytes ?: 0L
 
         DeviceStorageSnapshot(
             dailyData = dailyData,
-            monthlyData = monthlyData,
+            monthlyData = monthlyBreakdown.total,
+            monthlyDownload = monthlyBreakdown.download,
+            monthlyUpload = monthlyBreakdown.upload,
             availableSize = availableSize,
             usedSize = usedSize,
             totalSize = totalSize,
@@ -237,6 +244,8 @@ fun Route.baseDeviceInfoModule(context: Context) {
             battery = battery.batteryLevel?.toString(),
             daily_data = storage.dailyData,
             monthly_data = storage.monthlyData,
+            monthly_download = storage.monthlyDownload,
+            monthly_upload = storage.monthlyUpload,
             internal_available_storage = storage.availableSize,
             internal_used_storage = storage.usedSize,
             internal_total_storage = storage.totalSize,
@@ -358,6 +367,45 @@ fun Route.baseDeviceInfoModule(context: Context) {
                 }.toString(),
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
+            )
+        }
+    }
+
+    // WiFi station info (per-client signal, link speed) via hostapd control interface
+    get("/api/wifi_stations") {
+        try {
+            // Ensure root shell socket path is set for hostapd communication
+            if (HostapdClient.rootShellSocketPath.isEmpty()) {
+                val socketPath = java.io.File(context.filesDir, "hotbox_root_shell.sock")
+                HostapdClient.rootShellSocketPath = socketPath.absolutePath
+            }
+            val stations = HostapdClient.getAllStations()
+            val arr = JSONArray()
+            for (sta in stations) {
+                arr.put(JSONObject().apply {
+                    put("mac", sta.macAddress)
+                    if (sta.signal != null) put("signal", sta.signal)
+                    if (sta.txBitrate != null) put("tx_bitrate", sta.txBitrate)
+                    if (sta.rxBitrate != null) put("rx_bitrate", sta.rxBitrate)
+                    if (sta.txBytes != null) put("tx_bytes", sta.txBytes)
+                    if (sta.rxBytes != null) put("rx_bytes", sta.rxBytes)
+                    if (sta.connectedTime != null) put("connected_time", sta.connectedTime)
+                })
+            }
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText(
+                JSONObject().apply {
+                    put("result", "success")
+                    put("stations", arr)
+                }.toString(),
+                ContentType.Application.Json
+            )
+        } catch (e: Exception) {
+            HotboxLog.d(TAG, "Error getting WiFi stations: ${e.message}")
+            call.response.headers.append("Access-Control-Allow-Origin", "*")
+            call.respondText(
+                """{"result":"error","error":"${e.message}","stations":[]}""",
+                ContentType.Application.Json
             )
         }
     }

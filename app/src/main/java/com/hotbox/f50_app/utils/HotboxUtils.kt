@@ -168,27 +168,41 @@ class HotboxUtils {
             return totalBytes
         }
 
+        data class MonthlyDataBreakdown(
+            val total: Long,
+            val download: Long, // rxBytes = data received from network = downloaded
+            val upload: Long,   // txBytes = data sent to network = uploaded
+        )
+
         fun getMonthlyDataUsage(
             context: Context,
         ): Long {
+            return getMonthlyDataBreakdown(context).total
+        }
+
+        fun getMonthlyDataBreakdown(
+            context: Context,
+        ): MonthlyDataBreakdown {
             val networkStatsManager =
                 context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
 
             val startTime = getStartOfMonthMillis()
             val endTime = System.currentTimeMillis()
 
-            var totalBytes = 0L
-
             try {
                 val summary = networkStatsManager.querySummaryForDevice(
                     ConnectivityManager.TYPE_MOBILE, null, startTime, endTime
                 )
-                totalBytes = summary.rxBytes + summary.txBytes
+                return MonthlyDataBreakdown(
+                    total = summary.rxBytes + summary.txBytes,
+                    download = summary.rxBytes,
+                    upload = summary.txBytes,
+                )
             } catch (e: Exception) {
                 e.printStackTrace()
             }
 
-            return totalBytes
+            return MonthlyDataBreakdown(0L, 0L, 0L)
         }
 
         //Get data usage on demand

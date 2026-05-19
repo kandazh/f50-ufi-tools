@@ -38,9 +38,17 @@
       var res = await getDataUsage();
       if (!res) return;
 
-      // ZTE monthly counters use LAN perspective: tx = to clients (download), rx = from clients (upload)
-      var dl = Number(res.monthly_tx_bytes || 0);
-      var ul = Number(res.monthly_rx_bytes || 0);
+      // Use Android NetworkStatsManager data from baseDeviceInfo (accurate, persists across reboots)
+      var deviceInfo = await getBaseDeviceInfo();
+      var dl, ul;
+      if (deviceInfo && deviceInfo.monthly_download != null) {
+        dl = Number(deviceInfo.monthly_download || 0);
+        ul = Number(deviceInfo.monthly_upload || 0);
+      } else {
+        // Fallback to ZTE goform counters (can reset on reboot)
+        dl = Number(res.monthly_tx_bytes || 0);
+        ul = Number(res.monthly_rx_bytes || 0);
+      }
 
       totalEl.textContent = formatBytes(dl + ul);
       dlEl.textContent = formatBytes(dl);

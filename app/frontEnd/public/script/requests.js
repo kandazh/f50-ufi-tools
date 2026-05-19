@@ -355,11 +355,24 @@ const getUFIData = async () => {
         const params = new URLSearchParams();
         params.append('_', Date.now().toString());
 
-        const cmd = 'usb_port_switch,battery_charging,sms_received_flag,sms_unread_num,sms_sim_unread_num,sim_msisdn,data_volume_limit_switch,battery_value,battery_vol_percent,network_signalbar,network_rssi,cr_version,iccid,imei,imsi,wan_ipaddr,ipv6_wan_ipaddr,lan_ipaddr,mac_address,msisdn,network_information,Lte_ca_status,rssi,Z5g_rsrp,Nr_snr,nr_rsrq,nr_rssi,Nr_bands,Nr_fcn,Nr_bands_widths,Nr_pci,Nr_cell_id,lte_rsrp,Lte_snr,lte_rsrq,lte_rssi,Lte_bands,Lte_fcn,Lte_bands_widths,Lte_pci,Lte_cell_id,wifi_access_sta_num,loginfo,data_volume_alert_percent,data_volume_limit_size,realtime_rx_thrpt,realtime_tx_thrpt,realtime_time,monthly_tx_bytes,monthly_rx_bytes,monthly_time,network_type,network_provider,ppp_status,performance_mode,indicator_light_switch,samba_switch,roam_setting_option,dial_roam_setting_option';
+        // ZTE F50 firmware bug: requesting individual signal fields (Lte_bands, Lte_snr, etc.)
+        // returns empty strings in LTE mode. However, `network_information` is a composite field
+        // that returns ALL signal data correctly. We must NOT include individual signal fields
+        // alongside it, as they override the composite values with empty strings.
+        // Solution: fetch `network_information` alone, then fetch everything else separately.
+        const cmdSignal = 'network_information';
+        const cmdStatus = 'network_provider,Lte_ca_status,usb_port_switch,battery_charging,sms_received_flag,sms_unread_num,sms_sim_unread_num,sim_msisdn,data_volume_limit_switch,battery_value,battery_vol_percent,network_signalbar,network_rssi,cr_version,iccid,imei,imsi,wan_ipaddr,ipv6_wan_ipaddr,lan_ipaddr,mac_address,msisdn,rssi,wifi_access_sta_num,loginfo,data_volume_alert_percent,data_volume_limit_size,realtime_rx_thrpt,realtime_tx_thrpt,realtime_time,monthly_tx_bytes,monthly_rx_bytes,monthly_time,ppp_status,performance_mode,indicator_light_switch,samba_switch,roam_setting_option,dial_roam_setting_option';
 
-        // Fetch goform data and device info in parallel
-        const [goformRes, deviceInfoRes] = await Promise.all([
-            fetch(`${HOTBOX_baseURL}/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=${cmd}&${params.toString()}`, {
+        // Fetch signal data, status data, and device info in parallel
+        const [signalRes, statusRes, deviceInfoRes] = await Promise.all([
+            fetch(`${HOTBOX_baseURL}/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=${cmdSignal}&${params.toString()}`, {
+                headers: {
+                    ...common_headers,
+                    "hotbox-cookie": HOTBOX_COOKIE
+                },
+                signal: controller.signal
+            }),
+            fetch(`${HOTBOX_baseURL}/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=${cmdStatus}&_=${Date.now() + 1}`, {
                 headers: {
                     ...common_headers,
                     "hotbox-cookie": HOTBOX_COOKIE
@@ -369,7 +382,9 @@ const getUFIData = async () => {
             getBaseDeviceInfo(controller.signal)
         ]);
 
-        const resData = await goformRes.json()
+        const signalData = await signalRes.json()
+        const statusData = await statusRes.json()
+        const resData = { ...statusData, ...signalData }
         let deviceInfo = deviceInfoRes
 
         const isPresent = (value) => value !== undefined && value !== null && value !== ''

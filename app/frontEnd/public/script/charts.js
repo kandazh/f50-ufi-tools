@@ -33,7 +33,7 @@ const chartUpdater = (prop, value) => {
                     if (cur.length == 1) cur = `&nbsp;&nbsp;&nbsp;${cur}`
                     else if (cur.length == 2) cur = `&nbsp;&nbsp;${cur}`
                     else if (cur.length == 3) cur = `&nbsp;${cur}`
-                    const btnColor = getCssVariableColor('--dark-btn-color-active')
+                    const btnColor = getAccentColor()
                     html += `${hotbox_parseSignalBar(cur_origin, 0, max, max * 0.9, max * 0.9, {
                         g: '#ffa5008f',
                         o: '#ffa5008f',
@@ -97,6 +97,23 @@ const chartUpdater = (prop, value) => {
 const MAX_length = 20
 const ANI_DURATION = 300
 
+// Register plugin once globally
+Chart.register(centerTextPlugin);
+
+// Cache for CSS variable colors — refreshed on theme change
+let _cachedBtnColor = getCssVariableColor('--dark-btn-color-active');
+const getAccentColor = () => _cachedBtnColor;
+// Refresh on theme/color-scheme changes
+if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        _cachedBtnColor = getCssVariableColor('--dark-btn-color-active');
+    });
+}
+
+// Track all chart instances for cleanup
+const _allCharts = [];
+window.addEventListener('beforeunload', () => { _allCharts.forEach(c => c.destroy()); });
+
 // CPU usage
 const updateCpuChart = (() => {
     const canvas = document.getElementById('hotboxCpuChart');
@@ -105,7 +122,6 @@ const updateCpuChart = (() => {
     const labels = Array(MAX_length).fill('0')
     const data = Array(MAX_length).fill(0)
 
-    Chart.register(centerTextPlugin);
     const chart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -115,8 +131,8 @@ const updateCpuChart = (() => {
                 tension: 0.5,
                 pointRadius: 0,
                 fill: true,
-                backgroundColor: getCssVariableColor('--dark-btn-color-active'),
-                borderColor: getCssVariableColor('--dark-btn-color-active'),
+                backgroundColor: getAccentColor(),
+                borderColor: getAccentColor(),
                 borderRadius: 3,
                 borderSkipped: false,
             }]
@@ -147,6 +163,7 @@ const updateCpuChart = (() => {
             }
         }
     });
+    _allCharts.push(chart);
 
     return (value) => {
         if (value != undefined || value != null) {
@@ -159,8 +176,9 @@ const updateCpuChart = (() => {
             labels.push(Number(labels[labels.length - 1]) + 1)
             data.push(Number(value))
 
-            chart.data.datasets[0].backgroundColor = getCssVariableColor('--dark-btn-color-active');
-            chart.data.datasets[0].borderColor = getCssVariableColor('--dark-btn-color-active');
+            const c = getAccentColor();
+            chart.data.datasets[0].backgroundColor = c;
+            chart.data.datasets[0].borderColor = c;
             chart.update()
         }
     }
@@ -174,7 +192,6 @@ const updateCpuCoreChart = (() => {
     const labels = ['Core 1', 'Core 2', 'Core 3', 'Core 4', 'Core 5', 'Core 6', 'Core 7', 'Core 8']
     const data = Array(8).fill(0)
 
-    Chart.register(centerTextPlugin);
     const chart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -184,8 +201,8 @@ const updateCpuCoreChart = (() => {
                 tension: 0.5,
                 pointRadius: 0,
                 fill: true,
-                backgroundColor: getCssVariableColor('--dark-btn-color-active'),
-                borderColor: getCssVariableColor('--dark-btn-color-active'),
+                backgroundColor: getAccentColor(),
+                borderColor: getAccentColor(),
                 borderRadius: 3,
                 borderSkipped: false,
             }]
@@ -216,6 +233,7 @@ const updateCpuCoreChart = (() => {
             }
         }
     });
+    _allCharts.push(chart);
 
     return (value) => {
         if (value != undefined || value != null) {
@@ -226,8 +244,9 @@ const updateCpuCoreChart = (() => {
                     data[index] = 0
                 }
             }
-            chart.data.datasets[0].backgroundColor = getCssVariableColor('--dark-btn-color-active');
-            chart.data.datasets[0].borderColor = getCssVariableColor('--dark-btn-color-active');
+            const c = getAccentColor();
+            chart.data.datasets[0].backgroundColor = c;
+            chart.data.datasets[0].borderColor = c;
             chart.update()
         }
     }
@@ -241,14 +260,13 @@ const updateMemChart = (() => {
     const labels = Array(MAX_length).fill('0')
     const data = Array(MAX_length).fill(0)
 
-    Chart.register(centerTextPlugin);
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels,
             datasets: [{
                 data,
-                borderColor: getCssVariableColor('--dark-btn-color-active'),
+                borderColor: getAccentColor(),
                 tension: 0.5,
                 pointRadius: 0,
                 fill: false,
@@ -281,6 +299,7 @@ const updateMemChart = (() => {
             }
         }
     });
+    _allCharts.push(chart);
 
     return (value) => {
         if (value != undefined || value != null) {
@@ -303,8 +322,9 @@ const updateMemChart = (() => {
             data.forEach((_, index) => {
                 data[index] = newData[index]
             })
-            chart.data.datasets[0].backgroundColor = getCssVariableColor('--dark-btn-color-active');
-            chart.data.datasets[0].borderColor = getCssVariableColor('--dark-btn-color-active');
+            const c = getAccentColor();
+            chart.data.datasets[0].backgroundColor = c;
+            chart.data.datasets[0].borderColor = c;
             chart.update()
         }
     }
@@ -318,14 +338,13 @@ const updateTempChart = (() => {
     const labels = Array(MAX_length).fill('0')
     const data = Array(MAX_length).fill(0)
 
-    Chart.register(centerTextPlugin);
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels,
             datasets: [{
                 data,
-                borderColor: getCssVariableColor('--dark-btn-color-active'),
+                borderColor: getAccentColor(),
                 tension: 0.5,
                 pointRadius: 0,
                 borderWidth: 2,
@@ -358,6 +377,7 @@ const updateTempChart = (() => {
             }
         }
     });
+    _allCharts.push(chart);
 
     return (value) => {
         if (value != undefined || value != null) {
@@ -379,8 +399,9 @@ const updateTempChart = (() => {
             data.forEach((_, index) => {
                 data[index] = newData[index]
             })
-            chart.data.datasets[0].backgroundColor = getCssVariableColor('--dark-btn-color-active');
-            chart.data.datasets[0].borderColor = getCssVariableColor('--dark-btn-color-active');
+            const c = getAccentColor();
+            chart.data.datasets[0].backgroundColor = c;
+            chart.data.datasets[0].borderColor = c;
             chart.update()
         }
     }
@@ -395,7 +416,6 @@ const updateNetworkChart = (() => {
     const dataDL = Array(MAX_length).fill(0)
     const dataUL = Array(MAX_length).fill(0)
 
-    Chart.register(centerTextPlugin);
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -403,7 +423,7 @@ const updateNetworkChart = (() => {
             datasets: [{
                 label: 'DL',
                 data: dataDL,
-                borderColor: getCssVariableColor('--dark-btn-color-active'),
+                borderColor: getAccentColor(),
                 tension: 0.5,
                 pointRadius: 0,
                 yAxisID: 'y',
@@ -453,6 +473,7 @@ const updateNetworkChart = (() => {
             }
         }
     });
+    _allCharts.push(chart);
 
     return (value) => {
         if (value != undefined || value != null) {
@@ -487,8 +508,9 @@ const updateNetworkChart = (() => {
                     dataUL.forEach((_, index) => {
                         dataUL[index] = newDataUL[index]
                     })
-                    chart.data.datasets[0].backgroundColor = getCssVariableColor('--dark-btn-color-active');
-                    chart.data.datasets[0].borderColor = getCssVariableColor('--dark-btn-color-active');
+                    const c = getAccentColor();
+                    chart.data.datasets[0].backgroundColor = c;
+                    chart.data.datasets[0].borderColor = c;
                     chart.update()
                 }
             }, 1);
@@ -514,9 +536,9 @@ const updateDataHistoryChart = (() => {
                 pointBorderWidth: 3,
                 fill: true,
                 pointBackgroundColor: getTextColor(),
-                pointBorderColor: getCssVariableColor('--dark-btn-color-active'),
-                backgroundColor: getCssVariableColor('--dark-btn-color-active'),
-                borderColor: getCssVariableColor('--dark-btn-color-active'),
+                pointBorderColor: getAccentColor(),
+                backgroundColor: getAccentColor(),
+                borderColor: getAccentColor(),
                 borderRadius: 3,
                 borderSkipped: false,
             }]
@@ -562,6 +584,7 @@ const updateDataHistoryChart = (() => {
             }
         }
     });
+    _allCharts.push(chart);
 
     return ({ items }) => {
         if (!items || items.length === 0) {
@@ -578,10 +601,11 @@ const updateDataHistoryChart = (() => {
 
         chart.data.labels = newLabels;
         chart.data.datasets[0].data = newData;
-        chart.data.datasets[0].backgroundColor = getCssVariableColor('--dark-btn-color-active');
-        chart.data.datasets[0].borderColor = getCssVariableColor('--dark-btn-color-active');
+        const c = getAccentColor();
+        chart.data.datasets[0].backgroundColor = c;
+        chart.data.datasets[0].borderColor = c;
         chart.data.datasets[0].pointBackgroundColor = getTextColor()
-        chart.data.datasets[0].pointBorderColor = getCssVariableColor('--dark-btn-color-active')
+        chart.data.datasets[0].pointBorderColor = c
         // Shrink if too dense
         if (items.length >= 15) {
             chart.data.datasets[0].pointRadius = 0
@@ -622,6 +646,7 @@ const updateSignalChart = (() => {
                     pointRadius: 0,
                     fill: true,
                     borderWidth: 2,
+                    spanGaps: true,
                     yAxisID: 'yRsrp',
                 },
                 {
@@ -633,6 +658,7 @@ const updateSignalChart = (() => {
                     pointRadius: 0,
                     fill: true,
                     borderWidth: 2,
+                    spanGaps: true,
                     yAxisID: 'ySinr',
                 },
                 {
@@ -644,6 +670,7 @@ const updateSignalChart = (() => {
                     pointRadius: 0,
                     fill: true,
                     borderWidth: 2,
+                    spanGaps: true,
                     yAxisID: 'yRsrp',
                 },
                 {
@@ -655,6 +682,7 @@ const updateSignalChart = (() => {
                     pointRadius: 0,
                     fill: true,
                     borderWidth: 2,
+                    spanGaps: true,
                     yAxisID: 'yRsrp',
                 }
             ]
@@ -717,6 +745,7 @@ const updateSignalChart = (() => {
             }
         }
     });
+    _allCharts.push(chart);
 
     return (rsrp, sinr, rsrq, rssi) => {
         rsrpData.push(rsrp != null ? Number(rsrp) : null);
@@ -736,8 +765,8 @@ const updateSignalChart = (() => {
         const rsrqEl = document.getElementById('sig-rsrq-val');
         const rssiEl = document.getElementById('sig-rssi-val');
         if (rsrpEl) rsrpEl.textContent = rsrp != null ? rsrp + ' dBm' : '--';
-        if (sinrEl) sinrEl.textContent = sinr != null ? sinr + ' dB' : '--';
-        if (rsrqEl) rsrqEl.textContent = rsrq != null ? rsrq + ' dB' : '--';
+        if (sinrEl) sinrEl.textContent = sinr != null ? sinr + ' dB' : 'N/A';
+        if (rsrqEl) rsrqEl.textContent = rsrq != null ? rsrq + ' dB' : 'N/A';
         if (rssiEl) rssiEl.textContent = rssi != null ? rssi + ' dBm' : '--';
 
         chart.update();

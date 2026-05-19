@@ -752,6 +752,26 @@
   .dash-device-grid { grid-template-columns: 1fr; }
 }
 
+/* WiFi Clients card */
+.dash-wifi-clients { display: flex; flex-direction: column; gap: 6px; }
+.dash-wifi-clients-empty { font-size: 0.72rem; opacity: 0.5; padding: 8px; }
+.dash-wifi-client-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px;
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(148,163,184,0.08);
+}
+.dash-wifi-client-col { font-size: 0.72rem; }
+.dash-wifi-client-name { font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dash-wifi-client-ip { font-size: 0.65rem; opacity: 0.5; font-family: var(--font-mono); margin-left: 6px; }
+.dash-wifi-client-rx { color: #4ade80; font-family: var(--font-mono); white-space: nowrap; font-size: 0.65rem; }
+.dash-wifi-client-tx { color: #60a5fa; font-family: var(--font-mono); white-space: nowrap; font-size: 0.65rem; }
+
+@media (max-width: 480px) {
+  .dash-wifi-client-row { gap: 6px; padding: 5px 8px; }
+  .dash-wifi-client-name { font-size: 0.68rem; }
+  .dash-wifi-client-ip { display: none; }
+  .dash-wifi-client-rx, .dash-wifi-client-tx { font-size: 0.6rem; }
+}
+
 .info-card--wide {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));

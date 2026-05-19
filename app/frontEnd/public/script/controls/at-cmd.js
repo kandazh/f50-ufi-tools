@@ -93,9 +93,34 @@
   // Preset buttons
   var presetBtns = document.querySelectorAll('.at-cmd-preset-btn');
   presetBtns.forEach(function (btn) {
-    if (!btn.dataset.cmd) return;
-    btn.addEventListener('click', function () {
-      sendCommand(btn.dataset.cmd);
-    });
+    if (btn.dataset.cmd) {
+      btn.addEventListener('click', function () {
+        sendCommand(btn.dataset.cmd);
+      });
+    } else if (btn.dataset.action === 'force-imei') {
+      btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        try {
+          if (typeof checkAdvancedFunc === 'function' && !await checkAdvancedFunc()) {
+            appendOutput('Force IMEI Query', 'Error: Advanced features required', true);
+            return;
+          }
+          var res = await runShellWithRoot('/data/data/com.hotbox.f50_app/files/imei_reader');
+          if (typeof resetDiagImeiCache === 'function') resetDiagImeiCache();
+          appendOutput('Force IMEI Query', res.content || JSON.stringify(res), false);
+        } catch (e) {
+          appendOutput('Force IMEI Query', 'Error: ' + (e.message || 'Failed'), true);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    } else if (btn.dataset.action === 'input-imei') {
+      btn.addEventListener('click', function () {
+        var newImei = t ? t('your_new_imei') : 'YOUR_NEW_IMEI';
+        input.value = 'AT+SPIMEI=0,"' + newImei + '"';
+        input.focus();
+        input.setSelectionRange(13, 13 + newImei.length);
+      });
+    }
   });
 })();

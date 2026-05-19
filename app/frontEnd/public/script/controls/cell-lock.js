@@ -121,8 +121,10 @@
       return;
     }
     var rows = cells.map(function (c) {
+      var b = String(c.band || '');
+      var bandLabel = b ? (/^[BNbn]/i.test(b) ? b.toUpperCase() : 'B' + b) : '?';
       return '<tr style="cursor:pointer" data-pci="' + c.pci + '" data-earfcn="' + c.earfcn + '" data-band="' + (c.band || '') + '">' +
-        '<td>' + (c.band || '?') + '</td>' +
+        '<td>' + bandLabel + '</td>' +
         '<td>' + c.earfcn + '</td>' +
         '<td>' + c.pci + '</td>' +
         '<td>' + hotbox_parseSignalBar(c.rsrp) + '</td>' +
@@ -182,7 +184,10 @@
   }
 
   // Fetch cell data
+  var _isLoadingCellData = false;
   async function loadCellData(lockedOnly) {
+    if (_isLoadingCellData) return;
+    _isLoadingCellData = true;
     try {
       // neighbor + locked (same as original firmware Network tab)
       var params = new URLSearchParams({ cmd: 'neighbor_cell_info,locked_cell_info' });
@@ -227,6 +232,7 @@
       }
       renderCurrentCell(cells);
     }
+    _isLoadingCellData = false;
   }
 
   // Start/stop auto-refresh

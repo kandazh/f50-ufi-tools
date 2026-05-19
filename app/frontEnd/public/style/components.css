@@ -868,6 +868,30 @@ select.ctrl-input:focus-visible {
   font-family: var(--font-mono);
   letter-spacing: 0.3px;
 }
+.ctrl-device-sta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.ctrl-sta-signal {
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.ctrl-sta-signal.sig-excellent { color: #4ade80; background: rgba(74, 222, 128, 0.1); }
+.ctrl-sta-signal.sig-good { color: #a3e635; background: rgba(163, 230, 53, 0.1); }
+.ctrl-sta-signal.sig-fair { color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+.ctrl-sta-signal.sig-weak { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+.ctrl-sta-speed {
+  font-size: 10.5px;
+  color: rgba(168, 130, 255, 0.85);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
 .ctrl-device-actions {
   display: flex;
   gap: 6px;

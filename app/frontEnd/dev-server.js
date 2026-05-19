@@ -62,8 +62,11 @@ function realUpload(url, sizeBytes) {
 // Real ping using system ping command — returns avg ms
 function realPing(host, count) {
   try {
+    // Sanitize inputs to prevent shell injection
+    const safeHost = String(host).replace(/[^a-zA-Z0-9.\-:]/g, '');
+    const safeCount = Math.min(Math.max(parseInt(count) || 4, 1), 20);
     const isWin = process.platform === 'win32';
-    const cmd = isWin ? `ping -n ${count} ${host}` : `ping -c ${count} -W 3 ${host}`;
+    const cmd = isWin ? `ping -n ${safeCount} ${safeHost}` : `ping -c ${safeCount} -W 3 ${safeHost}`;
     const output = execSync(cmd, { timeout: 10000, encoding: 'utf8' });
     return output;
   } catch (e) {
@@ -73,9 +76,11 @@ function realPing(host, count) {
 
 // Real connection timing — returns seconds
 function realConnectTime(host) {
+  // Sanitize host to prevent SSRF
+  const safeHost = String(host).replace(/[^a-zA-Z0-9.\-:]/g, '');
   return new Promise((resolve) => {
     const startTime = Date.now();
-    const req = http.get(`http://${host}/`, { timeout: 3000 }, (res) => {
+    const req = http.get(`http://${safeHost}/`, { timeout: 3000 }, (res) => {
       res.resume();
       const secs = (Date.now() - startTime) / 1000;
       resolve(secs);
@@ -519,6 +524,21 @@ app.use('/api/connInfo', (req, res) => {
       tcp: '20', tcp_active: '3', tcp_other: '17',
       tcp6: '780', udp: '5', udp6: '15', unix: '423'
     }
+  });
+});
+
+// Mock /api/wifi_stations — per-client WiFi signal and link speed
+app.use('/api/wifi_stations', (req, res) => {
+  res.json({
+    result: 'success',
+    stations: [
+      { mac: 'a4:b1:c2:d3:e4:f5', signal: -42, tx_bitrate: 866, rx_bitrate: 780, tx_bytes: 1234567, rx_bytes: 9876543, connected_time: 3600 },
+      { mac: 'b6:c7:d8:e9:f0:a1', signal: -55, tx_bitrate: 780, rx_bitrate: 650, tx_bytes: 456789, rx_bytes: 2345678, connected_time: 1200 },
+      { mac: 'e1:f2:a3:b4:c5:d6', signal: -65, tx_bitrate: 433, rx_bitrate: 390, tx_bytes: 345678, rx_bytes: 1234567, connected_time: 7200 },
+      { mac: 'f1:a2:b3:c4:d5:e6', signal: -58, tx_bitrate: 650, rx_bitrate: 585, tx_bytes: 234567, rx_bytes: 876543, connected_time: 900 },
+      { mac: 'a1:b2:c3:d4:e5:f6', signal: -72, tx_bitrate: 293, rx_bitrate: 263, tx_bytes: 123456, rx_bytes: 654321, connected_time: 600 },
+      { mac: 'b1:c2:d3:e4:f5:a6', signal: -48, tx_bitrate: 866, rx_bitrate: 780, tx_bytes: 987654, rx_bytes: 5432109, connected_time: 4500 },
+    ]
   });
 });
 
@@ -1119,6 +1139,9 @@ app.use('/api/baseDeviceInfo', (req, res) => {
     current_now: jitter(2000, 5000),
     voltage_now: '3850000',
     daily_data: String(Math.floor(Math.random() * 200000000)),
+    monthly_data: 1970000000,
+    monthly_download: 1650000000,
+    monthly_upload: 320000000,
     internal_total_storage: '9793069056',
     internal_used_storage: '1567691264',
     internal_available_storage: '8225377792',

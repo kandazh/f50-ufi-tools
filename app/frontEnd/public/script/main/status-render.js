@@ -36,6 +36,48 @@ const resetDiagImeiCache = () => {
 let StopStatusRenderTimer = null
 let isNotLoginOnce = true
 let status_login_try_times = 0
+
+// Cached DOM references — queried once to avoid repeated getElementById per poll cycle
+const _dom = {
+    gsLogo: null, gsNet: null, gsType: null, gsSig: null,
+    gsWifi: null, gsWifiIcon: null, gsLan: null, gsLanIcon: null,
+    ciBand: null, ciFreq: null, ciBw: null, ciPci: null, ciCell: null,
+    ciQci: null, ciDl: null, ciUl: null,
+    ccBand: null, ccFreq: null, ccRsrp: null, ccSinr: null, ccRsrq: null,
+    ccRsrpFill: null, ccSinrFill: null, ccRsrqFill: null,
+    ccRssi: null, ccRssiFill: null,
+    unreadSms: null,
+};
+function _initDomCache() {
+    _dom.gsLogo = document.getElementById('gs-carrier-logo');
+    _dom.gsNet = document.getElementById('gs-network');
+    _dom.gsType = document.getElementById('gs-nettype');
+    _dom.gsSig = document.getElementById('gs-signal');
+    _dom.gsWifi = document.getElementById('gs-wifi');
+    _dom.gsWifiIcon = document.getElementById('gs-wifi-icon');
+    _dom.gsLan = document.getElementById('gs-lan');
+    _dom.gsLanIcon = document.getElementById('gs-lan-icon');
+    _dom.ciBand = document.getElementById('ci-band');
+    _dom.ciFreq = document.getElementById('ci-freq');
+    _dom.ciBw = document.getElementById('ci-bw');
+    _dom.ciPci = document.getElementById('ci-pci');
+    _dom.ciCell = document.getElementById('ci-cellid');
+    _dom.ciQci = document.getElementById('ci-qci');
+    _dom.ciDl = document.getElementById('ci-dl');
+    _dom.ciUl = document.getElementById('ci-ul');
+    _dom.ccBand = document.getElementById('cc-band');
+    _dom.ccFreq = document.getElementById('cc-freq');
+    _dom.ccRsrp = document.getElementById('cc-rsrp');
+    _dom.ccSinr = document.getElementById('cc-sinr');
+    _dom.ccRsrq = document.getElementById('cc-rsrq');
+    _dom.ccRsrpFill = document.getElementById('cc-rsrp-fill');
+    _dom.ccSinrFill = document.getElementById('cc-sinr-fill');
+    _dom.ccRsrqFill = document.getElementById('cc-rsrq-fill');
+    _dom.ccRssi = document.getElementById('cc-rssi');
+    _dom.ccRssiFill = document.getElementById('cc-rssi-fill');
+    _dom.unreadSms = document.querySelector('#UNREAD_SMS');
+}
+
 let handlerStatusRender = async (flag = false) => {
     const status = document.querySelector('#STATUS')
     if (flag) {
@@ -127,14 +169,16 @@ let handlerStatusRender = async (flag = false) => {
 
         // Update global status bar
         (() => {
-            const gsLogo = document.getElementById('gs-carrier-logo');
-            const gsNet = document.getElementById('gs-network');
-            const gsType = document.getElementById('gs-nettype');
-            const gsSig = document.getElementById('gs-signal');
-            const gsWifi = document.getElementById('gs-wifi');
-            const gsWifiIcon = document.getElementById('gs-wifi-icon');
-            const gsLan = document.getElementById('gs-lan');
-            const gsLanIcon = document.getElementById('gs-lan-icon');
+            // Lazy-init DOM cache on first render
+            if (!_dom.gsLogo) _initDomCache();
+            const gsLogo = _dom.gsLogo;
+            const gsNet = _dom.gsNet;
+            const gsType = _dom.gsType;
+            const gsSig = _dom.gsSig;
+            const gsWifi = _dom.gsWifi;
+            const gsWifiIcon = _dom.gsWifiIcon;
+            const gsLan = _dom.gsLan;
+            const gsLanIcon = _dom.gsLanIcon;
 
             // Indian carrier logo SVGs (brand colors, simple iconic designs)
             const carrierLogos = {
@@ -247,7 +291,10 @@ let handlerStatusRender = async (flag = false) => {
             const rsrp = pickMetricNumber(res.Z5g_rsrp, res.lte_rsrp);
             const sinr = pickMetricNumber(res.Nr_snr, res.Lte_snr);
             const rsrq = pickMetricNumber(res.nr_rsrq, res.lte_rsrq);
-            const rssi = pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi);
+            let rssi = pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi);
+            // ZTE firmware on LTE-only mode often only reports RSRP;
+            // estimate RSSI from RSRP when unavailable (approx +30 dB offset for 20MHz)
+            if (rssi == null && rsrp != null) rssi = rsrp + 30;
             updateSignalChart(rsrp, sinr, rsrq, rssi);
         }
 
@@ -264,11 +311,11 @@ let handlerStatusRender = async (flag = false) => {
             const pci   = is5g ? pickMetricText(res.Nr_pci, res.Lte_pci) : pickMetricText(res.Lte_pci, res.Nr_pci);
             const cellId = is5g ? pickMetricText(res.Nr_cell_id, res.Lte_cell_id) : pickMetricText(res.Lte_cell_id, res.Nr_cell_id);
 
-            const elBand = document.getElementById('ci-band');
-            const elFreq = document.getElementById('ci-freq');
-            const elBw   = document.getElementById('ci-bw');
-            const elPci  = document.getElementById('ci-pci');
-            const elCell = document.getElementById('ci-cellid');
+            const elBand = _dom.ciBand;
+            const elFreq = _dom.ciFreq;
+            const elBw   = _dom.ciBw;
+            const elPci  = _dom.ciPci;
+            const elCell = _dom.ciCell;
             const elFreqLabel = elFreq?.previousElementSibling;
 
             if (elBand)  elBand.textContent  = band;
@@ -280,9 +327,9 @@ let handlerStatusRender = async (flag = false) => {
 
             // QCI / DL / UL from window.QORS_MESSAGE (skip if dash-charts poller is handling it)
             if (!window._qosFromDashCharts) {
-                const elQci = document.getElementById('ci-qci');
-                const elDl  = document.getElementById('ci-dl');
-                const elUl  = document.getElementById('ci-ul');
+                const elQci = _dom.ciQci;
+                const elDl  = _dom.ciDl;
+                const elUl  = _dom.ciUl;
                 if (window.QORS_MESSAGE) {
                     const qm = window.QORS_MESSAGE.match(/QCI[：:]\s*(\d+)/);
                     const dlm = window.QORS_MESSAGE.match(/⬇️\s*([\d.]+\s*Mbps)/);
@@ -298,17 +345,17 @@ let handlerStatusRender = async (flag = false) => {
             }
 
             // Update Current Cell box (progress bar style)
-            const ccBand = document.getElementById('cc-band');
-            const ccFreq = document.getElementById('cc-freq');
+            const ccBand = _dom.ccBand;
+            const ccFreq = _dom.ccFreq;
             if (ccBand) ccBand.textContent = band;
             if (ccFreq) ccFreq.textContent = freq;
 
-            const ccRsrp = document.getElementById('cc-rsrp');
-            const ccSinr = document.getElementById('cc-sinr');
-            const ccRsrq = document.getElementById('cc-rsrq');
-            const ccRsrpFill = document.getElementById('cc-rsrp-fill');
-            const ccSinrFill = document.getElementById('cc-sinr-fill');
-            const ccRsrqFill = document.getElementById('cc-rsrq-fill');
+            const ccRsrp = _dom.ccRsrp;
+            const ccSinr = _dom.ccSinr;
+            const ccRsrq = _dom.ccRsrq;
+            const ccRsrpFill = _dom.ccRsrpFill;
+            const ccSinrFill = _dom.ccSinrFill;
+            const ccRsrqFill = _dom.ccRsrqFill;
 
             const rsrpVal = pickMetricNumber(res.Z5g_rsrp, res.lte_rsrp);
             const sinrVal = pickMetricNumber(res.Nr_snr, res.Lte_snr);
@@ -342,9 +389,10 @@ let handlerStatusRender = async (flag = false) => {
             }
 
             // RSSI: -110 to -25 dBm range
-            const ccRssi = document.getElementById('cc-rssi');
-            const ccRssiFill = document.getElementById('cc-rssi-fill');
-            const rssiVal = pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi);
+            const ccRssi = _dom.ccRssi;
+            const ccRssiFill = _dom.ccRssiFill;
+            let rssiVal = pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi);
+            if (rssiVal == null && rsrpVal != null) rssiVal = rsrpVal + 30;
             if (ccRssi) ccRssi.textContent = rssiVal != null ? rssiVal + ' dBm' : '--';
             if (ccRssiFill) {
                 const rssiPct = rssiVal != null ? Math.min(100, Math.max(0, ((rssiVal + 110) / 85) * 100)) : 0;
@@ -370,7 +418,7 @@ let handlerStatusRender = async (flag = false) => {
             if (window.QORS_MESSAGE) {
                 res['QORS_MESSAGE'] = window.QORS_MESSAGE
             }
-            const unreadEl = document.querySelector('#UNREAD_SMS')
+            const unreadEl = _dom.unreadSms;
             if (res.sms_unread_num && res.sms_unread_num > 0) {
                 unreadEl.style.display = ''
                 unreadEl.innerHTML = res.sms_unread_num > 99 ? '99+' : res.sms_unread_num

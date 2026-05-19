@@ -1050,4 +1050,59 @@
     pollQoS();
     setInterval(pollQoS, 300000);
 
+    // --- Row 8: WiFi Clients (signal + link speed) ---
+    async function pollWifiClients() {
+        const container = document.getElementById('dashWifiClients');
+        if (!container) return;
+        try {
+            const r = await fetch(_baseURL + '/wifi_stations');
+            const j = await r.json();
+            if (!j || !Array.isArray(j.stations) || j.stations.length === 0) {
+                container.innerHTML = '<div class="dash-wifi-clients-empty">No WiFi station data available</div>';
+                return;
+            }
+
+            // Also fetch client names from station_list for hostname resolution
+            let nameMap = {};
+            try {
+                const cr = await fetch(_baseURL + '/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=station_list,lan_station_list,hostNameList&_=' + Date.now(), {
+                    headers: typeof common_headers !== 'undefined' ? { ...common_headers, 'hotbox-cookie': (typeof HOTBOX_COOKIE !== 'undefined' ? HOTBOX_COOKIE : '') } : {}
+                });
+                const cd = await cr.json();
+                if (Array.isArray(cd.station_list)) cd.station_list.forEach(function(c) { if (c.mac_addr) nameMap[c.mac_addr.toLowerCase()] = c; });
+                if (Array.isArray(cd.lan_station_list)) cd.lan_station_list.forEach(function(c) { if (c.mac_addr) nameMap[c.mac_addr.toLowerCase()] = c; });
+            } catch(_) {}
+
+            container.innerHTML = j.stations.map(function(sta) {
+                const mac = (sta.mac || '').toLowerCase();
+                const client = nameMap[mac];
+                const name = (client && client.hostname && client.hostname !== '--') ? client.hostname : (client && client.ip_addr) || mac;
+                const ip = client ? (client.ip_addr || '') : '';
+
+                const rx = sta.rx_bitrate != null ? sta.rx_bitrate : '—';
+                const tx = sta.tx_bitrate != null ? sta.tx_bitrate : '—';
+
+                let sigHtml = '';
+                if (sta.signal != null) {
+                    const rssi = sta.signal;
+                    let cls = 'sig-weak';
+                    if (rssi >= -50) cls = 'sig-excellent';
+                    else if (rssi >= -60) cls = 'sig-good';
+                    else if (rssi >= -70) cls = 'sig-fair';
+                    sigHtml = ' <span class="' + cls + '">' + rssi + 'dBm</span>';
+                }
+
+                return '<div class="dash-wifi-client-row">' +
+                    '<div class="dash-wifi-client-col dash-wifi-client-name">' + escapeHtml(name) + (ip && ip !== name ? ' <span class="dash-wifi-client-ip">' + ip + '</span>' : '') + sigHtml + '</div>' +
+                    '<div class="dash-wifi-client-col dash-wifi-client-rx">↓' + rx + '</div>' +
+                    '<div class="dash-wifi-client-col dash-wifi-client-tx">↑' + tx + '</div>' +
+                '</div>';
+            }).join('');
+        } catch (e) {
+            // silent
+        }
+    }
+    pollWifiClients();
+    setInterval(pollWifiClients, 10000); // refresh every 10s
+
 })();

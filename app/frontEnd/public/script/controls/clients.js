@@ -26,16 +26,41 @@
     return false;
   }
 
+  // Fetch WiFi station info (signal, link speed) from hostapd
+  async function fetchWifiStations() {
+    try {
+      var _base = (typeof HOTBOX_baseURL !== 'undefined') ? HOTBOX_baseURL : '/api';
+      var r = await fetch(_base + '/wifi_stations');
+      var j = await r.json();
+      if (j && Array.isArray(j.stations)) return j.stations;
+    } catch (e) {}
+    return [];
+  }
+
+  function signalToLabel(rssi) {
+    if (rssi >= -50) return { text: 'Excellent', cls: 'sig-excellent' };
+    if (rssi >= -60) return { text: 'Good', cls: 'sig-good' };
+    if (rssi >= -70) return { text: 'Fair', cls: 'sig-fair' };
+    return { text: 'Weak', cls: 'sig-weak' };
+  }
+
   async function loadClientsData() {
     var connList = document.getElementById('CTRL_CONN_LIST');
     var blackList = document.getElementById('CTRL_BLACK_LIST');
     if (!connList) return;
     try {
-      var res = await getData(new URLSearchParams({
-        cmd: 'station_list,lan_station_list,queryDeviceAccessControlList,user_ip_addr,hostNameList',
-        multi_data: '1'
-      }));
+      var [res, wifiStations] = await Promise.all([
+        getData(new URLSearchParams({
+          cmd: 'station_list,lan_station_list,queryDeviceAccessControlList,user_ip_addr,hostNameList',
+          multi_data: '1'
+        })),
+        fetchWifiStations()
+      ]);
       if (!res) return;
+
+      // Build station lookup by MAC
+      var stationMap = {};
+      wifiStations.forEach(function (s) { if (s.mac) stationMap[s.mac.toLowerCase()] = s; });
 
       userIp = res.user_ip_addr || '';
 
@@ -76,6 +101,24 @@
           var badge = isWifi
             ? '<span class="ctrl-device-badge wifi">' + connIcon + ' WiFi</span>'
             : '<span class="ctrl-device-badge cable">' + connIcon + ' Cable</span>';
+          // WiFi station info (signal + link speed)
+          var staInfo = '';
+          if (isWifi && d.mac_addr) {
+            var sta = stationMap[d.mac_addr.toLowerCase()];
+            if (sta) {
+              var parts = [];
+              if (sta.signal != null) {
+                var sig = signalToLabel(sta.signal);
+                parts.push('<span class="ctrl-sta-signal ' + sig.cls + '">' + sta.signal + ' dBm (' + sig.text + ')</span>');
+              }
+              if (sta.tx_bitrate != null || sta.rx_bitrate != null) {
+                var tx = sta.tx_bitrate != null ? sta.tx_bitrate + '' : '—';
+                var rx = sta.rx_bitrate != null ? sta.rx_bitrate + '' : '—';
+                parts.push('<span class="ctrl-sta-speed">↓' + rx + ' / ↑' + tx + ' Mbps</span>');
+              }
+              if (parts.length) staInfo = '<div class="ctrl-device-sta">' + parts.join('') + '</div>';
+            }
+          }
           return '<div class="ctrl-device-item">' +
             '<div class="ctrl-device-icon">' + deviceIcon + '</div>' +
             '<div class="ctrl-device-info">' +
@@ -84,6 +127,7 @@
                 '<span class="ctrl-device-ip">' + escapeHtml(d.ip_addr || '') + '</span>' +
                 '<span class="ctrl-device-mac">' + escapeHtml(d.mac_addr || '') + '</span>' +
               '</div>' +
+              staInfo +
             '</div>' +
             '<div class="ctrl-device-actions">' +
               '<button class="ctrl-device-btn danger" onclick="blockDevice(\'' + escapeHtml(d.mac_addr) + '\',\'' + escapeHtml(name) + '\',\'' + escapeHtml(d.ip_addr || '') + '\')">Block</button>' +
