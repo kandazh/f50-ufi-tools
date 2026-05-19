@@ -717,7 +717,11 @@
   .container {
     gap: 8px;
     padding: 0 4px;
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+  .app-layout {
+    flex-shrink: 0;
+    flex-basis: auto;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
   .icon-bar {
     position: fixed;
@@ -747,7 +751,6 @@
   }
   .content-panel {
     margin-left: 0;
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
   .main-title {
     flex-direction: column;
@@ -770,6 +773,9 @@
   }
   .tab-bar::-webkit-scrollbar {
     display: none;
+  }
+  .tab-panel {
+    padding-bottom: 80px;
   }
   .tab-bar .tab-btn {
     padding: 8px 10px;

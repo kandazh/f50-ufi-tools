@@ -1050,59 +1050,138 @@
     pollQoS();
     setInterval(pollQoS, 300000);
 
-    // --- Row 8: WiFi Clients (signal + link speed) ---
+    // --- Row 8: WiFi Clients (signal + link speed + live bandwidth) ---
+    var _prevStations = {};
+    var _prevStationTime = 0;
+
     async function pollWifiClients() {
         const container = document.getElementById('dashWifiClients');
         if (!container) return;
         try {
-            const r = await fetch(_baseURL + '/wifi_stations');
-            const j = await r.json();
+            // Fetch both endpoints in parallel for speed
+            const [stationsRes, clientsRes] = await Promise.all([
+                fetch(_baseURL + '/wifi_stations'),
+                fetch(_baseURL + '/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=station_list,lan_station_list&_=' + Date.now(), {
+                    headers: typeof common_headers !== 'undefined' ? { ...common_headers, 'hotbox-cookie': (typeof HOTBOX_COOKIE !== 'undefined' ? HOTBOX_COOKIE : '') } : {}
+                }).catch(function() { return null; })
+            ]);
+
+            const j = await stationsRes.json();
             if (!j || !Array.isArray(j.stations) || j.stations.length === 0) {
                 container.innerHTML = '<div class="dash-wifi-clients-empty">No WiFi station data available</div>';
+                _prevStations = {};
+                _prevStationTime = 0;
                 return;
             }
 
-            // Also fetch client names from station_list for hostname resolution
+            var now = Date.now();
+            var elapsed = _prevStationTime > 0 ? (now - _prevStationTime) / 1000 : 0;
+
+            // Build name map from station_list
             let nameMap = {};
             try {
-                const cr = await fetch(_baseURL + '/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=station_list,lan_station_list,hostNameList&_=' + Date.now(), {
-                    headers: typeof common_headers !== 'undefined' ? { ...common_headers, 'hotbox-cookie': (typeof HOTBOX_COOKIE !== 'undefined' ? HOTBOX_COOKIE : '') } : {}
-                });
-                const cd = await cr.json();
-                if (Array.isArray(cd.station_list)) cd.station_list.forEach(function(c) { if (c.mac_addr) nameMap[c.mac_addr.toLowerCase()] = c; });
-                if (Array.isArray(cd.lan_station_list)) cd.lan_station_list.forEach(function(c) { if (c.mac_addr) nameMap[c.mac_addr.toLowerCase()] = c; });
+                if (clientsRes) {
+                    const cd = await clientsRes.json();
+                    if (Array.isArray(cd.station_list)) cd.station_list.forEach(function(c) { if (c.mac_addr) nameMap[c.mac_addr.toLowerCase()] = c; });
+                    if (Array.isArray(cd.lan_station_list)) cd.lan_station_list.forEach(function(c) { if (c.mac_addr) nameMap[c.mac_addr.toLowerCase()] = c; });
+                }
             } catch(_) {}
 
-            container.innerHTML = j.stations.map(function(sta) {
+            var headerRow = '<div class="dash-wifi-client-row dash-wifi-client-header">' +
+                '<span class="dash-wifi-client-name">Device</span>' +
+                '<span class="dash-wifi-client-dl">↓ DL</span>' +
+                '<span class="dash-wifi-client-ul">↑ UL</span>' +
+                '<span class="dash-wifi-client-total">Total</span>' +
+                '<span class="dash-wifi-client-bitrate">Link</span>' +
+                '<span class="dash-wifi-client-signal">Signal</span>' +
+                '<span class="dash-wifi-client-time">Time</span>' +
+            '</div>';
+
+            container.innerHTML = headerRow + j.stations.map(function(sta) {
                 const mac = (sta.mac || '').toLowerCase();
                 const client = nameMap[mac];
-                const name = (client && client.hostname && client.hostname !== '--') ? client.hostname : (client && client.ip_addr) || mac;
-                const ip = client ? (client.ip_addr || '') : '';
+                const name = (client && client.hostname && client.hostname !== '--') ? client.hostname : (client && client.ip_addr) || sta.ip || mac;
 
-                const rx = sta.rx_bitrate != null ? sta.rx_bitrate : '—';
-                const tx = sta.tx_bitrate != null ? sta.tx_bitrate : '—';
-
-                let sigHtml = '';
-                if (sta.signal != null) {
-                    const rssi = sta.signal;
-                    let cls = 'sig-weak';
-                    if (rssi >= -50) cls = 'sig-excellent';
-                    else if (rssi >= -60) cls = 'sig-good';
-                    else if (rssi >= -70) cls = 'sig-fair';
-                    sigHtml = ' <span class="' + cls + '">' + rssi + 'dBm</span>';
+                // Calculate live throughput from iptables byte counter diffs
+                var dlRate = '', ulRate = '';
+                if (elapsed > 0 && _prevStations[mac]) {
+                    var prev = _prevStations[mac];
+                    var dlDiff = (sta.dl_bytes || 0) - (prev.dl_bytes || 0);
+                    var ulDiff = (sta.ul_bytes || 0) - (prev.ul_bytes || 0);
+                    if (dlDiff >= 0 && ulDiff >= 0) {
+                        dlRate = formatRateCompact(dlDiff / elapsed);
+                        ulRate = formatRateCompact(ulDiff / elapsed);
+                    }
                 }
 
+                // Link speed + signal + connected time + total consumed
+                var bitrateText = '';
+                if (sta.rx_bitrate && sta.tx_bitrate) {
+                    bitrateText = sta.rx_bitrate + '/' + sta.tx_bitrate;
+                } else if (sta.rx_bitrate) {
+                    bitrateText = sta.rx_bitrate + 'M';
+                }
+                var signalText = sta.signal != null ? sta.signal + 'dBm' : '';
+                var durationText = sta.connected_time != null ? formatDuration(sta.connected_time) : '';
+                var totalBytes = (sta.dl_bytes || 0) + (sta.ul_bytes || 0);
+                var totalText = totalBytes > 0 ? formatBytesCompact(totalBytes) : '';
+
+                var dlText = dlRate || (_prevStationTime === 0 ? '...' : '0');
+                var ulText = ulRate || (_prevStationTime === 0 ? '...' : '0');
+
                 return '<div class="dash-wifi-client-row">' +
-                    '<div class="dash-wifi-client-col dash-wifi-client-name">' + escapeHtml(name) + (ip && ip !== name ? ' <span class="dash-wifi-client-ip">' + ip + '</span>' : '') + sigHtml + '</div>' +
-                    '<div class="dash-wifi-client-col dash-wifi-client-rx">↓' + rx + '</div>' +
-                    '<div class="dash-wifi-client-col dash-wifi-client-tx">↑' + tx + '</div>' +
+                    '<span class="dash-wifi-client-name" title="' + escapeHtml(name) + '">' + escapeHtml(name) + '</span>' +
+                    '<span class="dash-wifi-client-dl">' + dlText + '</span>' +
+                    '<span class="dash-wifi-client-ul">' + ulText + '</span>' +
+                    '<span class="dash-wifi-client-total">' + totalText + '</span>' +
+                    '<span class="dash-wifi-client-bitrate">' + bitrateText + '</span>' +
+                    '<span class="dash-wifi-client-signal">' + signalText + '</span>' +
+                    '<span class="dash-wifi-client-time">' + durationText + '</span>' +
                 '</div>';
             }).join('');
+
+            // Store current readings for next diff
+            var newPrev = {};
+            j.stations.forEach(function(sta) {
+                newPrev[(sta.mac || '').toLowerCase()] = { dl_bytes: sta.dl_bytes || 0, ul_bytes: sta.ul_bytes || 0 };
+            });
+            _prevStations = newPrev;
+            _prevStationTime = now;
         } catch (e) {
             // silent
         }
     }
+
+    function formatRate(bytesPerSec) {
+        if (bytesPerSec < 1) return '0 B/s';
+        if (bytesPerSec < 1024) return Math.round(bytesPerSec) + ' B/s';
+        if (bytesPerSec < 1048576) return (bytesPerSec / 1024).toFixed(1) + ' KB/s';
+        return (bytesPerSec / 1048576).toFixed(2) + ' MB/s';
+    }
+
+    function formatRateCompact(bytesPerSec) {
+        if (bytesPerSec < 1) return '0 B';
+        if (bytesPerSec < 1024) return Math.round(bytesPerSec) + ' B';
+        if (bytesPerSec < 1048576) return (bytesPerSec / 1024).toFixed(1) + ' KB';
+        return (bytesPerSec / 1048576).toFixed(1) + ' MB';
+    }
+
+    function formatBytesCompact(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+        if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+        return (bytes / 1073741824).toFixed(1) + ' GB';
+    }
+
+    function formatDuration(seconds) {
+        if (seconds < 60) return seconds + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        var h = Math.floor(seconds / 3600);
+        var m = Math.floor((seconds % 3600) / 60);
+        return h + 'h ' + m + 'm';
+    }
+
     pollWifiClients();
-    setInterval(pollWifiClients, 10000); // refresh every 10s
+    setInterval(pollWifiClients, 3000);
 
 })();
