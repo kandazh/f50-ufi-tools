@@ -292,7 +292,7 @@
 }
 
 .ctrl-input::placeholder {
-  color: rgba(148, 163, 184, 0.25);
+  color: rgba(148, 163, 184, 0.55);
   font-family: var(--font-sans);
   letter-spacing: 0;
 }

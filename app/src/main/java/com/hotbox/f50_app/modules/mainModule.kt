@@ -3,6 +3,8 @@ package com.hotbox.f50_app.modules
 import android.content.Context
 import com.hotbox.f50_app.modules.adb.adbModule
 import com.hotbox.f50_app.modules.advanced.advancedToolsModule
+import com.hotbox.f50_app.modules.advanced.diagnosticsModule
+import com.hotbox.f50_app.modules.advanced.wireguardModule
 import com.hotbox.f50_app.modules.at.anyProxyModule
 import com.hotbox.f50_app.modules.at.atModule
 import com.hotbox.f50_app.modules.auth.authenticatedRoute
@@ -55,6 +57,10 @@ fun Application.mainModule(context: Context, proxyServerIp: String) {
             atModule(context)
 
             advancedToolsModule(context, targetServerIP)
+
+            diagnosticsModule(context)
+
+            wireguardModule(context)
 
             speedTestModule(context)
 

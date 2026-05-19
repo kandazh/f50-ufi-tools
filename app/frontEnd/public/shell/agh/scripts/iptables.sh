@@ -133,8 +133,8 @@ verify_firewall_hardening() {
     log "Firewall verification failed: missing IPv6 LAN accept rule"
     return 1
   }
-  $ip6tables_w -C INPUT -p icmpv6 -j ACCEPT >/dev/null 2>&1 || {
-    log "Firewall verification failed: missing IPv6 ICMPv6 accept rule"
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT >/dev/null 2>&1 || {
+    log "Firewall verification failed: missing IPv6 ICMPv6 packet-too-big rule"
     return 1
   }
   $ip6tables_w -C INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT >/dev/null 2>&1 || {
@@ -189,15 +189,35 @@ harden_firewall() {
   # Allow all LAN traffic
   $ip6tables_w -C INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null || \
     $ip6tables_w -I INPUT 4 -i "$lan_interface" -j ACCEPT
-  # Allow ICMPv6 (mandatory for IPv6: neighbor solicitation, router adverts, PMTU)
-  $ip6tables_w -C INPUT -p icmpv6 -j ACCEPT 2>/dev/null || \
-    $ip6tables_w -I INPUT 5 -p icmpv6 -j ACCEPT
+  # Allow essential ICMPv6 from WAN only (neighbor discovery, router adverts, PMTU)
+  # Type 1: Destination Unreachable (needed for PMTU discovery)
+  # Type 2: Packet Too Big (mandatory for PMTU)
+  # Type 3: Time Exceeded
+  # Type 133: Router Solicitation
+  # Type 134: Router Advertisement
+  # Type 135: Neighbor Solicitation
+  # Type 136: Neighbor Advertisement
+  # Block echo-request (type 128) from WAN to prevent ping-based discovery
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 5 -i "$wan_interface" -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 6 -i "$wan_interface" -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 7 -i "$wan_interface" -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type router-solicitation -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 8 -i "$wan_interface" -p icmpv6 --icmpv6-type router-solicitation -j ACCEPT
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type router-advertisement -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 9 -i "$wan_interface" -p icmpv6 --icmpv6-type router-advertisement -j ACCEPT
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type neighbour-solicitation -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 10 -i "$wan_interface" -p icmpv6 --icmpv6-type neighbour-solicitation -j ACCEPT
+  $ip6tables_w -C INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type neighbour-advertisement -j ACCEPT 2>/dev/null || \
+    $ip6tables_w -I INPUT 11 -i "$wan_interface" -p icmpv6 --icmpv6-type neighbour-advertisement -j ACCEPT
   # Allow DHCPv6 replies from carrier (scoped to WAN interface)
   $ip6tables_w -C INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null || \
-    $ip6tables_w -I INPUT 6 -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT
+    $ip6tables_w -I INPUT 12 -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT
   # Drop unsolicited WAN traffic before OEM catch-all ACCEPT rules.
   $ip6tables_w -C INPUT -i "$wan_interface" -j DROP 2>/dev/null || \
-    $ip6tables_w -I INPUT 7 -i "$wan_interface" -j DROP
+    $ip6tables_w -I INPUT 13 -i "$wan_interface" -j DROP
   # Keep the policy strict too when the firmware allows it.
   $ip6tables_w -P INPUT DROP 2>/dev/null || \
     log "Unable to set IPv6 INPUT policy to DROP, relying on explicit WAN DROP rule"
@@ -222,7 +242,13 @@ remove_hardening() {
   $ip6tables_w -D INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -i lo -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -i "$lan_interface" -j ACCEPT 2>/dev/null
-  $ip6tables_w -D INPUT -p icmpv6 -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type router-solicitation -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type router-advertisement -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type neighbour-solicitation -j ACCEPT 2>/dev/null
+  $ip6tables_w -D INPUT -i "$wan_interface" -p icmpv6 --icmpv6-type neighbour-advertisement -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -i "$wan_interface" -p udp --sport 547 --dport 546 -j ACCEPT 2>/dev/null
   $ip6tables_w -D INPUT -i "$wan_interface" -j DROP 2>/dev/null
   log "Firewall hardening removed"

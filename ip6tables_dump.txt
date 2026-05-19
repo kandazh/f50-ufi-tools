@@ -1,0 +1,198 @@
+﻿=== IPv6 FILTER ===
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1      660 40140 DROP       all      *      *       ::/0                 ::/0                 state INVALID
+2    77696   53M ACCEPT     all      *      *       ::/0                 ::/0                 state RELATED,ESTABLISHED
+3      131 10898 ACCEPT     all      lo     *       ::/0                 ::/0                
+4    12941 1178K ACCEPT     all      br0    *       ::/0                 ::/0                
+5        9   864 ACCEPT     icmpv6    *      *       ::/0                 ::/0                
+6        0     0 ACCEPT     udp      sipa_eth0 *       ::/0                 ::/0                 udp spt:547 dpt:546
+7        0     0 DROP       all      sipa_eth0 *       ::/0                 ::/0                
+8      749  132K zte_fw_net_limit  all      *      *       ::/0                 ::/0                
+9      749  132K bw_INPUT   all      *      *       ::/0                 ::/0                
+10     749  132K fw_INPUT   all      *      *       ::/0                 ::/0                
+11       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:8080
+12       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:1146
+13       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:139
+14       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:445
+15       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:5555
+16       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:5201
+17       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:5001
+18       0     0 DROP       tcp      *      *       ::/0                 ::/0                 tcp dpt:5002
+19       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:8080
+20       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:1146
+21       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:139
+22       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:445
+23       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:5555
+24       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:5201
+25       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:5001
+26       0     0 DROP       udp      *      *       ::/0                 ::/0                 udp dpt:5002
+
+Chain FORWARD (policy ACCEPT 19 packets, 2475 bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 DROP       tcp      br0    *       ::/0                 ::/0                 tcp dpt:53
+2       10   916 DROP       udp      br0    *       ::/0                 ::/0                 udp dpt:53
+3    3929K 4587M oem_fwd    all      *      *       ::/0                 ::/0                
+4    3929K 4587M fw_FORWARD  all      *      *       ::/0                 ::/0                
+5    3929K 4587M bw_FORWARD  all      *      *       ::/0                 ::/0                
+6    3929K 4587M tetherctrl_FORWARD  all      *      *       ::/0                 ::/0                
+
+Chain OUTPUT (policy ACCEPT 2 packets, 144 bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    86898   43M oem_out    all      *      *       ::/0                 ::/0                
+2    86898   43M fw_OUTPUT  all      *      *       ::/0                 ::/0                
+3    86898   43M st_OUTPUT  all      *      *       ::/0                 ::/0                
+4    86898   43M bw_OUTPUT  all      *      *       ::/0                 ::/0                
+
+Chain bw_FORWARD (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        9   814 bw_costly_sipa_eth0  all      sipa_eth0 *       ::/0                 ::/0                
+2       10  1661 bw_costly_sipa_eth0  all      *      sipa_eth0  ::/0                 ::/0                
+
+Chain bw_INPUT (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1      749  132K bw_global_alert  all      *      *       ::/0                 ::/0                
+2        0     0 bw_costly_sipa_eth0  all      sipa_eth0 *       ::/0                 ::/0                
+3        0     0 RETURN     esp      *      *       ::/0                 ::/0                
+4        0     0 RETURN     all      *      *       ::/0                 ::/0                 mark match 0x100000/0x100000
+5      749  132K MARK       all      *      *       ::/0                 ::/0                 MARK or 0x100000
+
+Chain bw_OUTPUT (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    86898   43M bw_global_alert  all      *      *       ::/0                 ::/0                
+2        1    72 bw_costly_sipa_eth0  all      *      sipa_eth0  ::/0                 ::/0                
+
+Chain bw_costly_shared (0 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 bw_penalty_box  all      *      *       ::/0                 ::/0                
+
+Chain bw_costly_sipa_eth0 (4 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1       20  2547 bw_penalty_box  all      *      *       ::/0                 ::/0                
+2        0     0 REJECT     all      *      *       ::/0                 ::/0                 ! quota sipa_eth0: 9223372036854775807 bytes  reject-with icmp6-port-unreachable
+
+Chain bw_data_saver (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        4   240 RETURN     all      *      *       ::/0                 ::/0                
+
+Chain bw_global_alert (3 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    1433K 1732M            all      *      *       ::/0                 ::/0                 ! quota globalAlert: 2097152 bytes 
+
+Chain bw_happy_box (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    4003K 4627M RETURN     all      *      *       ::/0                 ::/0                match bpf pinned /sys/fs/bpf/netd_shared/prog_netd_skfilter_allowlist_xtbpf
+2        4   240 bw_data_saver  all      *      *       ::/0                 ::/0                
+
+Chain bw_penalty_box (2 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 REJECT     all      *      *       ::/0                 ::/0                match bpf pinned /sys/fs/bpf/netd_shared/prog_netd_skfilter_denylist_xtbpf reject-with icmp6-port-unreachable
+2    4003K 4627M bw_happy_box  all      *      *       ::/0                 ::/0                
+
+Chain fw_FORWARD (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain fw_INPUT (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain fw_OUTPUT (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 DROP       all      *      !lo     ::1                  ::/0                
+
+Chain oem_fwd (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain oem_out (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain st_OUTPUT (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain st_clear_caught (2 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain st_clear_detect (0 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 REJECT     all      *      *       ::/0                 ::/0                 connmark match  0x2000000/0x2000000 reject-with icmp6-port-unreachable
+2        0     0 RETURN     all      *      *       ::/0                 ::/0                 connmark match  0x1000000/0x1000000
+3        0     0 CONNMARK   tcp      *      *       ::/0                 ::/0                 u32 "0x34>>0x1a&0x3c@0x28&0xffff0000=0x16030000&&0x34>>0x1a&0x3c@0x2c&0xff0000=0x10000" CONNMARK or 0x1000000
+4        0     0 CONNMARK   udp      *      *       ::/0                 ::/0                 u32 "0x30&0xffff0000=0x16fe0000&&0x3c&0xff0000=0x10000" CONNMARK or 0x1000000
+5        0     0 RETURN     all      *      *       ::/0                 ::/0                 connmark match  0x1000000/0x1000000
+6        0     0 st_clear_caught  tcp      *      *       ::/0                 ::/0                 state ESTABLISHED u32 "0x34>>0x1a&0x3c@0x28&0x0=0x0"
+7        0     0 st_clear_caught  udp      *      *       ::/0                 ::/0                
+
+Chain st_penalty_log (0 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 CONNMARK   all      *      *       ::/0                 ::/0                 CONNMARK or 0x1000000
+2        0     0 NFLOG      all      *      *       ::/0                 ::/0                
+
+Chain st_penalty_reject (0 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 CONNMARK   all      *      *       ::/0                 ::/0                 CONNMARK or 0x2000000
+2        0     0 NFLOG      all      *      *       ::/0                 ::/0                
+3        0     0 REJECT     all      *      *       ::/0                 ::/0                 reject-with icmp6-port-unreachable
+
+Chain tetherctrl_FORWARD (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1     323K  374M bw_global_alert  all      *      *       ::/0                 ::/0                
+2     323K  374M tetherctrl_counters  all      *      *       ::/0                 ::/0                [goto] 
+
+Chain tetherctrl_counters (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1     319K   91M RETURN     all      br0    sipa_eth0  ::/0                 ::/0                
+2    3610K 4497M RETURN     all      sipa_eth0 br0     ::/0                 ::/0                
+
+Chain zte_fw_net_limit (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+=== IPv6 NAT ===
+ip6tables v1.8.7 (legacy): can't initialize ip6tables table `nat': Table does not exist (do you need to insmod?)
+Perhaps ip6tables or your kernel needs to be upgraded.
+
+=== IPv6 MANGLE ===
+Chain PREROUTING (policy ACCEPT 354K packets, 379M bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain INPUT (policy ACCEPT 30966 packets, 4947K bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    92186   54M wakeupctrl_mangle_INPUT  all      *      *       ::/0                 ::/0                
+2    92186   54M routectrl_mangle_INPUT  all      *      *       ::/0                 ::/0                
+
+Chain FORWARD (policy ACCEPT 323K packets, 374M bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    3929K 4587M tetherctrl_mangle_FORWARD  all      *      *       ::/0                 ::/0                
+
+Chain OUTPUT (policy ACCEPT 35548 packets, 5393K bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain POSTROUTING (policy ACCEPT 359K packets, 380M bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    4017K 4630M oem_mangle_post  all      *      *       ::/0                 ::/0                
+2    4017K 4630M bw_mangle_POSTROUTING  all      *      *       ::/0                 ::/0                
+3    4017K 4630M idletimer_mangle_POSTROUTING  all      *      *       ::/0                 ::/0                
+
+Chain bw_mangle_POSTROUTING (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 RETURN     all      *      ipsec+  ::/0                 ::/0                
+2        0     0 RETURN     all      *      *       ::/0                 ::/0                 policy match dir out pol ipsec
+3    4017K 4630M MARK       all      *      *       ::/0                 ::/0                 MARK and 0xffefffff
+4    4017K 4630M            all      *      *       ::/0                 ::/0                match bpf pinned /sys/fs/bpf/netd_shared/prog_netd_skfilter_egress_xtbpf
+
+Chain idletimer_mangle_POSTROUTING (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    59771   11M IDLETIMER  all      *      sipa_eth0  ::/0                 ::/0                 timeout:10 label:0 send_nl_msg
+
+Chain oem_mangle_post (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain routectrl_mangle_INPUT (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+1    13102 1208K MARK       all      br0    *       ::/0                 ::/0                 MARK xset 0x30063/0xffefffff
+2    26804 4552K MARK       all      sipa_eth0 *       ::/0                 ::/0                 MARK xset 0x30067/0xffefffff
+
+Chain tetherctrl_mangle_FORWARD (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain wakeupctrl_mangle_INPUT (1 references)
+num   pkts bytes target     prot opt in     out     source               destination         
+

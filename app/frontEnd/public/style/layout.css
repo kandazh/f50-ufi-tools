@@ -717,6 +717,7 @@
   .container {
     gap: 8px;
     padding: 0 4px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
   .icon-bar {
     position: fixed;
@@ -746,7 +747,7 @@
   }
   .content-panel {
     margin-left: 0;
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
   .main-title {
     flex-direction: column;

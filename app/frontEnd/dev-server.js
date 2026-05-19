@@ -542,6 +542,90 @@ app.use('/api/wifi_stations', (req, res) => {
   });
 });
 
+// Mock /api/diagnostics for local development
+app.post('/api/diagnostics', (req, res) => {
+  const { tool, target, options } = req.body;
+  if (!tool || !target) return res.status(400).json({ error: 'Missing tool or target' });
+
+  const { exec } = require('child_process');
+  let cmd;
+  switch (tool) {
+    case 'ping':
+      cmd = `ping -n ${Math.min(options?.count || 4, 20)} ${target}`;
+      break;
+    case 'ping6':
+      cmd = `ping -6 -n ${Math.min(options?.count || 4, 20)} ${target}`;
+      break;
+    case 'traceroute':
+      cmd = `tracert -h ${Math.min(options?.max_hops || 15, 30)} ${target}`;
+      break;
+    case 'traceroute6':
+      cmd = `tracert -6 -h ${Math.min(options?.max_hops || 15, 30)} ${target}`;
+      break;
+    case 'nslookup':
+      cmd = options?.server ? `nslookup ${target} ${options.server}` : `nslookup ${target}`;
+      break;
+    case 'curl':
+      cmd = `curl -sS -o NUL -w "dns: %{time_namelookup}s\\nconnect: %{time_connect}s\\ntls: %{time_appconnect}s\\nttfb: %{time_starttransfer}s\\ntotal: %{time_total}s\\nhttp_code: %{http_code}\\nremote_ip: %{remote_ip}" --max-time ${Math.min(options?.timeout || 10, 30)} -I "${target}"`;
+      break;
+    default:
+      return res.status(400).json({ error: 'Unknown tool: ' + tool });
+  }
+
+  exec(cmd, { timeout: 60000 }, (err, stdout, stderr) => {
+    res.json({ tool, target, output: (stdout || '') + (stderr || '') || (err ? err.message : 'No output') });
+  });
+});
+
+// Mock WireGuard endpoints
+let wgState = { active: false, active_config: '', configs: [] };
+
+app.get('/api/wireguard', (req, res) => {
+  res.json({ ...wgState, transfer: wgState.active ? 'MOCK_PEER\t1048576\t524288' : '', endpoints: '', handshakes: '' });
+});
+
+app.post('/api/wireguard/genkey', (req, res) => {
+  const crypto = require('crypto');
+  const priv = crypto.randomBytes(32).toString('base64');
+  const pub = crypto.randomBytes(32).toString('base64');
+  res.json({ private_key: priv, public_key: pub });
+});
+
+app.post('/api/wireguard/save', (req, res) => {
+  const { name, private_key } = req.body;
+  if (!name) return res.status(400).json({ error: 'Missing name' });
+  if (!wgState.configs.includes(name)) wgState.configs.push(name);
+  const crypto = require('crypto');
+  res.json({ saved: true, name, public_key: crypto.randomBytes(32).toString('base64') });
+});
+
+app.post('/api/wireguard/connect', (req, res) => {
+  const { name } = req.body;
+  if (!name || !wgState.configs.includes(name)) return res.status(400).json({ error: 'Config not found: ' + name });
+  wgState.active = true;
+  wgState.active_config = name;
+  res.json({ connected: true, name, interface: 'wg0' });
+});
+
+app.post('/api/wireguard/disconnect', (req, res) => {
+  wgState.active = false;
+  wgState.active_config = '';
+  res.json({ disconnected: true });
+});
+
+app.post('/api/wireguard/delete', (req, res) => {
+  const { name } = req.body;
+  wgState.configs = wgState.configs.filter(c => c !== name);
+  if (wgState.active_config === name) { wgState.active = false; wgState.active_config = ''; }
+  res.json({ deleted: true, name });
+});
+
+app.get('/api/wireguard/config/:name', (req, res) => {
+  const name = req.params.name;
+  if (!wgState.configs.includes(name)) return res.status(404).json({ error: 'Not found' });
+  res.json({ name, config: '[Interface]\nPrivateKey = ****\nAddress = 10.0.0.2/32\n\n[Peer]\nPublicKey = mock_key\nEndpoint = vpn.example.com:51820\nAllowedIPs = 0.0.0.0/0' });
+});
+
 // Mock /api/version_info for local development
 app.use('/api/version_info', (req, res) => {
   res.json({

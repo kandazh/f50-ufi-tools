@@ -224,6 +224,8 @@
     <script src="/script/controls/changepwd.js"></script>
     <script src="/script/controls/schedule-reboot.js"></script>
     <script src="/script/controls/scheduled-task.js"></script>
+    <script src="/script/controls/diagnostics.js"></script>
+    <script src="/script/controls/wireguard.js"></script>
     <script src="/script/controls/plugin.js"></script>
     <script src="/script/controls/virtual-memory.js"></script>
     <script src="/script/controls/adguard-home.js"></script>
