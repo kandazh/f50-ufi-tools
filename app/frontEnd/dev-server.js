@@ -527,34 +527,6 @@ app.use('/api/connInfo', (req, res) => {
   });
 });
 
-// Mock /api/wifi_stations — per-client WiFi signal and link speed + bandwidth
-var _mockStationBytes = {
-  'a4:b1:c2:d3:e4:f5': { ul: 102400000, dl: 51200000 },
-  'b6:c7:d8:e9:f0:a1': { ul: 45600000, dl: 23400000 },
-  'e1:f2:a3:b4:c5:d6': { ul: 12300000, dl: 6500000 },
-  'f1:a2:b3:c4:d5:e6': { ul: 8900000, dl: 3200000 },
-  'a1:b2:c3:d4:e5:f6': { ul: 2100000, dl: 900000 },
-  'b1:c2:d3:e4:f5:a6': { ul: 67800000, dl: 34500000 },
-};
-app.use('/api/wifi_stations', (req, res) => {
-  // Simulate traffic by incrementing bytes randomly each poll (different per device)
-  Object.keys(_mockStationBytes).forEach(function(mac) {
-    _mockStationBytes[mac].ul += Math.floor(Math.random() * 500000);
-    _mockStationBytes[mac].dl += Math.floor(Math.random() * 250000);
-  });
-  res.json({
-    result: 'success',
-    stations: [
-      { mac: 'a4:b1:c2:d3:e4:f5', ip: '192.168.0.101', signal: -42, rx_bitrate: 780, tx_bitrate: 780, ul_bytes: _mockStationBytes['a4:b1:c2:d3:e4:f5'].ul, dl_bytes: _mockStationBytes['a4:b1:c2:d3:e4:f5'].dl, connected_time: 3600 },
-      { mac: 'b6:c7:d8:e9:f0:a1', ip: '192.168.0.102', signal: -55, rx_bitrate: 650, tx_bitrate: 585, ul_bytes: _mockStationBytes['b6:c7:d8:e9:f0:a1'].ul, dl_bytes: _mockStationBytes['b6:c7:d8:e9:f0:a1'].dl, connected_time: 1200 },
-      { mac: 'e1:f2:a3:b4:c5:d6', ip: '192.168.0.103', signal: -65, rx_bitrate: 390, tx_bitrate: 390, ul_bytes: _mockStationBytes['e1:f2:a3:b4:c5:d6'].ul, dl_bytes: _mockStationBytes['e1:f2:a3:b4:c5:d6'].dl, connected_time: 7200 },
-      { mac: 'f1:a2:b3:c4:d5:e6', ip: '192.168.0.104', signal: -58, rx_bitrate: 585, tx_bitrate: 585, ul_bytes: _mockStationBytes['f1:a2:b3:c4:d5:e6'].ul, dl_bytes: _mockStationBytes['f1:a2:b3:c4:d5:e6'].dl, connected_time: 900 },
-      { mac: 'a1:b2:c3:d4:e5:f6', ip: '192.168.0.105', signal: -72, rx_bitrate: 263, tx_bitrate: 144, ul_bytes: _mockStationBytes['a1:b2:c3:d4:e5:f6'].ul, dl_bytes: _mockStationBytes['a1:b2:c3:d4:e5:f6'].dl, connected_time: 600 },
-      { mac: 'b1:c2:d3:e4:f5:a6', ip: '192.168.0.106', signal: -48, rx_bitrate: 780, tx_bitrate: 780, ul_bytes: _mockStationBytes['b1:c2:d3:e4:f5:a6'].ul, dl_bytes: _mockStationBytes['b1:c2:d3:e4:f5:a6'].dl, connected_time: 4500 },
-    ]
-  });
-});
-
 // Mock /api/diagnostics for local development
 app.post('/api/diagnostics', (req, res) => {
   const { tool, target, options } = req.body;

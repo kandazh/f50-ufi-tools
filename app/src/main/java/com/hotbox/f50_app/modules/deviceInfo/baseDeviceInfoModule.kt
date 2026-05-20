@@ -9,6 +9,7 @@ import com.hotbox.f50_app.modules.PREFS_NAME
 import com.hotbox.f50_app.utils.HostapdClient
 import com.hotbox.f50_app.utils.HotboxLog
 import com.hotbox.f50_app.utils.HotboxUtils
+import com.hotbox.f50_app.utils.RootShell
 import com.hotbox.f50_app.utils.UniqueDeviceIDManager
 import com.hotbox.f50_app.utils.calculateCpuUsage
 import com.hotbox.f50_app.utils.getCpuFreqJson
@@ -367,108 +368,6 @@ fun Route.baseDeviceInfoModule(context: Context) {
                 }.toString(),
                 ContentType.Application.Json,
                 HttpStatusCode.InternalServerError
-            )
-        }
-    }
-
-    // WiFi station info (per-client signal, link speed) via hostapd control interface
-    get("/api/wifi_stations") {
-        try {
-            // Ensure root shell socket path is set for hostapd communication
-            if (HostapdClient.rootShellSocketPath.isEmpty()) {
-                val socketPath = java.io.File(context.filesDir, "hotbox_root_shell.sock")
-                HostapdClient.rootShellSocketPath = socketPath.absolutePath
-            }
-            val stations = HostapdClient.getAllStations()
-
-            // Build MAC → IP map from ARP table
-            val macToIp = mutableMapOf<String, String>()
-            try {
-                java.io.File("/proc/net/arp").readLines().drop(1).forEach { line ->
-                    val parts = line.trim().split("\\s+".toRegex())
-                    if (parts.size >= 4) {
-                        val ip = parts[0]
-                        val mac = parts[3].lowercase()
-                        macToIp[mac] = ip
-                    }
-                }
-            } catch (_: Exception) {}
-
-            // Get per-IP traffic counters from iptables hotbox_acct chain
-            val ipTraffic = mutableMapOf<String, Pair<Long, Long>>() // ip -> (ul_bytes, dl_bytes)
-            val socketPath = java.io.File(context.filesDir, "hotbox_root_shell.sock").absolutePath
-            try {
-                // Ensure chain exists and is in FORWARD
-                val clientIps = stations.mapNotNull { macToIp[it.macAddress.lowercase()] }
-                if (clientIps.isNotEmpty()) {
-                    val setupCmd = buildString {
-                        append("iptables -N hotbox_acct 2>/dev/null; ")
-                        append("iptables -C FORWARD -j hotbox_acct 2>/dev/null || iptables -I FORWARD 1 -j hotbox_acct; ")
-                        for (ip in clientIps) {
-                            append("iptables -C hotbox_acct -s $ip 2>/dev/null || iptables -A hotbox_acct -s $ip; ")
-                            append("iptables -C hotbox_acct -d $ip 2>/dev/null || iptables -A hotbox_acct -d $ip; ")
-                        }
-                        append("iptables -L hotbox_acct -v -n -x")
-                    }
-                    val output = RootShell.sendCommandToSocket(setupCmd, socketPath, 5000)
-                    // Parse output: "pkts bytes target prot opt in out source destination"
-                    output?.lines()?.forEach { line ->
-                        val parts = line.trim().split("\\s+".toRegex())
-                        if (parts.size >= 8) {
-                            val bytes = parts[1].toLongOrNull() ?: return@forEach
-                            val src = parts[7]
-                            val dst = parts[8]
-                            if (src != "0.0.0.0/0" && dst == "0.0.0.0/0") {
-                                // Source rule = upload (client → internet)
-                                ipTraffic[src] = Pair(
-                                    (ipTraffic[src]?.first ?: 0L) + bytes,
-                                    ipTraffic[src]?.second ?: 0L
-                                )
-                            } else if (src == "0.0.0.0/0" && dst != "0.0.0.0/0") {
-                                // Dest rule = download (internet → client)
-                                ipTraffic[dst] = Pair(
-                                    ipTraffic[dst]?.first ?: 0L,
-                                    (ipTraffic[dst]?.second ?: 0L) + bytes
-                                )
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                HotboxLog.d(TAG, "iptables accounting error: ${e.message}")
-            }
-
-            val arr = JSONArray()
-            for (sta in stations) {
-                val ip = macToIp[sta.macAddress.lowercase()]
-                val traffic = if (ip != null) ipTraffic[ip] else null
-                arr.put(JSONObject().apply {
-                    put("mac", sta.macAddress)
-                    if (ip != null) put("ip", ip)
-                    if (sta.signal != null) put("signal", sta.signal)
-                    if (sta.txBitrate != null) put("tx_bitrate", sta.txBitrate)
-                    if (sta.rxBitrate != null) put("rx_bitrate", sta.rxBitrate)
-                    if (traffic != null) {
-                        put("ul_bytes", traffic.first)
-                        put("dl_bytes", traffic.second)
-                    }
-                    if (sta.connectedTime != null) put("connected_time", sta.connectedTime)
-                })
-            }
-            call.response.headers.append("Access-Control-Allow-Origin", "*")
-            call.respondText(
-                JSONObject().apply {
-                    put("result", "success")
-                    put("stations", arr)
-                }.toString(),
-                ContentType.Application.Json
-            )
-        } catch (e: Exception) {
-            HotboxLog.d(TAG, "Error getting WiFi stations: ${e.message}")
-            call.response.headers.append("Access-Control-Allow-Origin", "*")
-            call.respondText(
-                """{"result":"error","error":"${e.message}","stations":[]}""",
-                ContentType.Application.Json
             )
         }
     }

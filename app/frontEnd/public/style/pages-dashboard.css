@@ -752,55 +752,7 @@
   .dash-device-grid { grid-template-columns: 1fr; }
 }
 
-/* WiFi Clients card */
-.dash-wifi-clients { display: flex; flex-direction: column; gap: 2px; }
-.dash-wifi-clients-empty { font-size: 0.72rem; opacity: 0.5; padding: 8px; }
-.dash-wifi-client-row {
-  display: grid;
-  grid-template-columns: 1fr 56px 56px 48px 56px 46px 44px;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 10px;
-  border-radius: 5px;
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid rgba(148,163,184,0.06);
-}
-.dash-wifi-client-row:last-child { border-bottom: none; }
-.dash-wifi-client-header {
-  background: none; border-bottom: 1px solid rgba(148,163,184,0.12);
-}
-.dash-wifi-client-header span {
-  font-size: 0.55rem; font-weight: 700; color: rgba(148,163,184,0.6); text-transform: uppercase; letter-spacing: 0.03em;
-}
-.dash-wifi-client-name {
-  font-size: 0.72rem; font-weight: 600; color: #e2e8f0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
-}
-.dash-wifi-client-dl {
-  font-size: 0.6rem; font-family: var(--font-mono); color: #4ade80; white-space: nowrap; text-align: right;
-}
-.dash-wifi-client-ul {
-  font-size: 0.6rem; font-family: var(--font-mono); color: #f472b6; white-space: nowrap; text-align: right;
-}
-.dash-wifi-client-total {
-  font-size: 0.6rem; font-family: var(--font-mono); color: #60a5fa; white-space: nowrap; text-align: right; margin-left: 6px;
-}
-.dash-wifi-client-bitrate {
-  font-size: 0.6rem; font-family: var(--font-mono); color: rgba(148,163,184,0.55); white-space: nowrap; text-align: right;
-}
-.dash-wifi-client-signal {
-  font-size: 0.6rem; font-family: var(--font-mono); color: rgba(148,163,184,0.55); white-space: nowrap; text-align: right;
-}
-.dash-wifi-client-time {
-  font-size: 0.6rem; font-family: var(--font-mono); color: rgba(148,163,184,0.55); white-space: nowrap; text-align: right;
-}
 
-@media (max-width: 480px) {
-  .dash-wifi-client-row { grid-template-columns: 1fr 48px 48px 42px 48px 40px 38px; gap: 2px; padding: 5px 6px; }
-  .dash-wifi-client-name { font-size: 0.65rem; }
-  .dash-wifi-client-dl, .dash-wifi-client-ul, .dash-wifi-client-total,
-  .dash-wifi-client-bitrate, .dash-wifi-client-signal, .dash-wifi-client-time { font-size: 0.52rem; }
-}
 
 .info-card--wide {
   background: var(--glass-bg);
