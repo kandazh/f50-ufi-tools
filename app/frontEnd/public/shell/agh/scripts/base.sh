@@ -19,4 +19,12 @@ function log() {
   local str="$timestamp $1"
   echo "$str"
   echo "$str" >> "$MODPATH/history.log"
+  # Rotate log if it exceeds 10000 lines to prevent unbounded growth
+  if [ -f "$MODPATH/history.log" ]; then
+    line_count=$(wc -l < "$MODPATH/history.log" 2>/dev/null || echo 0)
+    if [ "$line_count" -gt 10000 ]; then
+      tail -n 5000 "$MODPATH/history.log" > "$MODPATH/history.log.tmp" 2>/dev/null && \
+        mv "$MODPATH/history.log.tmp" "$MODPATH/history.log" 2>/dev/null || true
+    fi
+  fi
 }

@@ -636,10 +636,11 @@
   min-height: 0;
   flex: 1;
   align-items: stretch;
+  flex-direction: column;
   padding-bottom: 60px;
 }
 
-/* Narrow icon strip */
+/* Narrow icon strip - DESKTOP LEFT SIDEBAR */
 .icon-bar {
   width: 48px;
   min-width: 48px;
@@ -655,6 +656,8 @@
   border-radius: var(--radius-lg);
   box-sizing: border-box;
   flex-shrink: 0;
+  flex-direction: column;
+  order: 1;
 }
 
 .icon-bar-btn {
@@ -701,14 +704,30 @@
   flex-shrink: 0;
 }
 
-/* Content Panel (right side) */
+/* Content Panel (right side on desktop) */
 .content-panel {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  margin-left: 12px;
   display: flex;
   flex-direction: column;
+  order: 2;
+}
+
+/* DESKTOP: Show icon bar on left */
+@media (min-width: 601px) {
+  .app-layout {
+    flex-direction: row;
+  }
+  .icon-bar {
+    width: 48px;
+    flex-direction: column;
+    border-top: 1px solid var(--glass-border);
+    margin-left: 0;
+  }
+  .content-panel {
+    margin-left: 12px;
+  }
 }
 
 /* --- Responsive breakpoints --- */
@@ -720,37 +739,37 @@
   }
   .app-layout {
     flex-shrink: 0;
-    flex-basis: auto;
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column;
+    padding-bottom: 20px;
   }
+  /* MOBILE: Navigation bar under header */
   .icon-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    top: auto;
+    position: static;
     width: 100%;
     min-width: 100%;
-    max-height: none;
     flex-direction: row;
     justify-content: center;
-    border-radius: 0;
-    padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
-    z-index: 100;
+    align-items: center;
+    border-radius: 8px;
     border-top: 1px solid var(--glass-border);
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
+    border-left: 1px solid var(--glass-border);
+    border-right: 1px solid var(--glass-border);
+    padding: 8px 4px;
+    gap: 4px;
+    margin-bottom: 12px;
+    order: 1;
   }
   .icon-bar-btn.active::before {
     left: 50%;
-    top: -6px;
+    top: -8px;
     transform: translateX(-50%);
     width: 18px;
     height: 3px;
-    border-radius: 0 0 3px 3px;
+    border-radius: 3px 3px 0 0;
   }
   .content-panel {
     margin-left: 0;
+    order: 2;
   }
   .main-title {
     flex-direction: column;
@@ -775,7 +794,7 @@
     display: none;
   }
   .tab-panel {
-    padding-bottom: 80px;
+    padding-bottom: 20px;
   }
   .tab-bar .tab-btn {
     padding: 8px 10px;

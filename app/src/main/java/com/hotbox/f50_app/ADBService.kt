@@ -87,6 +87,9 @@ class ADBService : Service() {
         //Start scheduled tasks
         TaskSchedulerManager.init(applicationContext)
 
+        // Setup AGH system boot hook (like legacy plugin does)
+        setupAghBootHook()
+
         // Start AGH watchdog (checks every 5 minutes, restarts if crashed)
         startAghWatchdog()
 
@@ -353,6 +356,38 @@ class ADBService : Service() {
         }
     }
 
+    private fun setupAghBootHook() {
+        // F50 uses /sdcard/ufi_tools_boot.sh to auto-start services at system boot
+        // Add AGH boot hook so it starts even if app crashes
+        try {
+            val aghBinary = java.io.File("/data/agh/agh/bin/AdGuardHome")
+            val bootHookFile = java.io.File("/sdcard/ufi_tools_boot.sh")
+            val aghBootScript = java.io.File("/data/agh/boot.sh")
+            
+            if (aghBinary.exists()) {
+                // Make boot.sh executable
+                aghBootScript.setExecutable(true)
+                HotboxLog.d(TAG, "AGH boot.sh is executable")
+                
+                // Check if boot hook already exists
+                if (bootHookFile.exists()) {
+                    val bootContent = bootHookFile.readText()
+                    if (!bootContent.contains("agh") || !bootContent.contains("boot.sh")) {
+                        // Add boot hook
+                        bootHookFile.appendText("\nsh /data/agh/boot.sh &\n")
+                        HotboxLog.d(TAG, "AGH boot hook added to /sdcard/ufi_tools_boot.sh")
+                    }
+                } else {
+                    // Create boot file with AGH hook
+                    bootHookFile.writeText("sh /data/agh/boot.sh &\n")
+                    HotboxLog.d(TAG, "Created /sdcard/ufi_tools_boot.sh with AGH boot hook")
+                }
+            }
+        } catch (e: Exception) {
+            HotboxLog.e(TAG, "Failed to setup AGH boot hook: ${e.message}")
+        }
+    }
+
     private fun startAghWatchdog() {
         aghWatchdogExecutor.execute {
             try {
@@ -375,15 +410,18 @@ class ADBService : Service() {
                             false // If can't read uptime, assume not in boot phase
                         }
 
-                        // If socket doesn't exist, AGH can't run
-                        if (!socketPath.exists()) {
-                            Thread.sleep(if (inBootPhase) 5_000L else 30_000L)
+                        // If binary doesn't exist, nothing to start
+                        if (!binary.exists()) {
+                            Thread.sleep(if (inBootPhase) 5_000L else 300_000L)
                             continue
                         }
 
-                        // If binary doesn't exist, nothing to start
-                        if (!binary.exists()) {
-                            Thread.sleep(if (inBootPhase) 5_000L else 30_000L)
+                        // Check if socket exists for sending commands
+                        if (!socketPath.exists()) {
+                            // Socket doesn't exist yet - wait for it to be established
+                            // Root shell might not be ready yet, especially during boot
+                            HotboxLog.d(TAG, "AGH watchdog: root shell socket not ready, waiting...")
+                            Thread.sleep(if (inBootPhase) 5_000L else 300_000L)
                             continue
                         }
 
@@ -414,20 +452,23 @@ class ADBService : Service() {
                         if (needsRestart) {
                             val timeSinceLastAttempt = System.currentTimeMillis() - lastRestartAttemptMs
                             if (timeSinceLastAttempt > 3_000) { // Minimum 3 seconds between restart attempts to avoid tight loop
-                                RootShell.sendCommandToSocket(
+                                HotboxLog.d(TAG, "AGH watchdog: attempting restart via tool.sh")
+                                val restartResult = RootShell.sendCommandToSocket(
                                     "rm -f /data/agh/agh/bin/agh.pid; sh /data/agh/agh/scripts/tool.sh start 2>&1",
                                     socketPath.absolutePath,
                                     30000
                                 )
                                 lastRestartAttemptMs = System.currentTimeMillis()
+                                if (restartResult != null && restartResult.contains("error", ignoreCase = true)) {
+                                    HotboxLog.w(TAG, "AGH restart may have failed: $restartResult")
+                                }
                             }
                         }
 
                         // Check frequency:
                         // - Boot phase (first 5 min): every 5 seconds (aggressive for fast startup)
-                        // - Normal: every 30 seconds (F50 always-on, can afford frequent checks)
-                        // - NOT every 5 minutes like phone (uptime too critical)
-                        Thread.sleep(if (inBootPhase) 5_000L else 30_000L)
+                        // - Normal: every 5 minutes (F50 always-on, AGH rarely crashes, reduce polling overhead)
+                        Thread.sleep(if (inBootPhase) 5_000L else 300_000L)
                         
                     } catch (e: Exception) {
                         HotboxLog.e(TAG, "AGH watchdog error: ${e.message}")
@@ -436,15 +477,6 @@ class ADBService : Service() {
                 }
             } catch (_: InterruptedException) {
                 HotboxLog.d(TAG, "AGH watchdog stopped")
-            }
-        }
-    }
-            }
-        }
-    }
-            }
-        }
-    }
             }
         }
     }

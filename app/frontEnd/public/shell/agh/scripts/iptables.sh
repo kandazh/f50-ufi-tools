@@ -547,8 +547,8 @@ enable_ipv6_iptables() {
 disable_ipv6_iptables() {
   # Clean up NAT rules if they exist
   if $ip6tables_w -t nat -L ADGUARD_REDIRECT_DNS6 >/dev/null 2>&1; then
-    $ip6tables_w -t nat -D PREROUTING -i $lan_interface -p udp --dport 53 -j REDIRECT --to-ports $redir_port 2>/dev/null
-    $ip6tables_w -t nat -D PREROUTING -i $lan_interface -p tcp --dport 53 -j REDIRECT --to-ports $redir_port 2>/dev/null
+    $ip6tables_w -t nat -D PREROUTING -i "$lan_interface" -p udp --dport 53 -j REDIRECT --to-ports "$redir_port" 2>/dev/null
+    $ip6tables_w -t nat -D PREROUTING -i "$lan_interface" -p tcp --dport 53 -j REDIRECT --to-ports "$redir_port" 2>/dev/null
     # Clean up PREROUTING bypass rules for ignore_src_list
     for subnet in $ignore_src_list; do
       $ip6tables_w -t nat -D PREROUTING -i "$lan_interface" -s "$subnet" -p udp --dport 53 -j ACCEPT 2>/dev/null
