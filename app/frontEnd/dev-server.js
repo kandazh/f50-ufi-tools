@@ -1335,6 +1335,8 @@ app.post('/api/translate', express.json(), async (req, res) => {
 });
 
 // Speed test mock endpoint - generates random data for download
+// For LOCAL network (192.168.x.x): NO throttle - test true WiFi speed
+// For REMOTE: Throttle to simulate cellular ~40 Mbps
 app.get('/api/speedtest', (req, res) => {
   const ckSize = parseInt(req.query.ckSize) || 16;
   if (ckSize === 0) {
@@ -1344,9 +1346,14 @@ app.get('/api/speedtest', (req, res) => {
   const bytes = ckSize * 1024 * 1024;
   res.set('Content-Type', 'application/octet-stream');
   res.set('Content-Length', bytes.toString());
-  // Throttle to simulate ~40 Mbps (5 MB/s) — ensures each 2s round takes full duration
-  const targetBytesPerSec = 5 * 1024 * 1024;
-  const chunkSize = 64 * 1024;
+  
+  // Detect if local network request
+  const clientIp = req.ip || req.connection.remoteAddress || '';
+  const isLocalNetwork = /^(192\.168|10\.|172\.(1[6-9]|2[0-9]|3[01]))/.test(clientIp.replace(/::ffff:/, ''));
+  
+  // Local network: NO throttle. Remote: ~40 Mbps
+  const targetBytesPerSec = isLocalNetwork ? (1000 * 1024 * 1024) : (5 * 1024 * 1024);
+  const chunkSize = 256 * 1024;
   let sent = 0;
   const startTime = Date.now();
   function sendChunk() {
@@ -1354,7 +1361,7 @@ app.get('/api/speedtest', (req, res) => {
       const elapsed = (Date.now() - startTime) / 1000;
       const expectedBytes = targetBytesPerSec * elapsed;
       if (sent >= expectedBytes) {
-        setTimeout(sendChunk, 10);
+        setImmediate(sendChunk);
         return;
       }
       const size = Math.min(chunkSize, bytes - sent);
@@ -1371,20 +1378,31 @@ app.get('/api/speedtest', (req, res) => {
   sendChunk();
 });
 
-// Speed test upload endpoint — throttled to simulate ~20 Mbps upload
+// Speed test upload endpoint - Local network has no throttle
 app.post('/api/speedtest_upload', (req, res) => {
   let size = 0;
   const startTime = Date.now();
-  const targetBytesPerSec = 2.5 * 1024 * 1024; // ~20 Mbps
+  
+  // Detect if local network
+  const clientIp = req.ip || req.connection.remoteAddress || '';
+  const isLocalNetwork = /^(192\.168|10\.|172\.(1[6-9]|2[0-9]|3[01]))/.test(clientIp.replace(/::ffff:/, ''));
+  
+  // Local: no throttle. Remote: ~40 Mbps
+  const targetBytesPerSec = isLocalNetwork ? (1000 * 1024 * 1024) : (5 * 1024 * 1024);
+  
   req.on('data', (chunk) => { size += chunk.length; });
   req.on('end', () => {
-    // Simulate upload delay based on data received
-    const expectedTime = (size / targetBytesPerSec) * 1000;
-    const elapsed = Date.now() - startTime;
-    const delay = Math.max(0, expectedTime - elapsed);
-    setTimeout(() => {
+    // Only throttle for remote
+    if (!isLocalNetwork) {
+      const expectedTime = (size / targetBytesPerSec) * 1000;
+      const elapsed = Date.now() - startTime;
+      const delay = Math.max(0, expectedTime - elapsed);
+      setTimeout(() => {
+        res.json({ bytes: size });
+      }, delay);
+    } else {
       res.json({ bytes: size });
-    }, delay);
+    }
   });
 });
 

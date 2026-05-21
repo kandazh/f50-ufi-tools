@@ -1,7 +1,24 @@
 MODPATH="/data/agh"
 
-. $MODPATH/agh/settings.conf
-. $MODPATH/agh/scripts/base.sh
+# Validate config files exist before sourcing
+if [ ! -f "$MODPATH/agh/settings.conf" ]; then
+  echo "ERROR: settings.conf not found at $MODPATH/agh/settings.conf" >&2
+  exit 1
+fi
+
+if [ ! -f "$MODPATH/agh/scripts/base.sh" ]; then
+  echo "ERROR: base.sh not found at $MODPATH/agh/scripts/base.sh" >&2
+  exit 1
+fi
+
+. $MODPATH/agh/settings.conf || { echo "ERROR: failed to source settings.conf" >&2; exit 1; }
+. $MODPATH/agh/scripts/base.sh || { echo "ERROR: failed to source base.sh" >&2; exit 1; }
+
+# Validate critical variables were set
+if [ -z "$BIN_DIR" ] || [ -z "$AGH_DIR" ] || [ -z "$PID_FILE" ]; then
+  echo "ERROR: critical variables not set after sourcing config" >&2
+  exit 1
+fi
 
 start_adguardhome() {
   # check if AdGuardHome is already running
@@ -60,38 +77,56 @@ start_adguardhome() {
   "$BIN_DIR/AdGuardHome" -w "$BIN_DIR" -c "$BIN_DIR/AdGuardHome.yaml" --no-check-update >>"$AGH_DIR/bin.log" 2>&1 &
   adg_pid=$!
 
-  # wait briefly for AdGuardHome to initialize
-  sleep 2
+  # wait briefly for AdGuardHome to initialize (increase from 2 to 4 seconds for stability)
+  sleep 4
 
   # check if AdGuardHome started successfully
-  if kill -0 "$adg_pid" 2>/dev/null; then
-    echo "$adg_pid" >"$PID_FILE"
-    # check if iptables is enabled
-    if [ "$enable_iptables" = true ]; then
-      if $SCRIPT_DIR/iptables.sh enable; then
-        log "started PID: $adg_pid iptables: enabled"
-      else
-        log "Failed to enable iptables, stopping AdGuardHome"
-        $SCRIPT_DIR/iptables.sh disable >/dev/null 2>&1
-        kill "$adg_pid" 2>/dev/null
-        i=0
-        while [ $i -lt 5 ] && kill -0 "$adg_pid" 2>/dev/null; do
-          sleep 1
-          i=$((i + 1))
-        done
-        if kill -0 "$adg_pid" 2>/dev/null; then
-          kill -9 "$adg_pid" 2>/dev/null
-        fi
-        rm -f "$PID_FILE"
-        exit 1
-      fi
+  if ! kill -0 "$adg_pid" 2>/dev/null; then
+    log "ERROR: AdGuardHome process died immediately after start"
+    log "Binary output:"
+    tail -20 "$AGH_DIR/bin.log" >> "$MODPATH/history.log" 2>&1
+    exit 1
+  fi
+
+  # Process is alive - write PID file
+  echo "$adg_pid" >"$PID_FILE"
+  log "AdGuardHome process started (PID: $adg_pid)"
+  
+  # check if iptables is enabled
+  if [ "$enable_iptables" = true ]; then
+    if $SCRIPT_DIR/iptables.sh enable; then
+      log "started PID: $adg_pid iptables: enabled"
+      exit 0
     else
-      log "started PID: $adg_pid iptables: disabled"
+      log "ERROR: Failed to enable iptables, stopping AdGuardHome"
+      
+      # Remove PID file BEFORE killing process to avoid watchdog race
+      rm -f "$PID_FILE"
+      
+      # Disable iptables if it's partial
+      $SCRIPT_DIR/iptables.sh disable >/dev/null 2>&1
+      
+      # Kill the process gracefully first
+      kill "$adg_pid" 2>/dev/null
+      
+      # Wait for graceful shutdown
+      i=0
+      while [ $i -lt 5 ] && kill -0 "$adg_pid" 2>/dev/null; do
+        sleep 1
+        i=$((i + 1))
+      done
+      
+      # Force kill if still running
+      if kill -0 "$adg_pid" 2>/dev/null; then
+        log "Force killing AdGuardHome"
+        kill -9 "$adg_pid" 2>/dev/null
+      fi
+      
+      exit 1
     fi
   else
-    log "Error occurred, check logs for details"
-    sh $MODPATH/agh/scripts/debug.sh
-    exit 1
+    log "started PID: $adg_pid iptables: disabled"
+    exit 0
   fi
 }
 

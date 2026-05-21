@@ -59,30 +59,35 @@ class BootReceiver : BroadcastReceiver() {
                 ShellHotbox.runADB(context)
                 Log.d("UFI_TOOLS_LOG", "Activate network ADB")
 
-                // Auto-start AdGuardHome if installed
+                // Auto-start AdGuardHome if installed - try immediately as early as possible
                 try {
                     val aghBinary = java.io.File("/data/agh/agh/bin/AdGuardHome")
                     if (aghBinary.exists()) {
                         val socketPath = java.io.File(context.filesDir, "hotbox_root_shell.sock")
-                        // Wait up to 60s for root socket (socat may not be ready yet at early boot)
+                        // Wait briefly for socket (first attempt to start - early boot safety)
                         var waited = 0
-                        while (!socketPath.exists() && waited < 60) {
-                            Thread.sleep(2000)
-                            waited += 2
+                        while (!socketPath.exists() && waited < 10) {
+                            Thread.sleep(500)
+                            waited++
                         }
                         if (socketPath.exists()) {
-                            Log.d("UFI_TOOLS_LOG", "AGH binary found, triggering boot.sh via root socket")
-                            RootShell.sendCommandToSocket(
-                                "sh /data/agh/boot.sh &",
-                                socketPath.absolutePath,
-                                5000
-                            )
+                            Log.d("UFI_TOOLS_LOG", "AGH binary found at boot, attempting early startup")
+                            try {
+                                RootShell.sendCommandToSocket(
+                                    "sh /data/agh/agh/scripts/tool.sh start",
+                                    socketPath.absolutePath,
+                                    15000
+                                )
+                                Log.d("UFI_TOOLS_LOG", "AGH early startup command sent")
+                            } catch (e: Exception) {
+                                Log.d("UFI_TOOLS_LOG", "Early AGH startup failed, watchdog will retry: ${e.message}")
+                            }
                         } else {
-                            Log.d("UFI_TOOLS_LOG", "AGH binary found but root socket not ready after 30s, watchdog will handle")
+                            Log.d("UFI_TOOLS_LOG", "AGH binary found but socket not available at boot, watchdog will start it later")
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e("UFI_TOOLS_LOG", "Failed to start AGH on boot", e)
+                    Log.e("UFI_TOOLS_LOG", "Failed to check AGH at boot", e)
                 }
             }
         }

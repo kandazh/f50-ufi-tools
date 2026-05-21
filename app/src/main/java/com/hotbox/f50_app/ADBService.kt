@@ -356,59 +356,95 @@ class ADBService : Service() {
     private fun startAghWatchdog() {
         aghWatchdogExecutor.execute {
             try {
-                // Initial delay — wait briefly for root socket to be ready
-                Thread.sleep(15_000)
-                var isFirstCheck = true
+                // F50 is always-on hotspot device - uptime is critical
+                // No battery concerns, so aggressive monitoring is appropriate
+                
+                var lastRestartAttemptMs = 0L
+                
                 while (!Thread.currentThread().isInterrupted) {
                     try {
                         val pidFile = java.io.File("/data/agh/agh/bin/agh.pid")
                         val binary = java.io.File("/data/agh/agh/bin/AdGuardHome")
                         val socketPath = java.io.File(applicationContext.filesDir, "hotbox_root_shell.sock")
+                        
+                        // Try to detect boot phase from /proc/uptime (seconds since boot)
+                        val inBootPhase = try {
+                            val uptimeSeconds = java.io.File("/proc/uptime").readText().split(" ")[0].toDouble().toLong()
+                            uptimeSeconds < 300 // First 5 minutes after device boot
+                        } catch (e: Exception) {
+                            false // If can't read uptime, assume not in boot phase
+                        }
 
-                        if (binary.exists() && socketPath.exists()) {
-                            if (pidFile.exists()) {
-                                // Validate PID: check process is alive AND is actually AdGuardHome
-                                // (prevents false positive from recycled PIDs after reboot)
-                                val checkResult = RootShell.sendCommandToSocket(
-                                    "pid=\$(cat /data/agh/agh/bin/agh.pid 2>/dev/null); " +
-                                    "if [ -n \"\$pid\" ] && kill -0 \"\$pid\" 2>/dev/null && " +
-                                    "grep -q AdGuardHome /proc/\$pid/cmdline 2>/dev/null; then " +
-                                    "echo ALIVE; else echo DEAD; fi",
-                                    socketPath.absolutePath,
-                                    5000
-                                )
-                                if (checkResult != null && checkResult.contains("DEAD")) {
-                                    HotboxLog.w(TAG, "AGH watchdog: process not alive (crashed or stale PID), restarting")
-                                    RootShell.sendCommandToSocket(
-                                        "rm -f /data/agh/agh/bin/agh.pid; sh /data/agh/agh/scripts/tool.sh start",
-                                        socketPath.absolutePath,
-                                        30000
-                                    )
-                                    HotboxLog.d(TAG, "AGH watchdog: restart triggered")
-                                }
-                            } else if (isFirstCheck) {
-                                // First check after boot: binary exists but no PID file.
-                                // boot.sh likely failed (root socket wasn't ready in time) — start now.
-                                HotboxLog.w(TAG, "AGH watchdog: first check, AGH installed but not running, starting")
+                        // If socket doesn't exist, AGH can't run
+                        if (!socketPath.exists()) {
+                            Thread.sleep(if (inBootPhase) 5_000L else 30_000L)
+                            continue
+                        }
+
+                        // If binary doesn't exist, nothing to start
+                        if (!binary.exists()) {
+                            Thread.sleep(if (inBootPhase) 5_000L else 30_000L)
+                            continue
+                        }
+
+                        // Binary and socket exist - check if AGH is running
+                        var needsRestart = false
+                        
+                        if (pidFile.exists()) {
+                            // Check if process is actually alive
+                            val checkResult = RootShell.sendCommandToSocket(
+                                "pid=\$(cat /data/agh/agh/bin/agh.pid 2>/dev/null); " +
+                                "if [ -n \"\$pid\" ] && kill -0 \"\$pid\" 2>/dev/null && " +
+                                "grep -q AdGuardHome /proc/\$pid/cmdline 2>/dev/null; then " +
+                                "echo ALIVE; else echo DEAD; fi",
+                                socketPath.absolutePath,
+                                5000
+                            )
+                            if (checkResult == null || !checkResult.contains("ALIVE")) {
+                                needsRestart = true
+                                HotboxLog.w(TAG, "AGH watchdog: process dead/stale, restarting")
+                            }
+                        } else {
+                            // No PID file = not running
+                            needsRestart = true
+                            HotboxLog.d(TAG, "AGH watchdog: no PID file, restarting")
+                        }
+
+                        // Restart immediately if needed - F50 is always-on, uptime critical
+                        if (needsRestart) {
+                            val timeSinceLastAttempt = System.currentTimeMillis() - lastRestartAttemptMs
+                            if (timeSinceLastAttempt > 3_000) { // Minimum 3 seconds between restart attempts to avoid tight loop
                                 RootShell.sendCommandToSocket(
-                                    "sh /data/agh/boot.sh &",
+                                    "rm -f /data/agh/agh/bin/agh.pid; sh /data/agh/agh/scripts/tool.sh start 2>&1",
                                     socketPath.absolutePath,
-                                    5000
+                                    30000
                                 )
-                                HotboxLog.d(TAG, "AGH watchdog: boot start triggered")
+                                lastRestartAttemptMs = System.currentTimeMillis()
                             }
                         }
+
+                        // Check frequency:
+                        // - Boot phase (first 5 min): every 5 seconds (aggressive for fast startup)
+                        // - Normal: every 30 seconds (F50 always-on, can afford frequent checks)
+                        // - NOT every 5 minutes like phone (uptime too critical)
+                        Thread.sleep(if (inBootPhase) 5_000L else 30_000L)
+                        
                     } catch (e: Exception) {
-                        HotboxLog.e(TAG, "AGH watchdog check error", e)
+                        HotboxLog.e(TAG, "AGH watchdog error: ${e.message}")
+                        Thread.sleep(10_000L) // Brief wait on error
                     }
-                    // Only consume firstCheck after socket was actually available
-                    if (isFirstCheck && java.io.File(applicationContext.filesDir, "hotbox_root_shell.sock").exists()) {
-                        isFirstCheck = false
-                    }
-                    Thread.sleep(300_000) // Check every 5 minutes
                 }
             } catch (_: InterruptedException) {
                 HotboxLog.d(TAG, "AGH watchdog stopped")
+            }
+        }
+    }
+            }
+        }
+    }
+            }
+        }
+    }
             }
         }
     }

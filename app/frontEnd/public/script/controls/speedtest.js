@@ -145,6 +145,7 @@
           });
       }
 
+      // Single sequential stream (like legacy)
       runOne();
     });
   }
