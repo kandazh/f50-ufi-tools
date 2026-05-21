@@ -150,12 +150,13 @@
     });
   }
 
-  // Upload test � continuous POST for TEST_DURATION_MS
+  // Upload test - continuous POST for TEST_DURATION_MS
   function measureUpload(sizeMB, onProgress) {
     return new Promise(function (resolve) {
       var totalUploaded = 0;
       var startTime = performance.now();
       var done = false;
+      var activeUploads = 0;
       var controller = new AbortController();
       var chunkBytes = sizeMB * 1024 * 1024;
       var payloadBlob = new Blob([new Uint8Array(chunkBytes)]);
@@ -167,8 +168,23 @@
         resolve(result);
       }
 
+      function tryStartMore() {
+        if (done) return;
+        var elapsed = (performance.now() - startTime) / 1000;
+        if (elapsed >= TEST_DURATION_MS) {
+          if (activeUploads === 0) {
+            finish(totalUploaded / (Math.max(elapsed, 0.001) * 1048576));
+          }
+          return;
+        }
+        while (activeUploads < 4 && (performance.now() - startTime) < TEST_DURATION_MS) {
+          runOne();
+        }
+      }
+
       function runOne() {
         if (done) return;
+        activeUploads++;
         fetch(HOTBOX_baseURL + '/speedtest_upload?_t=' + Date.now(), {
           method: 'POST',
           body: payloadBlob,
@@ -185,20 +201,21 @@
               totalUploaded += uploadedBytes;
               var elapsed = (performance.now() - startTime) / 1000;
               if (elapsed > 0) onProgress(totalUploaded / (elapsed * 1048576));
-              if ((performance.now() - startTime) >= TEST_DURATION_MS) { finish(totalUploaded / (elapsed * 1048576)); }
-              else { runOne(); }
+              activeUploads--;
+              tryStartMore();
             }).catch(function () {
               if (done) return;
               throw new Error('Upload test failed');
             });
           })
           .catch(function (err) {
+            activeUploads--;
             if (done || (err && err.name === 'AbortError')) return;
             finish(-1);
           });
       }
 
-      runOne();
+      tryStartMore();
     });
   }
 
