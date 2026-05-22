@@ -980,6 +980,8 @@
 .cell-info-row b {
   font-weight: 700;
   color: #a78bfa;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .cell-info-row--accent {

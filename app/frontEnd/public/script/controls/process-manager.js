@@ -13,6 +13,8 @@
     loadedAt: '',
     query: '',
     sortBy: 'rss',
+    systemCpu: null,
+    systemRam: null,
     processes: [],
     filtered: [],
     packages: new Set(),
@@ -33,6 +35,11 @@
     var kib = Number(value) || 0;
     if (!kib) return '-';
     return formatBytes(kib * 1024);
+  }
+  function formatPercent(value) {
+    var num = Number(value);
+    if (!Number.isFinite(num) || num < 0) return '--';
+    return num.toFixed(1).replace(/\.0$/, '') + '%';
   }
   function inferPackageName(name, packageSet) {
     var raw = String(name || '').trim();
@@ -202,6 +209,8 @@
     setText('pm_stat_total', String(state.processes.length));
     setText('pm_stat_visible', String(state.filtered.length));
     setText('pm_stat_apps', String(packages.size));
+    setText('pm_stat_cpu', formatPercent(state.systemCpu));
+    setText('pm_stat_ram', formatPercent(state.systemRam));
     setText('pm_stat_time', formatTime(state.loadedAt));
   }
 
@@ -212,7 +221,7 @@
       return;
     }
     var html = '<div class="pm-table-scroll"><div class="pm-list-inner">';
-    html += '<div class="pm-table-head"><div>PID</div><div>CPU%</div><div>MEM</div><div>USER</div><div>NAME</div><div style="text-align:right">ACTION</div></div>';
+    html += '<div class="pm-table-head"><div>PID</div><div>CPU%</div><div>RAM</div><div>USER</div><div>NAME</div><div style="text-align:right">ACTION</div></div>';
     state.filtered.forEach(function (item) {
       html += '<div class="pm-row">';
       html += '<div class="pm-col">' + escapeHtml(String(item.pid)) + '</div>';
@@ -293,7 +302,10 @@
       var packageSet = await listPackages();
       var results = await Promise.all([listProcesses(packageSet), listCpuUsage()]);
       var processList = results[0], cpuMap = results[1];
+      var deviceInfo = window.UFI_DATA || {};
       state.packages = packageSet;
+      state.systemCpu = Number(deviceInfo.cpu_usage);
+      state.systemRam = Number(deviceInfo.mem_usage);
       state.processes = processList.map(function (item) {
         return Object.assign({}, item, {
           cpu: cpuMap.get(item.pid) || 0,

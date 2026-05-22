@@ -25,6 +25,78 @@
   var isRefreshing = false;
   var panelVisible = false;
   var lastNeighborData = []; // cache for cross-referencing locked cells
+  var lastCurrentData = []; // cache current cell rows when modem exposes structured data
+
+  function hasCellValue(value) {
+    return value != null && String(value).trim() !== '';
+  }
+
+  function normalizeBandLabel(band, rat, channel) {
+    if (!hasCellValue(band)) return '?';
+
+    var label = String(band).trim().toUpperCase();
+    if (label.indexOf('LTE') === 0) label = 'B' + label.slice(3);
+    if (label.indexOf('NR') === 0) label = 'N' + label.slice(2);
+    if (/^[BN]/.test(label)) return label;
+
+    var channelNumber = Number(String(channel || '').trim());
+    var isNr = rat === '16' || (!Number.isNaN(channelNumber) && channelNumber > 65535);
+    return (isNr ? 'N' : 'B') + label;
+  }
+
+  function normalizeCell(cell, fallbackRat) {
+    if (!cell) return null;
+    var channel = hasCellValue(cell.fcn) ? cell.fcn : cell.earfcn;
+    return {
+      band: normalizeBandLabel(cell.band, cell.rat || fallbackRat, channel),
+      fcn: hasCellValue(cell.fcn) ? cell.fcn : channel,
+      earfcn: hasCellValue(cell.earfcn) ? cell.earfcn : channel,
+      pci: cell.pci,
+      rat: cell.rat || fallbackRat || '',
+      rsrp: cell.rsrp,
+      sinr: cell.sinr,
+      rsrq: cell.rsrq
+    };
+  }
+
+  function distanceToRange(value, min, max) {
+    if (value < min) return min - value;
+    if (value > max) return value - max;
+    return 0;
+  }
+
+  function normalizeSignalValue(value, min, max) {
+    if (!hasCellValue(value)) return null;
+    var candidate = Number(String(value).trim());
+    if (!Number.isFinite(candidate)) return null;
+
+    for (var i = 0; i < 4; i++) {
+      if (candidate >= min && candidate <= max) return candidate;
+
+      var scaled = candidate / 10;
+      if (!Number.isFinite(scaled)) break;
+      if (distanceToRange(scaled, min, max) >= distanceToRange(candidate, min, max)) break;
+      candidate = scaled;
+    }
+
+    return candidate >= min && candidate <= max ? candidate : null;
+  }
+
+  function formatSignalValue(value) {
+    var rounded = Math.round(value * 10) / 10;
+    return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/\.0$/, '');
+  }
+
+  function renderSignalMetric(value, min, max, greenLow, yellowLow) {
+    min = typeof min === 'number' ? min : -125;
+    max = typeof max === 'number' ? max : -81;
+    greenLow = typeof greenLow === 'number' ? greenLow : -90;
+    yellowLow = typeof yellowLow === 'number' ? yellowLow : -100;
+
+    var normalizedValue = normalizeSignalValue(value, min, max);
+    if (normalizedValue == null) return '—';
+    return hotbox_parseSignalBar(formatSignalValue(normalizedValue), min, max, greenLow, yellowLow);
+  }
 
   // RAT toggle
   ratBtns.forEach(function (btn) {
@@ -45,6 +117,10 @@
     for (var i = 0; i < lastNeighborData.length; i++) {
       if (lastNeighborData[i].pci == pci && lastNeighborData[i].earfcn == earfcn) return lastNeighborData[i];
     }
+    for (var j = 0; j < lastCurrentData.length; j++) {
+      var current = lastCurrentData[j];
+      if (current.pci == pci && current.earfcn == earfcn) return current;
+    }
     // Fall back to current cell from main status poll
     var d = window.UFI_DATA || {};
     if (d.Lte_pci == pci && d.Lte_fcn == earfcn) {
@@ -64,10 +140,10 @@
     }
     var rows = cells.map(function (c) {
       var match = findNeighborMatch(c.pci, c.earfcn);
-      var bandName = match ? match.band : (c.rat == '12' ? 'B?' : 'N?');
-      var rsrpTd = match ? hotbox_parseSignalBar(match.rsrp) : '—';
-      var sinrTd = match ? hotbox_parseSignalBar(match.sinr, -10, 30, 13, 0) : '—';
-      var rsrqTd = match ? hotbox_parseSignalBar(match.rsrq, -20, -3, -9, -12) : '—';
+      var bandName = match ? normalizeBandLabel(match.band, match.rat, match.fcn || match.earfcn) : (c.rat == '12' ? 'B?' : 'N?');
+      var rsrpTd = match ? renderSignalMetric(match.rsrp) : '—';
+      var sinrTd = match ? renderSignalMetric(match.sinr, -10, 30, 13, 0) : '—';
+      var rsrqTd = match ? renderSignalMetric(match.rsrq, -20, -3, -9, -12) : '—';
       return '<tr style="cursor:pointer" data-pci="' + c.pci + '" data-earfcn="' + c.earfcn + '" data-rat="' + c.rat + '">' +
         '<td>' + bandName + '</td>' +
         '<td>' + c.earfcn + '</td>' +
@@ -95,15 +171,16 @@
       return;
     }
     var rows = cells.map(function (c, i) {
+      var normalized = normalizeCell(c, /^N/i.test(c.band || '') ? '16' : '12');
       var label = cells.length > 1 ? (i === 0 ? 'PCC' : 'SCC' + i) : '';
-      var bandTd = (label ? '<span style="font-size:10px;opacity:0.5;margin-right:4px">' + label + '</span>' : '') + c.band;
-      return '<tr style="cursor:pointer" data-pci="' + c.pci + '" data-earfcn="' + c.fcn + '" data-band="' + c.band + '">' +
+      var bandTd = (label ? '<span style="font-size:10px;opacity:0.5;margin-right:4px">' + label + '</span>' : '') + normalized.band;
+      return '<tr style="cursor:pointer" data-pci="' + normalized.pci + '" data-earfcn="' + normalized.fcn + '" data-band="' + normalized.band + '">' +
         '<td>' + bandTd + '</td>' +
-        '<td>' + c.fcn + '</td>' +
-        '<td>' + c.pci + '</td>' +
-        '<td>' + hotbox_parseSignalBar(c.rsrp) + '</td>' +
-        '<td>' + hotbox_parseSignalBar(c.sinr, -10, 30, 13, 0) + '</td>' +
-        '<td>' + hotbox_parseSignalBar(c.rsrq, -20, -3, -9, -12) + '</td>' +
+        '<td>' + normalized.fcn + '</td>' +
+        '<td>' + normalized.pci + '</td>' +
+        '<td>' + renderSignalMetric(normalized.rsrp) + '</td>' +
+        '<td>' + renderSignalMetric(normalized.sinr, -10, 30, 13, 0) + '</td>' +
+        '<td>' + renderSignalMetric(normalized.rsrq, -20, -3, -9, -12) + '</td>' +
         '</tr>';
     }).join('');
     currentCardEl.innerHTML = TABLE_HEAD + rows + TABLE_FOOT;
@@ -121,15 +198,14 @@
       return;
     }
     var rows = cells.map(function (c) {
-      var b = String(c.band || '');
-      var bandLabel = b ? (/^[BNbn]/i.test(b) ? b.toUpperCase() : 'B' + b) : '?';
-      return '<tr style="cursor:pointer" data-pci="' + c.pci + '" data-earfcn="' + c.earfcn + '" data-band="' + (c.band || '') + '">' +
-        '<td>' + bandLabel + '</td>' +
-        '<td>' + c.earfcn + '</td>' +
-        '<td>' + c.pci + '</td>' +
-        '<td>' + hotbox_parseSignalBar(c.rsrp) + '</td>' +
-        '<td>' + hotbox_parseSignalBar(c.sinr, -10, 30, 13, 0) + '</td>' +
-        '<td>' + hotbox_parseSignalBar(c.rsrq, -20, -3, -9, -12) + '</td>' +
+      var normalized = normalizeCell(c);
+      return '<tr style="cursor:pointer" data-pci="' + normalized.pci + '" data-earfcn="' + normalized.earfcn + '" data-band="' + normalized.band + '">' +
+        '<td>' + normalized.band + '</td>' +
+        '<td>' + normalized.earfcn + '</td>' +
+        '<td>' + normalized.pci + '</td>' +
+        '<td>' + renderSignalMetric(normalized.rsrp) + '</td>' +
+        '<td>' + renderSignalMetric(normalized.sinr, -10, 30, 13, 0) + '</td>' +
+        '<td>' + renderSignalMetric(normalized.rsrq, -20, -3, -9, -12) + '</td>' +
         '</tr>';
     }).join('');
     neighborListEl.innerHTML = TABLE_HEAD + rows + TABLE_FOOT;
@@ -148,7 +224,8 @@
     if (earfcnInput) earfcnInput.value = earfcn || '';
     // Auto-select RAT based on band (N prefix = 5G NR, otherwise 4G LTE)
     if (band) {
-      var isNR = /^n/i.test(band);
+      var normalizedBand = normalizeBandLabel(band, '', earfcn);
+      var isNR = /^N/.test(normalizedBand);
       var targetRat = isNR ? '16' : '12';
       if (targetRat !== selectedRat) {
         selectedRat = targetRat;
@@ -190,49 +267,71 @@
     _isLoadingCellData = true;
     try {
       // neighbor + locked (same as original firmware Network tab)
-      var params = new URLSearchParams({ cmd: 'neighbor_cell_info,locked_cell_info' });
+      var params = new URLSearchParams({ cmd: 'neighbor_cell_info,locked_cell_info,current_cell_info' });
       var res = await getData(params);
-      if (!res) return;
+      if (!res) res = {};
 
-      if (!lockedOnly && res.neighbor_cell_info) {
-        lastNeighborData = res.neighbor_cell_info;
-        renderNeighborCells(res.neighbor_cell_info);
-        if (neighborCountEl) neighborCountEl.textContent = res.neighbor_cell_info.length || '0';
+      if (!lockedOnly) {
+        lastNeighborData = Array.isArray(res.neighbor_cell_info)
+          ? res.neighbor_cell_info.map(function (cell) { return normalizeCell(cell); }).filter(Boolean)
+          : [];
+        renderNeighborCells(lastNeighborData);
+        if (neighborCountEl) neighborCountEl.textContent = String(lastNeighborData.length);
       }
+
+      if (!lockedOnly) {
+        lastCurrentData = Array.isArray(res.current_cell_info)
+          ? res.current_cell_info.map(function (cell) { return normalizeCell(cell); }).filter(Boolean)
+          : [];
+        if (lastCurrentData.length > 0) {
+          renderCurrentCell(lastCurrentData);
+        }
+      }
+
       if (res.locked_cell_info) {
         renderLockedCells(res.locked_cell_info);
         if (countEl) countEl.textContent = res.locked_cell_info.length || '0';
       }
+      // Current cell from main status poll (UFI_DATA) — ZTE firmware only returns
+      // these fields when bundled with the full status batch, not standalone
+      if (!lockedOnly) {
+        var d = window.UFI_DATA || {};
+        if (lastCurrentData.length > 0) {
+          renderCurrentCell(lastCurrentData);
+        } else {
+          var cells = [];
+          if (d.Lte_pci && d.Lte_fcn) {
+            cells.push({
+              band: 'B' + (d.Lte_bands || '?'),
+              fcn: d.Lte_fcn,
+              earfcn: d.Lte_fcn,
+              pci: d.Lte_pci,
+              rat: '12',
+              rsrp: d.lte_rsrp || '',
+              sinr: d.Lte_snr || '',
+              rsrq: d.lte_rsrq || ''
+            });
+          }
+          if (d.Nr_pci && d.Nr_fcn) {
+            cells.push({
+              band: 'N' + (d.Nr_bands || '?'),
+              fcn: d.Nr_fcn,
+              earfcn: d.Nr_fcn,
+              pci: d.Nr_pci,
+              rat: '16',
+              rsrp: d.Z5g_rsrp || '',
+              sinr: d.Nr_snr || '',
+              rsrq: d.nr_rsrq || ''
+            });
+          }
+          lastCurrentData = cells.map(function (cell) { return normalizeCell(cell, cell.rat); }).filter(Boolean);
+          renderCurrentCell(lastCurrentData);
+        }
+      }
     } catch (e) { /* ignore */ }
-
-    // Current cell from main status poll (UFI_DATA) — ZTE firmware only returns
-    // these fields when bundled with the full status batch, not standalone
-    if (!lockedOnly) {
-      var d = window.UFI_DATA || {};
-      var cells = [];
-      if (d.Lte_pci && d.Lte_fcn) {
-        cells.push({
-          band: 'B' + (d.Lte_bands || '?'),
-          fcn: d.Lte_fcn,
-          pci: d.Lte_pci,
-          rsrp: d.lte_rsrp || '',
-          sinr: d.Lte_snr || '',
-          rsrq: d.lte_rsrq || ''
-        });
-      }
-      if (d.Nr_pci && d.Nr_fcn) {
-        cells.push({
-          band: 'N' + (d.Nr_bands || '?'),
-          fcn: d.Nr_fcn,
-          pci: d.Nr_pci,
-          rsrp: d.Z5g_rsrp || '',
-          sinr: d.Nr_snr || '',
-          rsrq: d.nr_rsrq || ''
-        });
-      }
-      renderCurrentCell(cells);
+    finally {
+      _isLoadingCellData = false;
     }
-    _isLoadingCellData = false;
   }
 
   // Start/stop auto-refresh

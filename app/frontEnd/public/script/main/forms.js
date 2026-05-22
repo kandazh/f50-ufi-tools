@@ -814,7 +814,16 @@ function parseCGEQOSRDP(input) {
     if (parts.length < 8) {
         return input
     }
-    return `QCI：${parts[1]} ⬇️ ${+parts[6] / 1000}Mbps ⬆️ ${+parts[7] / 1000}Mbps`
+
+    const formatQosRate = (rawValue) => {
+        const parsed = Number(rawValue);
+        if (!Number.isFinite(parsed) || parsed <= 0) return '0';
+        const kbpsScaledMbps = parsed / 1000;
+        const mbps = kbpsScaledMbps >= 10000 ? (parsed / 1000000) : kbpsScaledMbps;
+        return Number.isInteger(mbps) ? String(mbps) : mbps.toFixed(1).replace(/\.0$/, '');
+    };
+
+    return `QCI：${parts[1]} ⬇️ ${formatQosRate(parts[6])}Mbps ⬆️ ${formatQosRate(parts[7])}Mbps`
 }
 
 

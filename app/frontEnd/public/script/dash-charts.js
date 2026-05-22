@@ -1025,7 +1025,7 @@
         if (deviceInfoVersion) set('ddi-version', deviceInfoVersion);
     };
 
-    // --- QCI / DL Max / UL Max poller (independent of main.js QOSRDPCommand) ---
+    // --- QoS / DL Max / UL Max poller (independent of main.js QOSRDPCommand) ---
     async function pollQoS() {
         try {
             const r = await fetch(_baseURL + '/AT?command=' + encodeURIComponent('AT+CGEQOSRDP=1') + '&slot=0');
@@ -1035,12 +1035,31 @@
                 if (m) {
                     const p = m[1].split(',').map(Number);
                     if (p.length >= 8) {
+                        const formatLinkBandwidthKbps = (rawValue) => {
+                            const parsed = Number(rawValue);
+                            if (!Number.isFinite(parsed) || parsed <= 0) return '--';
+                            const mbps = parsed / 1000;
+                            const text = Number.isInteger(mbps) ? String(mbps) : mbps.toFixed(1).replace(/\.0$/, '');
+                            return text + ' Mbps';
+                        };
+                        const formatQosRate = (rawValue) => {
+                            const parsed = Number(rawValue);
+                            if (!Number.isFinite(parsed) || parsed <= 0) return '0 Mbps';
+                            const kbpsScaledMbps = parsed / 1000;
+                            const mbps = kbpsScaledMbps >= 10000 ? (parsed / 1000000) : kbpsScaledMbps;
+                            const text = Number.isInteger(mbps) ? String(mbps) : mbps.toFixed(1).replace(/\.0$/, '');
+                            return text + ' Mbps';
+                        };
                         const elQci = document.getElementById('ci-qci');
                         const elDl  = document.getElementById('ci-dl');
                         const elUl  = document.getElementById('ci-ul');
-                        if (elQci) elQci.textContent = p[1];
-                        if (elDl)  elDl.textContent  = (p[6] / 1000) + ' Mbps';
-                        if (elUl)  elUl.textContent  = (p[7] / 1000) + ' Mbps';
+                        const linkDl = formatLinkBandwidthKbps(window.UFI_DATA?.link_downstream_bandwidth_kbps);
+                        const linkUl = formatLinkBandwidthKbps(window.UFI_DATA?.link_upstream_bandwidth_kbps);
+                        const qosDl = formatQosRate(p[6]);
+                        const qosUl = formatQosRate(p[7]);
+                        if (elQci) elQci.textContent = 'QCI ' + p[1] + ' | ⬇️ ' + qosDl + ' | ⬆️ ' + qosUl;
+                        if (elDl)  elDl.textContent  = linkDl !== '--' ? linkDl : qosDl;
+                        if (elUl)  elUl.textContent  = linkUl !== '--' ? linkUl : qosUl;
                         window._qosFromDashCharts = true;
                     }
                 }

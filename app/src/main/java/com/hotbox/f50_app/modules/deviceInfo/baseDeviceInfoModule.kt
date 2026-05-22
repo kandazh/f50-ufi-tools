@@ -1,7 +1,13 @@
 package com.hotbox.f50_app.modules.deviceInfo
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.os.Build
 import android.os.StatFs
+import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
 import com.hotbox.f50_app.configs.AppMeta
 import com.hotbox.f50_app.configs.AppMeta.isReadUseTerms
 import com.hotbox.f50_app.modules.BASE_TAG
@@ -38,6 +44,7 @@ import io.ktor.server.request.receiveText
 import kotlinx.serialization.json.JsonObject
 import org.json.JSONArray
 import org.json.JSONObject
+import androidx.core.content.ContextCompat
 
 data class MyStorageInfo(
     val path: String, val totalBytes: Long, val availableBytes: Long
@@ -70,6 +77,9 @@ private data class BaseDeviceInfoResponse(
     val memInfo: JsonElement? = null,
     val current_now: Int? = null,
     val voltage_now: Int? = null,
+    val link_downstream_bandwidth_kbps: Int? = null,
+    val link_upstream_bandwidth_kbps: Int? = null,
+    val cell_bandwidths_khz: List<Int>? = null,
 )
 
 private data class DeviceStorageSnapshot(
@@ -91,6 +101,12 @@ private data class DeviceBatterySnapshot(
     val currentNow: Int? = null,
     val voltageNow: Int? = null,
     val timestamp: Long,
+)
+
+private data class DeviceRadioSnapshot(
+    val linkDownstreamBandwidthKbps: Int? = null,
+    val linkUpstreamBandwidthKbps: Int? = null,
+    val cellBandwidthsKhz: List<Int>? = null,
 )
 
 // Cache for frequently polled device metrics (CPU/thermal/memory)
@@ -168,6 +184,60 @@ private suspend fun readBatterySnapshot(context: Context, tag: String, timestamp
     }
 }
 
+private fun readRadioSnapshot(context: Context, tag: String): DeviceRadioSnapshot {
+    return try {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetwork
+        val networkCapabilities = activeNetwork?.let { connectivityManager.getNetworkCapabilities(it) }
+
+        val downlinkKbps = networkCapabilities
+            ?.linkDownstreamBandwidthKbps
+            ?.takeIf { it > 0 }
+        val uplinkKbps = networkCapabilities
+            ?.linkUpstreamBandwidthKbps
+            ?.takeIf { it > 0 }
+
+        val hasPhoneStatePermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_PHONE_STATE
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val cellBandwidthsKhz = if (hasPhoneStatePermission) {
+            val telephonyManager = context.getSystemService(TelephonyManager::class.java)
+            val dataSubscriptionId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                SubscriptionManager.getActiveDataSubscriptionId()
+            } else {
+                SubscriptionManager.getDefaultDataSubscriptionId()
+            }
+            val subscriptionTelephonyManager = if (
+                telephonyManager != null &&
+                dataSubscriptionId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+            ) {
+                telephonyManager.createForSubscriptionId(dataSubscriptionId)
+            } else {
+                telephonyManager
+            }
+
+            subscriptionTelephonyManager
+                ?.serviceState
+                ?.cellBandwidths
+                ?.filter { it > 0 }
+                ?.takeIf { it.isNotEmpty() }
+        } else {
+            null
+        }
+
+        DeviceRadioSnapshot(
+            linkDownstreamBandwidthKbps = downlinkKbps,
+            linkUpstreamBandwidthKbps = uplinkKbps,
+            cellBandwidthsKhz = cellBandwidthsKhz,
+        )
+    } catch (e: Exception) {
+        HotboxLog.d(tag, "Error getting radio info: ${e.message}")
+        DeviceRadioSnapshot()
+    }
+}
+
 fun Route.baseDeviceInfoModule(context: Context) {
     val TAG = "[$BASE_TAG]_baseDeviceInfoModule"
 
@@ -236,6 +306,7 @@ fun Route.baseDeviceInfoModule(context: Context) {
 
         val battery = batteryCache?.takeIf { (now - it.timestamp) < CACHE_TTL_MS }
             ?: readBatterySnapshot(context, TAG, now).also { batteryCache = it }
+        val radio = readRadioSnapshot(context, TAG)
 
         val response = BaseDeviceInfoResponse(
             app_ver = AppMeta.versionName,
@@ -263,6 +334,9 @@ fun Route.baseDeviceInfoModule(context: Context) {
             memInfo = metrics.memInfo,
             current_now = battery.currentNow,
             voltage_now = battery.voltageNow,
+            link_downstream_bandwidth_kbps = radio.linkDownstreamBandwidthKbps,
+            link_upstream_bandwidth_kbps = radio.linkUpstreamBandwidthKbps,
+            cell_bandwidths_khz = radio.cellBandwidthsKhz,
         )
         call.response.headers.append("Access-Control-Allow-Origin", "*")
         call.respondText(Json.encodeToString(response), ContentType.Application.Json)

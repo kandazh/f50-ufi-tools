@@ -285,6 +285,32 @@ let handlerStatusRender = async (flag = false) => {
             }
             return '--';
         };
+        const formatKbpsAsMbpsText = (value) => {
+            if (!hasMetricValue(value)) return '--';
+            const parsed = Number.parseFloat(value);
+            if (!Number.isFinite(parsed) || parsed <= 0) return '--';
+            const mbps = parsed / 1000;
+            const text = Number.isInteger(mbps) ? String(mbps) : mbps.toFixed(1).replace(/\.0$/, '');
+            return text + ' Mbps';
+        };
+        const formatCellBandwidthText = (values) => {
+            const list = Array.isArray(values) ? values : [values];
+            const formatted = list
+                .map((value) => Number.parseFloat(value))
+                .filter((value) => Number.isFinite(value) && value > 0)
+                .map((value) => {
+                    const mhz = value / 1000;
+                    return (Number.isInteger(mhz) ? String(mhz) : mhz.toFixed(1).replace(/\.0$/, '')) + ' MHz';
+                });
+            return formatted.length > 0 ? formatted.join(' + ') : '--';
+        };
+        const formatQosSummary = (qci, dl, ul) => {
+            const parts = [];
+            if (hasMetricValue(qci)) parts.push('QCI ' + qci);
+            if (hasMetricValue(dl)) parts.push('⬇️ ' + String(dl).replace(/\s+/g, ' ').trim());
+            if (hasMetricValue(ul)) parts.push('⬆️ ' + String(ul).replace(/\s+/g, ' ').trim());
+            return parts.length > 0 ? parts.join(' | ') : '--';
+        };
 
         // Update signal history chart
         if (typeof updateSignalChart === 'function') {
@@ -300,14 +326,20 @@ let handlerStatusRender = async (flag = false) => {
 
         // Update cell info strip (Band / EARFCN / BW / PCI / Cell ID)
         {
+            const networkTypeText = String(res.network_type || '').toUpperCase();
             const hasNrData = [res.Nr_bands, res.Nr_fcn, res.Nr_pci, res.Z5g_rsrp, res.Nr_snr, res.nr_rsrq]
                 .some(hasMetricValue);
-            const is5g = hasNrData || res.network_type === '20' || String(res.network_type || '').toUpperCase().includes('5G');
+            const networkIndicates5g = networkTypeText === '20' || networkTypeText === '5G' || networkTypeText.includes('5G') || networkTypeText.includes('NR');
+            const networkIndicatesLte = networkTypeText === '13' || networkTypeText === 'LTE' || networkTypeText === 'LTE_CA' || networkTypeText.includes('LTE');
+            const is5g = networkIndicates5g ? true : (networkIndicatesLte ? false : hasNrData);
             const band  = is5g
                 ? (hasMetricValue(res.Nr_bands) ? 'N' + res.Nr_bands : (hasMetricValue(res.Lte_bands) ? 'B' + res.Lte_bands : '--'))
                 : (hasMetricValue(res.Lte_bands) ? 'B' + res.Lte_bands : '--');
             const freq  = is5g ? pickMetricText(res.Nr_fcn, res.Lte_fcn) : pickMetricText(res.Lte_fcn, res.Nr_fcn);
-            const bw    = is5g ? pickMetricText(res.Nr_bands_widths, res.Lte_bands_widths) : pickMetricText(res.Lte_bands_widths, res.Nr_bands_widths);
+            const radioBw = formatCellBandwidthText(res.cell_bandwidths_khz);
+            const bw    = is5g
+                ? pickMetricText(res.Nr_bands_widths, res.Lte_bands_widths, radioBw)
+                : pickMetricText(res.Lte_bands_widths, res.Nr_bands_widths, radioBw);
             const pci   = is5g ? pickMetricText(res.Nr_pci, res.Lte_pci) : pickMetricText(res.Lte_pci, res.Nr_pci);
             const cellId = is5g ? pickMetricText(res.Nr_cell_id, res.Lte_cell_id) : pickMetricText(res.Lte_cell_id, res.Nr_cell_id);
 
@@ -330,17 +362,19 @@ let handlerStatusRender = async (flag = false) => {
                 const elQci = _dom.ciQci;
                 const elDl  = _dom.ciDl;
                 const elUl  = _dom.ciUl;
+                const linkDl = formatKbpsAsMbpsText(res.link_downstream_bandwidth_kbps);
+                const linkUl = formatKbpsAsMbpsText(res.link_upstream_bandwidth_kbps);
                 if (window.QORS_MESSAGE) {
                     const qm = window.QORS_MESSAGE.match(/QCI[：:]\s*(\d+)/);
                     const dlm = window.QORS_MESSAGE.match(/⬇️\s*([\d.]+\s*Mbps)/);
                     const ulm = window.QORS_MESSAGE.match(/⬆️\s*([\d.]+\s*Mbps)/);
-                    if (elQci) elQci.textContent = qm ? qm[1] : '--';
-                    if (elDl)  elDl.textContent  = dlm ? dlm[1] : '--';
-                    if (elUl)  elUl.textContent  = ulm ? ulm[1] : '--';
+                    if (elQci) elQci.textContent = formatQosSummary(qm ? qm[1] : null, dlm ? dlm[1] : null, ulm ? ulm[1] : null);
+                    if (elDl)  elDl.textContent  = linkDl !== '--' ? linkDl : (dlm ? dlm[1] : '--');
+                    if (elUl)  elUl.textContent  = linkUl !== '--' ? linkUl : (ulm ? ulm[1] : '--');
                 } else {
                     if (elQci) elQci.textContent = '--';
-                    if (elDl)  elDl.textContent  = '--';
-                    if (elUl)  elUl.textContent  = '--';
+                    if (elDl)  elDl.textContent  = linkDl;
+                    if (elUl)  elUl.textContent  = linkUl;
                 }
             }
 
@@ -357,9 +391,15 @@ let handlerStatusRender = async (flag = false) => {
             const ccSinrFill = _dom.ccSinrFill;
             const ccRsrqFill = _dom.ccRsrqFill;
 
-            const rsrpVal = pickMetricNumber(res.Z5g_rsrp, res.lte_rsrp);
-            const sinrVal = pickMetricNumber(res.Nr_snr, res.Lte_snr);
-            const rsrqVal = pickMetricNumber(res.nr_rsrq, res.lte_rsrq);
+            const rsrpVal = is5g
+                ? pickMetricNumber(res.Z5g_rsrp, res.lte_rsrp)
+                : pickMetricNumber(res.lte_rsrp, res.Z5g_rsrp);
+            const sinrVal = is5g
+                ? pickMetricNumber(res.Nr_snr, res.Lte_snr)
+                : pickMetricNumber(res.Lte_snr, res.Nr_snr);
+            const rsrqVal = is5g
+                ? pickMetricNumber(res.nr_rsrq, res.lte_rsrq)
+                : pickMetricNumber(res.lte_rsrq, res.nr_rsrq);
 
             // RSRP: -125 to -81 dBm range
             if (ccRsrp) ccRsrp.textContent = rsrpVal != null ? rsrpVal + ' dBm' : '--';
@@ -391,7 +431,9 @@ let handlerStatusRender = async (flag = false) => {
             // RSSI: -110 to -25 dBm range
             const ccRssi = _dom.ccRssi;
             const ccRssiFill = _dom.ccRssiFill;
-            let rssiVal = pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi);
+            let rssiVal = is5g
+                ? pickMetricNumber(res.nr_rssi, res.lte_rssi, res.network_rssi)
+                : pickMetricNumber(res.lte_rssi, res.nr_rssi, res.network_rssi);
             if (rssiVal == null && rsrpVal != null) rssiVal = rsrpVal + 30;
             if (ccRssi) ccRssi.textContent = rssiVal != null ? rssiVal + ' dBm' : '--';
             if (ccRssiFill) {

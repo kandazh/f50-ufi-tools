@@ -69,6 +69,7 @@ $pkg = "com.hotbox.f50_app"
 # 5. Grant runtime permissions
 Write-Host "`n=== Granting permissions ===" -ForegroundColor Cyan
 & $adb shell pm grant $pkg android.permission.POST_NOTIFICATIONS
+& $adb shell pm grant $pkg android.permission.READ_PHONE_STATE
 & $adb shell pm grant $pkg android.permission.READ_SMS
 & $adb shell pm grant $pkg android.permission.READ_EXTERNAL_STORAGE
 & $adb shell pm grant $pkg android.permission.WRITE_EXTERNAL_STORAGE

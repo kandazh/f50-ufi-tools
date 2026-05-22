@@ -361,10 +361,11 @@ const getUFIData = async () => {
         // alongside it, as they override the composite values with empty strings.
         // Solution: fetch `network_information` alone, then fetch everything else separately.
         const cmdSignal = 'network_information';
+        const cmdSignalDetails = 'Z5g_rsrp,Nr_snr,nr_rsrq,nr_rssi,Nr_bands,Nr_fcn,Nr_bands_widths,Nr_pci,Nr_cell_id,lte_rsrp,Lte_snr,lte_rsrq,lte_rssi,Lte_bands,Lte_fcn,Lte_bands_widths,Lte_pci,Lte_cell_id';
         const cmdStatus = 'network_provider,Lte_ca_status,usb_port_switch,battery_charging,sms_received_flag,sms_unread_num,sms_sim_unread_num,sim_msisdn,data_volume_limit_switch,battery_value,battery_vol_percent,network_signalbar,network_rssi,cr_version,iccid,imei,imsi,wan_ipaddr,ipv6_wan_ipaddr,lan_ipaddr,mac_address,msisdn,rssi,wifi_access_sta_num,loginfo,data_volume_alert_percent,data_volume_limit_size,realtime_rx_thrpt,realtime_tx_thrpt,realtime_time,monthly_tx_bytes,monthly_rx_bytes,monthly_time,ppp_status,performance_mode,indicator_light_switch,samba_switch,roam_setting_option,dial_roam_setting_option';
 
-        // Fetch signal data, status data, and device info in parallel
-        const [signalRes, statusRes, deviceInfoRes] = await Promise.all([
+        // Fetch composite signal data first, then overlay any non-empty individual fields.
+        const [signalRes, signalDetailsData, statusRes, deviceInfoRes] = await Promise.all([
             fetch(`${HOTBOX_baseURL}/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=${cmdSignal}&${params.toString()}`, {
                 headers: {
                     ...common_headers,
@@ -372,6 +373,15 @@ const getUFIData = async () => {
                 },
                 signal: controller.signal
             }),
+            fetch(`${HOTBOX_baseURL}/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=${cmdSignalDetails}&_=${Date.now() + 2}`, {
+                headers: {
+                    ...common_headers,
+                    "hotbox-cookie": HOTBOX_COOKIE
+                },
+                signal: controller.signal
+            })
+                .then(r => r.json())
+                .catch(() => ({})),
             fetch(`${HOTBOX_baseURL}/goform/goform_get_cmd_process?multi_data=1&isTest=false&cmd=${cmdStatus}&_=${Date.now() + 1}`, {
                 headers: {
                     ...common_headers,
@@ -388,6 +398,12 @@ const getUFIData = async () => {
         let deviceInfo = deviceInfoRes
 
         const isPresent = (value) => value !== undefined && value !== null && value !== ''
+        Object.entries(signalDetailsData || {}).forEach(([key, value]) => {
+            if (isPresent(value)) {
+                resData[key] = value
+            }
+        })
+
         const battery = isPresent(resData?.battery_value)
             ? resData.battery_value
             : isPresent(resData?.battery_vol_percent)
