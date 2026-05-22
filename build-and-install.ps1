@@ -3,10 +3,35 @@
 
 Set-Location $PSScriptRoot
 
+# 0. Kill any lingering Gradle/Java processes and force-clean build dir
+Write-Host "`n=== Preparing build environment ===" -ForegroundColor Cyan
+Get-Process -Name "java", "gradle", "gradlew" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 500
+
+# Force delete build directory if it exists (fixes Windows file lock issues)
+if (Test-Path "app\build") {
+    Write-Host "Forcing build directory cleanup..." -ForegroundColor Yellow
+    Remove-Item -Recurse -Force "app\build" -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 1
+}
+
 # 1. Clean and build release APK (includes frontend build automatically)
 Write-Host "`n=== Cleaning & Building Release APK ===" -ForegroundColor Cyan
-.\gradlew.bat clean assembleRelease
-if ($LASTEXITCODE -ne 0) { Write-Host "Build failed!" -ForegroundColor Red; exit 1 }
+$buildAttempt = 1
+$maxAttempts = 3
+while ($buildAttempt -le $maxAttempts) {
+    Write-Host "Build attempt $buildAttempt of $maxAttempts..." -ForegroundColor Cyan
+    .\gradlew.bat clean assembleRelease
+    if ($LASTEXITCODE -eq 0) { break }
+    if ($buildAttempt -lt $maxAttempts) {
+        Write-Host "Build failed, retrying in 5 seconds..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 5
+        Get-Process -Name "java", "gradle", "gradlew" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 1
+    }
+    $buildAttempt++
+}
+if ($LASTEXITCODE -ne 0) { Write-Host "Build failed after $maxAttempts attempts!" -ForegroundColor Red; exit 1 }
 
 # 2. Find the generated APK
 $apk = Get-ChildItem "app\build\outputs\apk\release\*.apk" | Sort-Object LastWriteTime -Descending | Select-Object -First 1

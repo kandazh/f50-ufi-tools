@@ -150,7 +150,7 @@
     });
   }
 
-  // Upload test - continuous POST for TEST_DURATION_MS
+  // Upload test - parallel POST for TEST_DURATION_MS (up to 4 concurrent)
   function measureUpload(sizeMB, onProgress) {
     return new Promise(function (resolve) {
       var totalUploaded = 0;
@@ -170,10 +170,10 @@
 
       function tryStartMore() {
         if (done) return;
-        var elapsed = (performance.now() - startTime) / 1000;
-        if (elapsed >= TEST_DURATION_MS) {
+        if ((performance.now() - startTime) >= TEST_DURATION_MS) {
           if (activeUploads === 0) {
-            finish(totalUploaded / (Math.max(elapsed, 0.001) * 1048576));
+            var elapsed = Math.max((performance.now() - startTime) / 1000, 0.001);
+            finish(totalUploaded / (elapsed * 1048576));
           }
           return;
         }
@@ -193,7 +193,11 @@
         })
           .then(function (res) {
             if (done) return;
-            if (!res.ok) throw new Error('Upload test failed');
+            if (!res.ok) {
+              activeUploads--;
+              tryStartMore();
+              return;
+            }
             return res.json().then(function (payload) {
               if (done) return;
               var uploadedBytes = Number(payload && payload.bytes);
@@ -205,13 +209,17 @@
               tryStartMore();
             }).catch(function () {
               if (done) return;
-              throw new Error('Upload test failed');
+              activeUploads--;
+              tryStartMore();
             });
           })
           .catch(function (err) {
+            if (done || (err && err.name === 'AbortError')) {
+              activeUploads--;
+              return;
+            }
             activeUploads--;
-            if (done || (err && err.name === 'AbortError')) return;
-            finish(-1);
+            tryStartMore();
           });
       }
 

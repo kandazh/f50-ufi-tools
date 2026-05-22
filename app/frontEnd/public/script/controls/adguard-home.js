@@ -189,6 +189,14 @@
     } finally { busy = false; }
   }
 
+  function requireShellSuccess(res, fallbackMessage) {
+    if (res && res.success) return true;
+    const message = (res && res.content) ? res.content : fallbackMessage;
+    log(message);
+    showCtrlToast(message, 'error');
+    return false;
+  }
+
   async function restart() {
     if (busy) return;
     busy = true;
@@ -196,11 +204,13 @@
     try {
       if (!(await checkRoot())) { showCtrlToast('Advanced features not enabled', 'error'); return; }
       log('Stopping AdGuard Home...');
-      await runShellWithRoot('/data/agh/action.sh stop');
+      var stopRes = await runShellWithRoot('/data/agh/action.sh stop');
+      if (!requireShellSuccess(stopRes, 'Failed to stop AdGuard Home')) return;
       log('Waiting...');
       await runShellWithRoot('sleep 2');
       log('Starting AdGuard Home...');
       var res = await runShellWithRoot('/data/agh/action.sh toggle');
+      if (!requireShellSuccess(res, 'Failed to start AdGuard Home')) return;
       log(res.content || 'Started');
       showCtrlToast('Restarted');
       refreshStatus();
@@ -215,6 +225,7 @@
       if (!(await checkRoot())) { showCtrlToast('Advanced features not enabled', 'error'); return; }
       log('Stopping AdGuard Home...');
       var res = await runShellWithRoot('/data/agh/action.sh stop');
+      if (!requireShellSuccess(res, 'Failed to stop AdGuard Home')) return;
       log(res.content || 'Stopped');
       setService('Stopped', '#fbbf24');
       showCtrlToast('Stopped');
@@ -231,6 +242,7 @@
       await runShellWithRoot("sed -i '/agh.*boot.sh/d' " + BOOT_SH_FILE);
       log('Stopping service...');
       var res = await runShellWithRoot('/data/agh/action.sh stop 2>/dev/null');
+      if (!requireShellSuccess(res, 'Failed to stop AdGuard Home during uninstall')) return;
       log(res.content || '');
       log('Removing AdGuard files...');
       await runShellWithRoot('rm -rf /data/agh /data/agh_update_tmp /data/AdGuardHome_linux_arm64.tar.gz');
@@ -283,7 +295,8 @@
       if (!extRes.success) { log('Extraction failed'); showCtrlToast('Extraction failed', 'error'); return; }
 
       log('Installing new binary...');
-      await runShellWithRoot('/data/agh/action.sh stop 2>/dev/null');
+  var stopRes = await runShellWithRoot('/data/agh/action.sh stop 2>/dev/null');
+  if (!requireShellSuccess(stopRes, 'Failed to stop AdGuard Home before update')) return;
       await runShellWithRoot('cp -f /data/agh_update_tmp/AdGuardHome/AdGuardHome /data/agh/agh/bin/AdGuardHome');
       await runShellWithRoot('chmod 755 /data/agh/agh/bin/AdGuardHome');
       await runShellWithRoot('rm -rf /data/agh_update_tmp "' + AGH_DOWNLOAD_PATH + '"');
@@ -333,7 +346,8 @@
       if (!extRes.success) { log('Extraction failed'); showCtrlToast('Extraction failed', 'error'); return; }
 
       log('Installing new binary...');
-      await runShellWithRoot('/data/agh/action.sh stop 2>/dev/null');
+  var stopRes = await runShellWithRoot('/data/agh/action.sh stop 2>/dev/null');
+  if (!requireShellSuccess(stopRes, 'Failed to stop AdGuard Home before update')) return;
       await runShellWithRoot('cp -f /data/agh_update_tmp/AdGuardHome/AdGuardHome /data/agh/agh/bin/AdGuardHome');
       await runShellWithRoot('chmod 755 /data/agh/agh/bin/AdGuardHome');
       await runShellWithRoot('rm -rf /data/agh_update_tmp "' + AGH_DOWNLOAD_PATH + '"');

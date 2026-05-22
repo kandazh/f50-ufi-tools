@@ -152,8 +152,12 @@ stop_adguardhome() {
     pkill -f "AdGuardHome" || pkill -9 -f "AdGuardHome"
   fi
   log "AdGuardHome stopped"
-  $SCRIPT_DIR/iptables.sh disable
-  log "Iptables disabled"
+  if $SCRIPT_DIR/iptables.sh disable; then
+    log "Iptables disabled"
+  else
+    log "WARNING: Iptables disable had errors, some rules may still be active"
+    return 1
+  fi
 }
 
 toggle_adguardhome() {

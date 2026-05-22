@@ -399,6 +399,58 @@ apply_wan_firewall() {
   log "Applied WAN firewall rules (IPv4 + IPv6)"
 }
 
+# Block DNS bypass methods (port 853 for DoT, alternate DNS ports)
+# Uses FORWARD chain to block client egress traffic to external DoT/DNS servers
+block_dns_bypass_methods() {
+  log "Blocking DNS bypass methods on LAN (DoT port 853, alt DNS ports via FORWARD)"
+  # Block DoT (DNS-over-TLS) on port 853 for WiFi clients trying to bypass AGH
+  # Use FORWARD chain so it blocks client->WAN traffic, not just loopback
+  $iptables_w -C FORWARD -i "$lan_interface" -p tcp --dport 853 -j DROP 2>/dev/null || \
+    $iptables_w -I FORWARD -i "$lan_interface" -p tcp --dport 853 -j DROP
+  $iptables_w -C FORWARD -i "$lan_interface" -p udp --dport 853 -j DROP 2>/dev/null || \
+    $iptables_w -I FORWARD -i "$lan_interface" -p udp --dport 853 -j DROP
+  # Block alternate DNS ports (5053, 5054, 5055, 9053)
+  for port in 5053 5054 5055 9053; do
+    $iptables_w -C FORWARD -i "$lan_interface" -p tcp --dport "$port" -j DROP 2>/dev/null || \
+      $iptables_w -I FORWARD -i "$lan_interface" -p tcp --dport "$port" -j DROP
+    $iptables_w -C FORWARD -i "$lan_interface" -p udp --dport "$port" -j DROP 2>/dev/null || \
+      $iptables_w -I FORWARD -i "$lan_interface" -p udp --dport "$port" -j DROP
+  done
+  # Also block on IPv6
+  $ip6tables_w -C FORWARD -i "$lan_interface" -p tcp --dport 853 -j DROP 2>/dev/null || \
+    $ip6tables_w -I FORWARD -i "$lan_interface" -p tcp --dport 853 -j DROP
+  $ip6tables_w -C FORWARD -i "$lan_interface" -p udp --dport 853 -j DROP 2>/dev/null || \
+    $ip6tables_w -I FORWARD -i "$lan_interface" -p udp --dport 853 -j DROP
+  for port in 5053 5054 5055 9053; do
+    $ip6tables_w -C FORWARD -i "$lan_interface" -p tcp --dport "$port" -j DROP 2>/dev/null || \
+      $ip6tables_w -I FORWARD -i "$lan_interface" -p tcp --dport "$port" -j DROP
+    $ip6tables_w -C FORWARD -i "$lan_interface" -p udp --dport "$port" -j DROP 2>/dev/null || \
+      $ip6tables_w -I FORWARD -i "$lan_interface" -p udp --dport "$port" -j DROP
+  done
+  log "Blocked DNS bypass methods (port 853 DoT + alternate ports via FORWARD)"
+}
+
+# Unblock DNS bypass methods
+unblock_dns_bypass_methods() {
+  log "Removing DNS bypass blocking"
+  # Remove DoT blocking from FORWARD chain (port 853)
+  $iptables_w -D FORWARD -i "$lan_interface" -p tcp --dport 853 -j DROP 2>/dev/null
+  $iptables_w -D FORWARD -i "$lan_interface" -p udp --dport 853 -j DROP 2>/dev/null
+  # Remove alternate DNS port blocking from FORWARD
+  for port in 5053 5054 5055 9053; do
+    $iptables_w -D FORWARD -i "$lan_interface" -p tcp --dport "$port" -j DROP 2>/dev/null
+    $iptables_w -D FORWARD -i "$lan_interface" -p udp --dport "$port" -j DROP 2>/dev/null
+  done
+  # Remove IPv6 blocking from FORWARD
+  $ip6tables_w -D FORWARD -i "$lan_interface" -p tcp --dport 853 -j DROP 2>/dev/null
+  $ip6tables_w -D FORWARD -i "$lan_interface" -p udp --dport 853 -j DROP 2>/dev/null
+  for port in 5053 5054 5055 9053; do
+    $ip6tables_w -D FORWARD -i "$lan_interface" -p tcp --dport "$port" -j DROP 2>/dev/null
+    $ip6tables_w -D FORWARD -i "$lan_interface" -p udp --dport "$port" -j DROP 2>/dev/null
+  done
+  log "Removed DNS bypass blocking"
+}
+
 disable_iptables() {
   # Always clean up WAN firewall rules (they exist independently of the NAT chain)
   log "Removing WAN firewall rules"
@@ -707,6 +759,11 @@ enable)
     apply_wan_firewall
   fi
 
+  # Block DNS bypass methods (DoT, alternate DNS ports) - only if iptables enabled
+  if [ "$enable_iptables" = true ]; then
+    block_dns_bypass_methods
+  fi
+
   if [ "$enable_iptables" = false ]; then
     log "enable_iptables is disabled in settings, skipping DNS redirect rules"
   else
@@ -735,18 +792,26 @@ enable)
   fi
   ;;
 disable)
+  disable_failed=0
   log "Disabling iptables"
   disable_iptables || {
     log "Failed to disable iptables"
-    exit 1
+    disable_failed=1
   }
-  log "Disabled iptables"
+  if [ "$disable_failed" -eq 0 ]; then
+    log "Disabled iptables"
+  fi
   # Always attempt IPv6 cleanup regardless of current settings,
   # in case settings were changed between enable and disable
   log "Cleaning up ipv6 DNS blocking (if active)"
-  del_block_ipv6_dns
+  del_block_ipv6_dns || disable_failed=1
   log "Cleaning up IPv6 DNS redirect (if active)"
-  disable_ipv6_iptables
+  disable_ipv6_iptables || disable_failed=1
+  # Remove DNS bypass blocking
+  unblock_dns_bypass_methods || disable_failed=1
+  if [ "$disable_failed" -ne 0 ]; then
+    exit 1
+  fi
   # NOTE: Hardening is NOT removed on disable for security.
   # The device stays protected even when AGH is stopped.
   # Use 'unharden' to explicitly remove if needed.

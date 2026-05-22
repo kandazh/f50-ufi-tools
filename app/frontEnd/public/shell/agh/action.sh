@@ -2,18 +2,33 @@ MODPATH="/data/agh"
 AGH_DIR="$MODPATH/agh"
 
 start() {
-  $AGH_DIR/scripts/tool.sh start
-  echo "ADGuard started successfully"
+  if $AGH_DIR/scripts/tool.sh start; then
+    echo "ADGuard started successfully"
+    return 0
+  else
+    echo "ERROR: ADGuard failed to start"
+    return 1
+  fi
 }
 
 stop() {
-  $AGH_DIR/scripts/tool.sh stop
-  echo "ADGuard stopped successfully"
+  if $AGH_DIR/scripts/tool.sh stop; then
+    echo "ADGuard stopped successfully"
+    return 0
+  else
+    echo "ERROR: ADGuard failed to stop properly"
+    return 1
+  fi
 }
 
 toggle() {
-  $AGH_DIR/scripts/tool.sh toggle
-  echo "ADGuard restarted successfully"
+  if $AGH_DIR/scripts/tool.sh toggle; then
+    echo "ADGuard restarted successfully"
+    return 0
+  else
+    echo "ERROR: ADGuard failed to restart"
+    return 1
+  fi
 }
 
 case "$1" in
