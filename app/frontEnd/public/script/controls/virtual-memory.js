@@ -8,7 +8,7 @@
   var OLD_SH_FILE = '/sdcard/kano_swap.sh';
   var LOG_FILE = '/data/swap_setup.log';
   var BOOT_SH = '/sdcard/ufi_tools_boot.sh';
-  var SWAP_SIZE_MB = parseInt(localStorage.getItem('swap_size_mb')) || 1536;
+  var SWAP_SIZE_MB = parseInt(localStorage.getItem('swap_size_mb')) || 2048;
 
   var toggleWrap = document.getElementById('SWAP_TOGGLE_SWITCH');
   var statusEl = document.getElementById('swap_status');
