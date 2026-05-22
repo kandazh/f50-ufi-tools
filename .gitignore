@@ -42,6 +42,8 @@ platform-tools/
 app/frontEnd/node_modules/
 app/frontEnd/package-lock.json
 app/src/main/assets/
+
+# misc
 F50_Android13_kernel(5.4.210)/
 nr_modem_a.bin
 legacy_app/

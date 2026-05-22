@@ -77,7 +77,7 @@ android {
         targetSdk = 33
         // Dynamically generate versionCode in yyyyMMdd format
         versionCode = SimpleDateFormat("yyyyMMdd").format(Date()).toInt()
-        versionName = "4.0.0"
+        versionName = "4.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "BUILD_TIMESTAMP", "\"${SimpleDateFormat("yyyy-MM-dd HH:mm").apply { timeZone = TimeZone.getTimeZone("Asia/Kolkata") }.format(Date())}\"")
     }

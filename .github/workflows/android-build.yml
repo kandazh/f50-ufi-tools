@@ -2,12 +2,16 @@ name: Android Release CI
 
 on:
   push:
-    branches: [ "main", "master", "http-server-version" ]
+    branches: [ "main", "master"]
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
 
 jobs:
   build-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -49,3 +53,11 @@ jobs:
         with:
           name: app-release
           path: app/build/outputs/apk/release/*.apk
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Hotbox ${{ github.ref_name }}
+          generate_release_notes: true
+          files: app/build/outputs/apk/release/*.apk
