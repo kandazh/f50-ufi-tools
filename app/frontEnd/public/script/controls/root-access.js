@@ -233,10 +233,10 @@
   async function cleanupRootFiles() {
     // Remove boot/schedule scripts, logs, flags, mount dirs, unlock scripts
     await runShellWithRoot([
-      'rm -f /sdcard/ufi_tools_boot.sh',
-      'rm -f /sdcard/ufi_tools_schedule.sh',
-      'rm -f /sdcard/unlock_samba.sh',
-      'rm -f /sdcard/smb_log.log',
+      'rm -f /sdcard/hotbox/hotbox_boot.sh',
+      'rm -f /sdcard/hotbox/hotbox_schedule.sh',
+      'rm -f /sdcard/hotbox/unlock_samba.sh',
+      'rm -f /sdcard/hotbox/smb_log.log',
       'rm -f /cache/unlock_samba.sh',
       'rm -f /data/local/tmp/boot_once.flag',
       'rm -rf /data/local/tmp/hotbox_mc',

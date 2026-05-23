@@ -389,7 +389,7 @@ fun Route.advancedToolsModule(context: Context, targetServerIP: String) {
                 var jsonResult = """{"result":"Execution successful"}"""
                 try {
                     val escapedCommand =
-                        "sh /sdcard/quick_shell.sh".replace("\"", "\\\"")
+                        "sh /sdcard/hotbox/quick_shell.sh".replace("\"", "\\\"")
                     ShellHotbox.fillInputAndSend(
                         escapedCommand,
                         outFile_adb.absolutePath,

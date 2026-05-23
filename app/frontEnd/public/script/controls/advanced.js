@@ -56,6 +56,7 @@
     });
     switches.fotaRoam = createToggle('ADV_FOTA_ROAM_SWITCH');
     switches.zteUpdate = createToggle('ADV_ZTE_UPDATE_SWITCH');
+    switches.mobileData = createToggle('MOBILE_DATA_SWITCH');
     switches.roam = createToggle('ADV_ROAM_SWITCH');
     switches.samba = createToggle('ADV_SAMBA_SWITCH');
     switches.light = createToggle('ADV_LIGHT_SWITCH');
@@ -83,10 +84,10 @@
     container.appendChild(btn);
     return {
       get: function () { return state; },
-      set: function (v) {
+      set: function (v, silent) {
         state = !!v;
         btn.className = 'ctrl-toggle ' + (state ? 'on' : 'off');
-        if (onChange) onChange(state);
+        if (!silent && onChange) onChange(state);
       }
     };
   }
@@ -243,6 +244,13 @@
       if (switches.samba) switches.samba.set(data.samba_switch === '1');
       if (switches.light) switches.light.set(data.indicator_light_switch === '1');
     } catch (e) { console.warn('[Advanced] Failed to load quick switches:', e); }
+    // Load Mobile Data state
+    try {
+      var pppData = await getData(new URLSearchParams({ cmd: 'ppp_status', multi_data: '1' }));
+      if (pppData && switches.mobileData) {
+        switches.mobileData.set(pppData.ppp_status && pppData.ppp_status !== 'ppp_disconnected');
+      }
+    } catch (e) { console.warn('[Advanced] Failed to load quick switches:', e); }
     // Load HSR state via AT command (separate from goform)
     try {
       if (switches.hsr && typeof executeATCommand === 'function') {
@@ -273,6 +281,7 @@
         dial_roam_setting_option: roamValue
       });
       await postData(cookie, { goformId: 'SAMBA_SETTING', samba_switch: switches.samba.get() ? '1' : '0' });
+      await postData(cookie, { goformId: switches.mobileData.get() ? 'CONNECT_NETWORK' : 'DISCONNECT_NETWORK' });
     });
   }
 

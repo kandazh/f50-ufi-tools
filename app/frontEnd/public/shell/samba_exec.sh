@@ -1,7 +1,10 @@
 #!/system/bin/sh
 
-LOG_FILE="/sdcard/smb_log.log"
+LOG_FILE="/sdcard/hotbox/smb_log.log"
 MAX_SIZE=$((4 * 1024 * 1024))  # 4MB = 4 * 1024 * 1024 bytes
+
+# Ensure hotbox directory exists
+mkdir -p /sdcard/hotbox
 
 FLAG_FILE="/data/local/tmp/boot_once.flag"
 THRESHOLD=120  # uptime 120s
@@ -11,8 +14,8 @@ SOCKET_FILE="$SOCKET_DIR/hotbox_root_shell.sock"
 SOCAT_PATH="/data/data/com.hotbox.f50_app/files/socat"
 TTYD_PATH="/data/data/com.hotbox.f50_app/files/ttyd"
 LOGIN_PATH="/data/data/com.hotbox.f50_app/files/login.sh"
-BOOTUP_SCRIPT_PATH="/sdcard/ufi_tools_boot.sh"
-SCHEDULE_SCRIPT_PATH="/sdcard/ufi_tools_schedule.sh"
+BOOTUP_SCRIPT_PATH="/sdcard/hotbox/hotbox_boot.sh"
+SCHEDULE_SCRIPT_PATH="/sdcard/hotbox/hotbox_schedule.sh"
 APP_PKG="com.hotbox.f50_app"
 CORRECT_SMB_SRC="/sdcard/Android/data/$APP_PKG/files/smb.conf"
 
@@ -345,24 +348,23 @@ disable_fota(){
 }
 
 samba_path(){
-  SRC_LIST="/sdcard/DCIM /mnt/media_rw /storage/sdcard0"
-  TGT_LIST="/data/SAMBA_SHARE/Internal /data/SAMBA_SHARE/External /data/SAMBA_SHARE/SDCard"
+  # Always mount full internal storage
+  [ ! -d "/data/SAMBA_SHARE/Internal" ] && mkdir -p "/data/SAMBA_SHARE/Internal"
+  mount | grep " /data/SAMBA_SHARE/Internal " >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+      mount --bind /sdcard /data/SAMBA_SHARE/Internal
+      echo "[`date`] Mounted /sdcard -> /data/SAMBA_SHARE/Internal" >> "$LOG_FILE"
+  fi
 
-  i=1
-  for src in $SRC_LIST; do
-      tgt=$(echo "$TGT_LIST" | cut -d' ' -f"$i")
-      i=$((i + 1))
-
-      [ ! -d "$tgt" ] && mkdir -p "$tgt"
-
-      mount | grep " $tgt " >/dev/null 2>&1
+  # Mount external SD card if present
+  if [ -d "/mnt/media_rw" ] && [ "$(ls /mnt/media_rw 2>/dev/null)" ]; then
+      [ ! -d "/data/SAMBA_SHARE/External" ] && mkdir -p "/data/SAMBA_SHARE/External"
+      mount | grep " /data/SAMBA_SHARE/External " >/dev/null 2>&1
       if [ $? -ne 0 ]; then
-          mount --bind "$src" "$tgt"
-          echo "[`date`] Mounted $src -> $tgt" >> "$LOG_FILE"
-      else
-          echo "[`date`] $tgt already mounted" >> "$LOG_FILE"
+          mount --bind /mnt/media_rw /data/SAMBA_SHARE/External
+          echo "[`date`] Mounted /mnt/media_rw -> /data/SAMBA_SHARE/External" >> "$LOG_FILE"
       fi
-  done
+  fi
 }
 
 close_thread_killer() {
@@ -376,8 +378,8 @@ boot_up_script() {
       echo "[`date`] exec $BOOTUP_SCRIPT_PATH ..." >> "$LOG_FILE"
       sh "$BOOTUP_SCRIPT_PATH"
   else
-      echo "$BOOTUP_SH" > /sdcard/ufi_tools_boot.sh
-      chmod +x /sdcard/ufi_tools_boot.sh
+      echo "$BOOTUP_SH" > /sdcard/hotbox/hotbox_boot.sh
+      chmod +x /sdcard/hotbox/hotbox_boot.sh
       echo "[`date`] $BOOTUP_SCRIPT_PATH not found, skip" >> "$LOG_FILE"
   fi
 
@@ -402,7 +404,7 @@ boot_up_script() {
   iptables -I OUTPUT 1 -i lo -j ACCEPT
 
   echo "$UNLOCK_SAMBA_CONF" > /cache/unlock_samba.sh
-  echo "$UNLOCK_SAMBA_CONF" > /sdcard/unlock_samba.sh
+  echo "$UNLOCK_SAMBA_CONF" > /sdcard/hotbox/unlock_samba.sh
 
   samba_path
   fix_smb_conf
@@ -421,8 +423,8 @@ schedule_script() {
   if [ -f "$SCHEDULE_SCRIPT_PATH" ]; then
       sh "$SCHEDULE_SCRIPT_PATH"
   else
-      echo "$SCHEDULE_SH" > /sdcard/ufi_tools_schedule.sh
-      chmod +x /sdcard/ufi_tools_schedule.sh
+      echo "$SCHEDULE_SH" > /sdcard/hotbox/hotbox_schedule.sh
+      chmod +x /sdcard/hotbox/hotbox_schedule.sh
       echo "[`date`] $SCHEDULE_SCRIPT_PATH not found, skip" >> "$LOG_FILE"
   fi
 

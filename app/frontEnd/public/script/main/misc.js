@@ -268,17 +268,17 @@ const togglePort = async (port, flag, isBootup = false, v6 = false) => {
 
         const saveBootup = async (cmd, proto) => {
             const line = `${cmd} # UFI-TOOLS ${proto} ${port}`;
-            const shell = `grep -qxF '${line}' /sdcard/ufi_tools_boot.sh || echo '${line}' >> /sdcard/ufi_tools_boot.sh`;
+            const shell = `grep -qxF '${line}' /sdcard/hotbox/hotbox_boot.sh || echo '${line}' >> /sdcard/hotbox/hotbox_boot.sh`;
             await runShellWithRoot(shell);
         };
 
         const removeBootup = async (proto) => {
             const pattern = `# UFI-TOOLS ${proto} ${port}`;
-            await runShellWithRoot(`sed -i '/${pattern}/d' /sdcard/ufi_tools_boot.sh`);
+            await runShellWithRoot(`sed -i '/${pattern}/d' /sdcard/hotbox/hotbox_boot.sh`);
         };
 
         const removeAllBootup = async () => {
-            await runShellWithRoot(`sed -i '/# UFI-TOOLS .* ${port}/d' /sdcard/ufi_tools_boot.sh`);
+            await runShellWithRoot(`sed -i '/# UFI-TOOLS .* ${port}/d' /sdcard/hotbox/hotbox_boot.sh`);
         };
 
         if (!isBootup) {
@@ -1457,3 +1457,209 @@ const doDataUsageHistorySearch = async () => {
     window.openDataUsageHistory = openDataUsageHistory;
     window.doDataUsageHistorySearch = doDataUsageHistorySearch;
 })();
+
+// ===== HEADER BUTTON FUNCTIONS (must be defined after window assignments reference them) =====
+
+// Header: WiFi Band switch (click to toggle between bands)
+const toggleWiFiBand = async () => {
+    try {
+        if (!(await window.initRequestData())) {
+            createToast('Not initialized', 'red');
+            return;
+        }
+        
+        const res = await getData(new URLSearchParams({
+            cmd: 'queryWiFiModuleSwitch,queryAccessPointInfo'
+        }));
+        
+        if (!res) {
+            createToast('Failed to query WiFi', 'red');
+            return;
+        }
+        
+        const label = document.querySelector('#wifiBandLabel');
+        const btn = document.querySelector('#wifiBandBtn');
+        if (!label || !btn) return;
+        
+        // Determine current band and next band to switch to
+        let nextBand = 'chip1'; // default to 2.4G
+        let nextLabel = '2.4G';
+        
+        if (res.WiFiModuleSwitch === '1' && res.ResponseList && res.ResponseList.length > 0) {
+            const ap = res.ResponseList.find(r => r.AccessPointSwitchStatus === '1');
+            if (ap) {
+                const currentBand = ap.ChipIndex === '1' ? 'chip2' : 'chip1';
+                // Toggle: if on chip1 (2.4G), switch to chip2 (5G), and vice versa
+                nextBand = currentBand === 'chip1' ? 'chip2' : 'chip1';
+                nextLabel = nextBand === 'chip1' ? '2.4G' : '5G';
+            }
+        } else {
+            nextLabel = 'On';
+        }
+        
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        
+        const cookie = await login();
+        if (!cookie) {
+            createToast('Login failed', 'red');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            return;
+        }
+        
+        try {
+            if (nextBand === '0') {
+                await (await postData(cookie, { goformId: 'switchWiFiModule', SwitchOption: 0 })).json();
+            } else {
+                await (await postData(cookie, { goformId: 'switchWiFiChip', ChipEnum: nextBand, GuestEnable: 0 })).json();
+            }
+            
+            label.textContent = nextLabel;
+            createToast(`WiFi switched to ${nextLabel}`, 'green');
+        } catch (e) {
+            createToast('Failed to switch WiFi', 'red');
+        } finally {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    } catch (e) {
+        console.error('WiFi band error:', e);
+        createToast('WiFi error', 'red');
+    }
+};
+
+// Header: AdGuard toggle (click to restart/toggle)
+const toggleAdGuardStatus = async () => {
+    try {
+        if (!(await window.initRequestData())) {
+            createToast('Not initialized', 'red');
+            return;
+        }
+        
+        const label = document.querySelector('#adguardLabel');
+        const btn = document.querySelector('#adguardBtn');
+        if (!label || !btn) return;
+        
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        label.textContent = 'Toggling...';
+        
+        try {
+            // Toggle AdGuard using the action script
+            const res = await runShellWithRoot('/data/agh/action.sh toggle');
+            
+            if (res && res.success) {
+                createToast('AdGuard toggled', 'green');
+                // Refresh status after 1 second
+                setTimeout(async () => {
+                    const pidRes = await runShellWithRoot('cat /data/agh/agh/bin/agh.pid 2>/dev/null && kill -0 $(cat /data/agh/agh/bin/agh.pid) 2>/dev/null && echo RUNNING');
+                    const status = pidRes && pidRes.success && pidRes.content.includes('RUNNING') ? 'Running' : 'Stopped';
+                    label.textContent = status;
+                }, 1000);
+            } else {
+                createToast('AdGuard not installed', 'orange');
+                label.textContent = 'Not Installed';
+            }
+        } catch (e) {
+            console.error('AdGuard toggle error:', e);
+            createToast('Failed to toggle AdGuard', 'red');
+            label.textContent = '--';
+        } finally {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    } catch (e) {
+        console.error('AdGuard error:', e);
+        createToast('AdGuard error', 'red');
+    }
+};
+
+// Header: Clean RAM trigger (click to clean memory)
+const cleanMemory = () => {
+    try {
+        // Find the hidden clean memory button created by memory-cleaner.js
+        const cleanBtn = document.getElementById('CLEAN_MEMORY');
+        if (cleanBtn && cleanBtn.onclick) {
+            cleanBtn.onclick({ target: cleanBtn });
+        } else {
+            createToast('Memory cleaner not ready', 'orange');
+        }
+    } catch (e) {
+        console.error('Clean memory error:', e);
+        createToast('Memory cleanup failed', 'red');
+    }
+};
+
+// Initialize header displays on page load (show current status only)
+const initHeaderDisplays = async () => {
+    try {
+        // Display WiFi Band
+        const wifiLabel = document.querySelector('#wifiBandLabel');
+        if (wifiLabel) {
+            try {
+                const res = await getData(new URLSearchParams({
+                    cmd: 'queryWiFiModuleSwitch,queryAccessPointInfo'
+                }));
+                
+                if (res) {
+                    let bandLabel = '--';
+                    if (res.WiFiModuleSwitch === '1' && res.ResponseList && res.ResponseList.length > 0) {
+                        const ap = res.ResponseList.find(r => r.AccessPointSwitchStatus === '1');
+                        if (ap) {
+                            const currentBand = ap.ChipIndex === '1' ? 'chip2' : 'chip1';
+                            bandLabel = currentBand === 'chip1' ? '2.4G' : '5G';
+                        }
+                    } else {
+                        bandLabel = 'Off';
+                    }
+                    wifiLabel.textContent = bandLabel;
+                }
+            } catch (e) {
+                wifiLabel.textContent = '--';
+            }
+        }
+        
+        // Display AdGuard Status
+        const aghLabel = document.querySelector('#adguardLabel');
+        if (aghLabel) {
+            try {
+                const res = await runShellWithRoot('/data/agh/agh/bin/AdGuardHome --version 2>/dev/null');
+                let status = 'Not Installed';
+                if (res && res.success && res.content) {
+                    const pidRes = await runShellWithRoot('cat /data/agh/agh/bin/agh.pid 2>/dev/null && kill -0 $(cat /data/agh/agh/bin/agh.pid) 2>/dev/null && echo RUNNING');
+                    if (pidRes && pidRes.success && pidRes.content.includes('RUNNING')) {
+                        status = 'Running';
+                    } else {
+                        status = 'Stopped';
+                    }
+                }
+                aghLabel.textContent = status;
+            } catch (e) {
+                aghLabel.textContent = '--';
+            }
+        }
+    } catch (e) {
+        console.error('Init header displays error:', e);
+    }
+};
+
+(() => {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                initHeaderDisplays();
+            }, 500);
+        });
+    } else {
+        setTimeout(() => {
+            initHeaderDisplays();
+        }, 500);
+    }
+})();
+
+// Assign header functions to window (after they're defined)
+window.toggleWiFiBand = toggleWiFiBand;
+window.toggleAdGuardStatus = toggleAdGuardStatus;
+window.cleanMemory = cleanMemory;
+window.initHeaderDisplays = initHeaderDisplays;

@@ -201,6 +201,7 @@ rm -rf "${TMP_DIR}"
   button.textContent = TITLE;
   button.setAttribute('data-i18n', 'clean_memory');
   button.onclick = () => handleClick(button);
+  button.style.display = 'none'; // Hide the old button since we're using header version
 
   const qt = document.getElementById('quickToggles');
   if (qt) qt.appendChild(button);

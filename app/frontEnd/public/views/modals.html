@@ -966,14 +966,14 @@
                                     <div class="title" style="font-size: 11px;margin-bottom: 10px;">
                                         <div data-i18n="advance_feature_list">
                                             <b>Note: Do not disable File Sharing after enabling advanced features, or they will stop working.</b><br>
-                                            <i class="user_select">If removing advanced features causes errors, run in TTYD: sh /sdcard/unlock_samba.sh
+                                            <i class="user_select">If removing advanced features causes errors, run in TTYD: sh /sdcard/hotbox/unlock_samba.sh
                                                 Reboot to apply.</i>
                                             <i><br>Advanced features include:<br>
                                                 1. Optimized Samba directories (SD card, device root)<br>
                                                 2. TTYD with root shell<br>
                                                 3. Block IPv6 access to TTYD/ADB/SMB for security<br>
-                                                4. Scheduled script (runs every ~30s: ufi_tools_schedule.sh)<br>
-                                                5. Boot script (ufi_tools_boot.sh on internal storage)<br>
+                                                4. Scheduled script (runs every ~30s: hotbox_schedule.sh)<br>
+                                                5. Boot script (hotbox_boot.sh on internal storage)<br>
                                                 <span style="color: pink;">(Thanks to @QuTick @AiCherub @atwat for the ideas)</span>
                                             </i>
                                         </div>
@@ -996,7 +996,7 @@
                                         <button onclick="handleEditBootScriptModal()"
                                             data-i18n="edit_boot_script">Edit Boot Script</button>
                                         <button class="btn" onclick="disableButtonWhenExecuteFunc(event,handleShell)"
-                                            data-i18n="advance_run_shell">Run Shell Script (non-root)<br>(Script at /sdcard/quick_shell.sh)</button>
+                                            data-i18n="advance_run_shell">Run Shell Script (non-root)<br>(Script at /sdcard/hotbox/quick_shell.sh)</button>
                                         <button class="btn"
                                             onclick="disableButtonWhenExecuteFunc(event,()=>switchCpuCore(false))"
                                             data-i18n="advance_disable_little_core">Disable Small Cores</button>

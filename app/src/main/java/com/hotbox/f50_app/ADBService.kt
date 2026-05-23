@@ -357,14 +357,16 @@ class ADBService : Service() {
     }
 
     private fun setupAghBootHook() {
-        // F50 uses /sdcard/ufi_tools_boot.sh to auto-start services at system boot
+        // F50 uses /sdcard/hotbox/hotbox_boot.sh to auto-start services at system boot
         // Add AGH boot hook so it starts even if app crashes
         try {
             val aghBinary = java.io.File("/data/agh/agh/bin/AdGuardHome")
-            val bootHookFile = java.io.File("/sdcard/ufi_tools_boot.sh")
+            val bootHookFile = java.io.File("/sdcard/hotbox/hotbox_boot.sh")
             val aghBootScript = java.io.File("/data/agh/boot.sh")
             
             if (aghBinary.exists()) {
+                // Ensure hotbox directory exists
+                bootHookFile.parentFile?.mkdirs()
                 // Make boot.sh executable
                 aghBootScript.setExecutable(true)
                 HotboxLog.d(TAG, "AGH boot.sh is executable")
@@ -375,12 +377,12 @@ class ADBService : Service() {
                     if (!bootContent.contains("agh") || !bootContent.contains("boot.sh")) {
                         // Add boot hook
                         bootHookFile.appendText("\nsh /data/agh/boot.sh &\n")
-                        HotboxLog.d(TAG, "AGH boot hook added to /sdcard/ufi_tools_boot.sh")
+                        HotboxLog.d(TAG, "AGH boot hook added to /sdcard/hotbox/hotbox_boot.sh")
                     }
                 } else {
                     // Create boot file with AGH hook
                     bootHookFile.writeText("sh /data/agh/boot.sh &\n")
-                    HotboxLog.d(TAG, "Created /sdcard/ufi_tools_boot.sh with AGH boot hook")
+                    HotboxLog.d(TAG, "Created /sdcard/hotbox/hotbox_boot.sh with AGH boot hook")
                 }
             }
         } catch (e: Exception) {

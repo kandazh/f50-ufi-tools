@@ -58,24 +58,23 @@ object SmbThrottledRunner {
                                 val result =
                                     RootShell.sendCommandToSocket(
                                         """
-SRC_LIST="/sdcard/DCIM /mnt/media_rw /storage/sdcard0"
-TGT_LIST="/data/SAMBA_SHARE/Internal /data/SAMBA_SHARE/External /data/SAMBA_SHARE/SDCard"
-
-i=1
-for src in ${'$'}SRC_LIST; do
-  tgt=${'$'}(echo ${'$'}TGT_LIST | cut -d' ' -f${'$'}i)
-  i=${'$'}((i + 1))
-
-  [ ! -d "${'$'}tgt" ] && mkdir -p "${'$'}tgt"
-
-  mount | grep " ${'$'}tgt " >/dev/null 2>&1
-  if [ ${'$'}? -ne 0 ]; then
-      mount --bind "${'$'}src" "${'$'}tgt"
-      echo "Mounted ${'$'}src -> ${'$'}tgt"
-  else
-      echo "${'$'}tgt already mounted"
-  fi
-done
+mkdir -p /sdcard/hotbox
+# Mount full internal storage
+[ ! -d "/data/SAMBA_SHARE/Internal" ] && mkdir -p "/data/SAMBA_SHARE/Internal"
+mount | grep " /data/SAMBA_SHARE/Internal " >/dev/null 2>&1
+if [ ${'$'}? -ne 0 ]; then
+    mount --bind /sdcard /data/SAMBA_SHARE/Internal
+    echo "Mounted /sdcard -> /data/SAMBA_SHARE/Internal"
+fi
+# Mount external SD card if present
+if [ -d "/mnt/media_rw" ] && [ "${'$'}(ls /mnt/media_rw 2>/dev/null)" ]; then
+    [ ! -d "/data/SAMBA_SHARE/External" ] && mkdir -p "/data/SAMBA_SHARE/External"
+    mount | grep " /data/SAMBA_SHARE/External " >/dev/null 2>&1
+    if [ ${'$'}? -ne 0 ]; then
+        mount --bind /mnt/media_rw /data/SAMBA_SHARE/External
+        echo "Mounted /mnt/media_rw -> /data/SAMBA_SHARE/External"
+    fi
+fi
                         """.trimIndent(),
                                         socketPath.absolutePath
                                     )

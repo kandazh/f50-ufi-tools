@@ -56,11 +56,38 @@
 <body id="BG">
         <div class="container">
             <!-- Header -->
-            <div class="title main-title" style="align-items: end;">
-                <strong id="MAIN_TITLE" style="flex-shrink: 0;" onclick="enableTTYD()">Hotbox</strong>
-                <strong id="MODEL"
-                    style="font-size: .8rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;box-shadow: none;text-shadow: none;max-width: 400px;"
-                    onclick="nicknameSettingClick()"></strong>
+            <div class="title main-title">
+                <div class="header-left" id="headerLeft">
+                    <strong id="MAIN_TITLE" style="flex-shrink: 0;" onclick="enableTTYD()">Hotbox</strong>
+                    <strong id="MODEL"
+                        style="font-size: .8rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;box-shadow: none;text-shadow: none;max-width: 400px;"
+                        onclick="nicknameSettingClick()"></strong>
+                </div>
+                <nav class="icon-bar" id="iconBar">
+                    <button class="icon-bar-btn active" data-tab="dashboard" title="Dashboard" onclick="switchTab('dashboard')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    </button>
+                    <button class="icon-bar-btn" data-tab="network" title="Network" onclick="switchTab('network')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                    </button>
+                    <button class="icon-bar-btn" data-tab="controls" title="Settings" onclick="switchTab('controls')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
+                </nav>
+                <div class="header-center">
+                    <button class="header-control-btn" id="wifiBandBtn" title="WiFi Band" onclick="window.toggleWiFiBand && window.toggleWiFiBand()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a 6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+                        <span id="wifiBandLabel">--</span>
+                    </button>
+                    <button class="header-control-btn" id="adguardBtn" title="AdGuard Status" onclick="window.toggleAdGuardStatus && window.toggleAdGuardStatus()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <span id="adguardLabel">--</span>
+                    </button>
+                    <button class="header-control-btn" id="cleanMemBtn" title="Clean RAM" onclick="window.cleanMemory && window.cleanMemory()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l1.46-2.19A2 2 0 0 1 9.41 6h5.18a2 2 0 0 1 1.95 1.81L18 9M6 9h12v8a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9zM10 5V3h4v2"/></svg>
+                        <span id="cleanMemLabel">Clean RAM</span>
+                    </button>
+                </div>
                 <div class="global-status" id="globalStatus">
                     <button class="header-refresh-btn" id="headerLoginBtn" title="Login / Logout" onclick="toggleLoginLogout()" style="margin-right:2px;">
                         <svg id="loginBtnIcon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
@@ -121,27 +148,11 @@
 
             <!-- Main Layout: Icon Bar + Content Panel -->
             <div class="app-layout">
-                <!-- Icon Bar (narrow left strip) -->
-                <nav class="icon-bar" id="iconBar">
-                    <button class="icon-bar-btn active" data-tab="dashboard" title="Dashboard" onclick="switchTab('dashboard')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                    </button>
-                    <button class="icon-bar-btn" data-tab="network" title="Network" onclick="switchTab('network')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-                    </button>
-                    <button class="icon-bar-btn" data-tab="controls" title="Settings" onclick="switchTab('controls')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    </button>
-                </nav>
-
                 <!-- Content Panel -->
                 <div class="content-panel">
                     <div class="tab-panel" data-tab="dashboard">
             <!-- Quick Toggles -->
             <div class="quick-toggles" id="quickToggles">
-                <button class="qt-btn" id="qt-data" data-i18n="cellular" onclick="window.qtToggle('data')">
-                    <span class="qt-dot"></span><span class="qt-label">Mobile Data</span>
-                </button>
             </div>
 
             <!-- Live Tracking Charts -->
@@ -560,6 +571,12 @@
                         <div class="ctrl-section">
                             <div class="ctrl-section-title"><span class="ctrl-section-icon">🎛️</span> <span>Quick Switches</span></div>
                             <div class="ctrl-form">
+                                <div class="ctrl-field">
+                                    <span class="ctrl-label" data-i18n="cellular">Mobile Data</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <div id="MOBILE_DATA_SWITCH"></div>
+                                    </div>
+                                </div>
                                 <div class="ctrl-field">
                                     <span class="ctrl-label">Network Roaming</span>
                                     <div style="display:flex;align-items:center;gap:8px">
@@ -1436,7 +1453,7 @@ df -h /data
                         </div>
                         <div class="ctrl-adv-info-card" style="margin-top:auto">
                             <p style="margin:0 0 5px"><strong>🔄 Flow:</strong> Edit above → <strong>Save &amp; Run</strong> → saved to device → executed</p>
-                            <p style="margin:0 0 5px"><strong>📁 File:</strong> <code>/sdcard/quick_shell.sh</code></p>
+                            <p style="margin:0 0 5px"><strong>📁 File:</strong> <code>/sdcard/hotbox/quick_shell.sh</code></p>
                             <p style="margin:0 0 5px"><strong>👤 Runs as:</strong> <code>shell</code> user (UID 2000) — no root needed</p>
                             <p style="margin:0 0 5px"><strong>🛠️ Method:</strong> ZTE Engineer Mode → DEBUG&LOG → ADB Shell (UI automation)</p>
                             <p style="margin:0 0 8px"><strong>✅ Use for:</strong> granting permissions, enabling WiFi ADB, automating settings — all without root</p>
@@ -2627,12 +2644,12 @@ uptime</pre>
                                 <li>Root access &amp; samba hook (<code>/data/samba/etc/smb.conf</code>)</li>
                                 <li>AdGuard Home (<code>/data/agh/</code>)</li>
                                 <li>Virtual Memory swap (<code>/data/swapfile</code>)</li>
-                                <li>Boot &amp; schedule scripts (<code>/sdcard/ufi_tools_*.sh</code>)</li>
-                                <li>Quick shell script (<code>/sdcard/quick_shell.sh</code>)</li>
-                                <li>Logs (<code>/sdcard/smb_log.log</code>, <code>/data/swap_setup.log</code>)</li>
+                                <li>Boot &amp; schedule scripts (<code>/sdcard/hotbox/hotbox_boot.sh</code>, <code>/sdcard/hotbox/hotbox_schedule.sh</code>)</li>
+                                <li>Quick shell script (<code>/sdcard/hotbox/quick_shell.sh</code>)</li>
+                                <li>Logs (<code>/sdcard/hotbox/smb_log.log</code>, <code>/data/swap_setup.log</code>)</li>
                                 <li>Samba mount dirs (<code>/data/SAMBA_SHARE/</code>)</li>
                                 <li>Temp files (<code>/data/local/tmp/</code> app files)</li>
-                                <li>OTA update files (<code>/sdcard/ufi_tools_latest.apk</code>)</li>
+                                <li>OTA update files (<code>/sdcard/hotbox/ufi_tools_latest.apk</code>)</li>
                             </ul>
                         </div>
                         <div class="ctrl-section">
@@ -3621,14 +3638,14 @@ uptime</pre>
                                     <div class="title" style="font-size: 11px;margin-bottom: 10px;">
                                         <div data-i18n="advance_feature_list">
                                             <b>Note: Do not disable File Sharing after enabling advanced features, or they will stop working.</b><br>
-                                            <i class="user_select">If removing advanced features causes errors, run in TTYD: sh /sdcard/unlock_samba.sh
+                                            <i class="user_select">If removing advanced features causes errors, run in TTYD: sh /sdcard/hotbox/unlock_samba.sh
                                                 Reboot to apply.</i>
                                             <i><br>Advanced features include:<br>
                                                 1. Optimized Samba directories (SD card, device root)<br>
                                                 2. TTYD with root shell<br>
                                                 3. Block IPv6 access to TTYD/ADB/SMB for security<br>
-                                                4. Scheduled script (runs every ~30s: ufi_tools_schedule.sh)<br>
-                                                5. Boot script (ufi_tools_boot.sh on internal storage)<br>
+                                                4. Scheduled script (runs every ~30s: hotbox_schedule.sh)<br>
+                                                5. Boot script (hotbox_boot.sh on internal storage)<br>
                                                 <span style="color: pink;">(Thanks to @QuTick @AiCherub @atwat for the ideas)</span>
                                             </i>
                                         </div>
@@ -3651,7 +3668,7 @@ uptime</pre>
                                         <button onclick="handleEditBootScriptModal()"
                                             data-i18n="edit_boot_script">Edit Boot Script</button>
                                         <button class="btn" onclick="disableButtonWhenExecuteFunc(event,handleShell)"
-                                            data-i18n="advance_run_shell">Run Shell Script (non-root)<br>(Script at /sdcard/quick_shell.sh)</button>
+                                            data-i18n="advance_run_shell">Run Shell Script (non-root)<br>(Script at /sdcard/hotbox/quick_shell.sh)</button>
                                         <button class="btn"
                                             onclick="disableButtonWhenExecuteFunc(event,()=>switchCpuCore(false))"
                                             data-i18n="advance_disable_little_core">Disable Small Cores</button>

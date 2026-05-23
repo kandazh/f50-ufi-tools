@@ -264,27 +264,27 @@ fun Route.otaModule(context: Context) {
                     val shellScript = """
                 #!/system/bin/sh
                 nohup sh -c '
-                echo "${'$'}(date) Starting install..." >> /sdcard/ufi_tools_update.log
-                pm install -r -g "${ApkState.downloadResultPath}" >> /sdcard/ufi_tools_update.log 2>&1
+                echo "${'$'}(date) Starting install..." >> /sdcard/hotbox/ufi_tools_update.log
+                pm install -r -g "${ApkState.downloadResultPath}" >> /sdcard/hotbox/ufi_tools_update.log 2>&1
                 INSTALL_RC=${'$'}?
-                echo "${'$'}(date) pm install exit code: ${'$'}INSTALL_RC" >> /sdcard/ufi_tools_update.log
+                echo "${'$'}(date) pm install exit code: ${'$'}INSTALL_RC" >> /sdcard/hotbox/ufi_tools_update.log
                 if [ ${'$'}INSTALL_RC -ne 0 ]; then
-                    echo "${'$'}(date) Install FAILED" >> /sdcard/ufi_tools_update.log
+                    echo "${'$'}(date) Install FAILED" >> /sdcard/hotbox/ufi_tools_update.log
                     exit 1
                 fi
                 sleep 1
-                dumpsys activity start-activity -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                dumpsys activity start-activity -n com.hotbox.f50_app/.MainActivity >> /sdcard/hotbox/ufi_tools_update.log 2>&1
                 sleep 3
                 # Verify app is running, retry if not
                 if ! pidof com.hotbox.f50_app > /dev/null 2>&1; then
-                    echo "${'$'}(date) App not running, retrying start..." >> /sdcard/ufi_tools_update.log
-                    am start -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                    echo "${'$'}(date) App not running, retrying start..." >> /sdcard/hotbox/ufi_tools_update.log
+                    am start -n com.hotbox.f50_app/.MainActivity >> /sdcard/hotbox/ufi_tools_update.log 2>&1
                     sleep 3
                 fi
                 if pidof com.hotbox.f50_app > /dev/null 2>&1; then
-                    echo "${'$'}(date) App is running. Install complete!" >> /sdcard/ufi_tools_update.log
+                    echo "${'$'}(date) App is running. Install complete!" >> /sdcard/hotbox/ufi_tools_update.log
                 else
-                    echo "${'$'}(date) WARNING: App may not have started" >> /sdcard/ufi_tools_update.log
+                    echo "${'$'}(date) WARNING: App may not have started" >> /sdcard/hotbox/ufi_tools_update.log
                 fi
                 sync
                 ' >/dev/null 2>&1 &
@@ -318,33 +318,33 @@ fun Route.otaModule(context: Context) {
 
                     // Copy APK to sdcard root dir
                     val copyCmd =
-                        "${outFileAdb.absolutePath} -s localhost shell sh -c 'cp ${ApkState.downloadResultPath} /sdcard/ufi_tools_latest.apk'"
+                        "${outFileAdb.absolutePath} -s localhost shell sh -c 'cp ${ApkState.downloadResultPath} /sdcard/hotbox/ufi_tools_latest.apk'"
                     HotboxLog.d(TAG, "Executing: $copyCmd")
                     ShellHotbox.runShellCommand(copyCmd, context)
 
                     // Create and copy shell script
                     val scriptText = """
                     #!/system/bin/sh
-                    echo "${'$'}(date) Starting install (Plan B)..." >> /sdcard/ufi_tools_update.log
-                    pm install -r -g /sdcard/ufi_tools_latest.apk >> /sdcard/ufi_tools_update.log 2>&1
+                    echo "${'$'}(date) Starting install (Plan B)..." >> /sdcard/hotbox/ufi_tools_update.log
+                    pm install -r -g /sdcard/hotbox/ufi_tools_latest.apk >> /sdcard/hotbox/ufi_tools_update.log 2>&1
                     INSTALL_RC=${'$'}?
-                    echo "${'$'}(date) pm install exit code: ${'$'}INSTALL_RC" >> /sdcard/ufi_tools_update.log
+                    echo "${'$'}(date) pm install exit code: ${'$'}INSTALL_RC" >> /sdcard/hotbox/ufi_tools_update.log
                     if [ ${'$'}INSTALL_RC -ne 0 ]; then
-                        echo "${'$'}(date) Install FAILED" >> /sdcard/ufi_tools_update.log
+                        echo "${'$'}(date) Install FAILED" >> /sdcard/hotbox/ufi_tools_update.log
                         exit 1
                     fi
                     sleep 1
-                    dumpsys activity start-activity -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                    dumpsys activity start-activity -n com.hotbox.f50_app/.MainActivity >> /sdcard/hotbox/ufi_tools_update.log 2>&1
                     sleep 3
                     if ! pidof com.hotbox.f50_app > /dev/null 2>&1; then
-                        echo "${'$'}(date) App not running, retrying start..." >> /sdcard/ufi_tools_update.log
-                        am start -n com.hotbox.f50_app/.MainActivity >> /sdcard/ufi_tools_update.log 2>&1
+                        echo "${'$'}(date) App not running, retrying start..." >> /sdcard/hotbox/ufi_tools_update.log
+                        am start -n com.hotbox.f50_app/.MainActivity >> /sdcard/hotbox/ufi_tools_update.log 2>&1
                         sleep 3
                     fi
                     if pidof com.hotbox.f50_app > /dev/null 2>&1; then
-                        echo "${'$'}(date) App is running. Install complete!" >> /sdcard/ufi_tools_update.log
+                        echo "${'$'}(date) App is running. Install complete!" >> /sdcard/hotbox/ufi_tools_update.log
                     else
-                        echo "${'$'}(date) WARNING: App may not have started" >> /sdcard/ufi_tools_update.log
+                        echo "${'$'}(date) WARNING: App may not have started" >> /sdcard/hotbox/ufi_tools_update.log
                     fi
                     sync
                 """.trimIndent()
@@ -354,7 +354,7 @@ fun Route.otaModule(context: Context) {
                     val shPath = scriptFile.absolutePath
 
                     val copyShCmd =
-                        "${outFileAdb.absolutePath} -s localhost shell sh -c 'cp $shPath /sdcard/ufi_tools_update.sh'"
+                        "${outFileAdb.absolutePath} -s localhost shell sh -c 'cp $shPath /sdcard/hotbox/ufi_tools_update.sh'"
                     HotboxLog.d(TAG, "Executing: $copyShCmd")
                     ShellHotbox.runShellCommand(copyShCmd, context)
 
@@ -434,7 +434,7 @@ fun Route.otaModule(context: Context) {
 
                     try {
                         val escapedCommand =
-                            "sh /sdcard/ufi_tools_update.sh".replace("\"", "\\\"")
+                            "sh /sdcard/hotbox/ufi_tools_update.sh".replace("\"", "\\\"")
                         ShellHotbox.fillInputAndSend(
                             escapedCommand,
                             outFileAdb.absolutePath,

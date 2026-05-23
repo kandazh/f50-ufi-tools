@@ -1,6 +1,6 @@
 /**
  * Controls Tab — Quick Shell
- * Edit and execute /sdcard/quick_shell.sh via ADB Engineer Mode
+ * Edit and execute /sdcard/hotbox/quick_shell.sh via ADB Engineer Mode
  */
 (function () {
   var loaded = false;
@@ -182,7 +182,7 @@
         return false;
       }
       var file = new File([content], 'quick_shell.sh', { type: 'text/plain' });
-      var saved = await saveConfig(file, '/sdcard/quick_shell.sh');
+      var saved = await saveConfig(file, '/sdcard/hotbox/quick_shell.sh');
       if (!saved) {
         showOutput('<span style="color:#f87171">Failed to save script to device</span>');
         return false;
@@ -192,20 +192,20 @@
 
     // Load current script from device
     bindShellBtn(loadBtn, 'Loading script...', async function () {
-      var res = await runShellWithRoot('timeout 5s cat /sdcard/quick_shell.sh');
+      var res = await runShellWithRoot('timeout 5s cat /sdcard/hotbox/quick_shell.sh');
       if (res.success && res.content) {
         if (editor) editor.value = res.content;
         showOutput('<span style="color:#4ade80">✓ Script loaded from device</span>');
       } else {
         if (editor) editor.value = '#!/system/bin/sh\n# quick_shell.sh not found on device\nsync\n';
-        showOutput('<span style="color:#fbbf24">⚠ No script found at /sdcard/quick_shell.sh</span>');
+        showOutput('<span style="color:#fbbf24">⚠ No script found at /sdcard/hotbox/quick_shell.sh</span>');
       }
     });
 
     // Save only
     bindShellBtn(saveBtn, 'Saving script...', async function () {
       var ok = await saveScript();
-      if (ok) showOutput('<span style="color:#4ade80">✓ Script saved to /sdcard/quick_shell.sh</span>');
+      if (ok) showOutput('<span style="color:#4ade80">✓ Script saved to /sdcard/hotbox/quick_shell.sh</span>');
     });
 
     // Save & Run
@@ -213,7 +213,7 @@
       var ok = await saveScript();
       if (!ok) return;
       showOutput('<span style="opacity:0.6">⏳ Running quick_shell.sh...</span>');
-      var res = await runShellWithRoot('sh /sdcard/quick_shell.sh', 15000);
+      var res = await runShellWithRoot('sh /sdcard/hotbox/quick_shell.sh', 15000);
       if (res.success && res.content) {
         showOutput('<pre>' + escapeHtml(res.content) + '</pre>');
       } else if (res.content) {

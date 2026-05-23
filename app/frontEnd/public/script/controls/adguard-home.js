@@ -7,7 +7,7 @@
   if (!panel) return;
 
   var SH_FILE = '/data/agh/boot.sh';
-  var BOOT_SH_FILE = '/sdcard/ufi_tools_boot.sh';
+  var BOOT_SH_FILE = '/sdcard/hotbox/hotbox_boot.sh';
   var AGH_GITHUB_API = 'https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest';
   var AGH_DOWNLOAD_NAME = 'AdGuardHome_linux_arm64.tar.gz';
   var AGH_DOWNLOAD_PATH = '/data/' + AGH_DOWNLOAD_NAME;

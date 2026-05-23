@@ -49,20 +49,20 @@
       // 4. Remove boot/schedule/quick scripts
       log('[4/9] Removing scripts...');
       await runShellWithRoot([
-        'rm -f /sdcard/ufi_tools_boot.sh',
-        'rm -f /sdcard/ufi_tools_schedule.sh',
-        'rm -f /sdcard/quick_shell.sh',
-        'rm -f /sdcard/hotbox_swap.sh',
-        'rm -f /sdcard/unlock_samba.sh',
+        'rm -f /sdcard/hotbox/hotbox_boot.sh',
+        'rm -f /sdcard/hotbox/hotbox_schedule.sh',
+        'rm -f /sdcard/hotbox/quick_shell.sh',
+        'rm -f /sdcard/hotbox/hotbox_swap.sh',
+        'rm -f /sdcard/hotbox/unlock_samba.sh',
       ].join('; '));
 
       // 5. Remove logs
       log('[5/9] Removing logs...');
-      await runShellWithRoot('rm -f /sdcard/smb_log.log /sdcard/ufi_tools_update.log');
+      await runShellWithRoot('rm -f /sdcard/hotbox/smb_log.log /sdcard/hotbox/ufi_tools_update.log');
 
       // 6. Remove OTA files
       log('[6/9] Removing OTA update files...');
-      await runShellWithRoot('rm -f /sdcard/ufi_tools_latest.apk /sdcard/ufi_tools_update.sh');
+      await runShellWithRoot('rm -f /sdcard/hotbox/ufi_tools_latest.apk /sdcard/hotbox/ufi_tools_update.sh');
 
       // 7. Remove temp/mount dirs and flags
       log('[7/9] Removing temp files & mount dirs...');

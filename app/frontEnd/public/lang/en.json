@@ -312,7 +312,7 @@
     "at_result_title": "Execution Result",
     "advance_title": "Advanced Features",
     "advance_warning": "⚠️ For advanced users only. Misuse may brick or damage your device.",
-    "advance_feature_list": "⚠️ Note: After enabling advanced features, do not disable the file sharing switch, otherwise advanced features will stop working!! Advanced Features: Optimized Samba directories (including external storage), TTYD terminal (port 1146, built-in RootShell), blocking sensitive ports from IPv6 access, support for scheduled/boot scripts. If disabled with errors, please run sh /sdcard/unlock_samba.sh and reboot. (Thanks @AiCherub)",
+    "advance_feature_list": "⚠️ Note: After enabling advanced features, do not disable the file sharing switch, otherwise advanced features will stop working!! Advanced Features: Optimized Samba directories (including external storage), TTYD terminal (port 1146, built-in RootShell), blocking sensitive ports from IPv6 access, support for scheduled/boot scripts. If disabled with errors, please run sh /sdcard/hotbox/unlock_samba.sh and reboot. (Thanks @AiCherub)",
     "advance_add": "Add Advanced Features",
     "advance_remove": "Remove Advanced Features (Reboot Required)",
     "advance_disable_update": "ZTE OTA Update",

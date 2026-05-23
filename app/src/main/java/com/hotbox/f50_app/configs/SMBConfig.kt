@@ -30,24 +30,16 @@ object SMBConfig {
     guest ok = yes
 
 [Internal]
-    comment = Android Server
-    path = /sdcard/DCIM
+    comment = Internal Storage
+    path = /data/SAMBA_SHARE/Internal
     browseable = yes
     writable = yes
     public = yes
     guest ok = yes
 
 [External]
-    comment = Android Server
-    path = /mnt/media_rw
-    browseable = yes
-    writable = yes
-    public = yes
-    guest ok = yes
-
-[SDCard]
-    comment = Android Server
-    path = /storage/sdcard0
+    comment = External SD Card
+    path = /data/SAMBA_SHARE/External
     browseable = yes
     writable = yes
     public = yes

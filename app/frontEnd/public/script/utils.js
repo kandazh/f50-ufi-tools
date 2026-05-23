@@ -1178,7 +1178,7 @@ const handleEditBootScriptModal = async () => {
     }
 
     const res = await runShellWithRoot(`
-        timeout 5s  awk '{print}' /sdcard/ufi_tools_boot.sh
+        timeout 5s  awk '{print}' /sdcard/hotbox/hotbox_boot.sh
         `)
     if (!res.success) return createToast(t('read_file_fail'), 'red')
 
@@ -1217,8 +1217,8 @@ const handleEditBootScriptModal = async () => {
         if (!v || v.trim().length == 0) {
             v = '#!/system/bin/sh\n# put script content here!!!\nsync\n\n'
         }
-        const file = new File([v], "ufi_tools_boot.sh", { type: "text/plain" });
-        if (! await saveConfig(file, "/sdcard/ufi_tools_boot.sh")) {
+        const file = new File([v], "hotbox_boot.sh", { type: "text/plain" });
+        if (! await saveConfig(file, "/sdcard/hotbox/hotbox_boot.sh")) {
             return createToast(t('toast_save_failed'), 'pink')
         }
         createToast(t('toast_save_success_sync'), 'green')
