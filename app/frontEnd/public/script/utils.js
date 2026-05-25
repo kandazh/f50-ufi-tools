@@ -728,7 +728,7 @@ const getRefteshRate = (cb) => {
 
     let rate_num = null
     if (rate == null || rate == undefined || isNaN(Number(rate))) {
-        rate_num = 1000
+        rate_num = 3000
     } else {
         rate_num = Number(rate)
     }

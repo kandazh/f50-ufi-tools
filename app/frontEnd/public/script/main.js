@@ -84,11 +84,12 @@ if ('serviceWorker' in navigator) {
 }
 
 // --- Loading overlay ---
+const splash = document.getElementById('splash')
+if (splash) splash.remove()
 const overlay = document.createElement('div')
 overlay.className = 'loading-overlay'
 overlay.innerHTML = "<p>Loading...</p>"
 document.body.appendChild(overlay)
-document.body.classList.add('ready')
 
 // --- Check if token needed ---
 const needToken = async (shouldThrowError = false, fetchMaxRetries = 3) => {
@@ -130,6 +131,11 @@ const needToken = async (shouldThrowError = false, fetchMaxRetries = 3) => {
 
 // --- Boot sequence ---
 needToken(true, 30).then(() => {
+    try {
+        main_func()
+    } catch (e) {
+        console.error('[main_func]', e)
+    }
     overlay && (overlay.style.opacity = '0')
     setTimeout(() => {
         let container = document.querySelector('.container')
@@ -137,9 +143,9 @@ needToken(true, 30).then(() => {
         container.style.filter = 'none'
         overlay && overlay.remove()
     }, 100);
-    main_func()
 }).catch((e) => {
     if (overlay) {
+        overlay.style.opacity = '1'
         overlay.innerHTML = `
         <p>${e.message}</p>
         <div><button onclick="location.reload()">${t('common_refresh_btn')}</button></div>
@@ -329,7 +335,7 @@ function main_func() {
                 window.stopRefresh()
             }
         }
-    })
+    });
 
     // --- Collapse menu ---
     (() => {
@@ -363,7 +369,7 @@ function main_func() {
 
     // --- QOS polling ---
     QOSRDPCommand("AT+CGEQOSRDP=1")
-    window._QORSTimer = requestInterval(() => { QOSRDPCommand("AT+CGEQOSRDP=1") }, 10000)
+    window._QORSTimer = requestInterval(() => { QOSRDPCommand("AT+CGEQOSRDP=1") }, 10000);
 
     // --- Initialize language pack ---
     (() => {
