@@ -187,7 +187,7 @@
   min-width: 0;
   white-space: nowrap;
   margin-left: auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .gs-carrier-logo {
@@ -897,7 +897,7 @@
   .global-status {
     flex-shrink: 1;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
     gap: 4px;
     font-size: 0.6rem;
     padding: 0;

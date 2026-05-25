@@ -83,9 +83,9 @@
   }, 0);
 
   // Save settings via goform
-  bindCtrlSave('dm_save_btn', async function () {
+  bindCtrlSave('dm_save_btn', async function (cookie) {
     var limitSize = limitSizeInput.value + '_1024';
-    await postData({
+    await postData(cookie, {
       goformId: 'DATA_LIMIT_SETTING',
       data_volume_limit_switch: limitSwitch && limitSwitch.get() ? '1' : '0',
       data_volume_limit_size: limitSize,
@@ -93,13 +93,13 @@
       wan_auto_clear_flow_data_switch: autoClearSwitch && autoClearSwitch.get() ? '1' : '0',
       traffic_clear_date: clearDateInput.value || '1'
     });
-  }, { needsLogin: false });
+  });
 
   // Reset counter
-  bindCtrlSave('dm_reset_btn', async function () {
-    await postData({ goformId: 'CLEAR_DATA_COUNTER' });
+  bindCtrlSave('dm_reset_btn', async function (cookie) {
+    await postData(cookie, { goformId: 'CLEAR_DATA_COUNTER' });
     loadData();
-  }, { needsLogin: false, successMsg: 'Counter reset', errorMsg: 'Failed to reset' });
+  }, { successMsg: 'Counter reset', errorMsg: 'Failed to reset' });
 
   // Load on panel show
   document.addEventListener('ctrl-panel-show', function (e) {

@@ -173,9 +173,9 @@
     }
   });
 
-  bindCtrlSave('reboot_now_btn', async function () {
-    await postData({ goformId: 'REBOOT_DEVICE' });
-  }, { needsLogin: false, successMsg: 'Rebooting...', errorMsg: 'Reboot failed' });
+  bindCtrlSave('reboot_now_btn', async function (cookie) {
+    await postData(cookie, { goformId: 'REBOOT_DEVICE' });
+  }, { successMsg: 'Rebooting...', errorMsg: 'Reboot failed' });
 
   document.addEventListener('ctrl-panel-show', function (e) {
     if (e.detail && e.detail.tab === 'schedule_reboot') loadTasks();

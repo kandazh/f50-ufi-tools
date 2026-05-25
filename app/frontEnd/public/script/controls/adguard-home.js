@@ -176,12 +176,13 @@
 
       log('[8/8] Registering boot script & starting...');
       await runShellWithRoot("grep -qxF 'sh /data/agh/boot.sh &' " + BOOT_SH_FILE + " || echo 'sh /data/agh/boot.sh &' >> " + BOOT_SH_FILE);
-      await runShellWithRoot('sh ' + SH_FILE + ' &');
+      await runShellWithRoot('sh ' + SH_FILE);
 
       log('=== Installation complete ===');
       log('Address: http://192.168.0.1:3000');
       log('Default user: root');
       showCtrlToast('AdGuard Home installed!');
+      await new Promise(function(r) { setTimeout(r, 3000); });
       refreshStatus();
     } catch (e) {
       log('ERROR: ' + e.message);

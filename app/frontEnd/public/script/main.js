@@ -88,6 +88,7 @@ const overlay = document.createElement('div')
 overlay.className = 'loading-overlay'
 overlay.innerHTML = "<p>Loading...</p>"
 document.body.appendChild(overlay)
+document.body.classList.add('ready')
 
 // --- Check if token needed ---
 const needToken = async (shouldThrowError = false, fetchMaxRetries = 3) => {

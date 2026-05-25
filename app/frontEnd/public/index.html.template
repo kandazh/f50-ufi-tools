@@ -18,6 +18,7 @@
             }
         })()
     </script>
+    <style>body{opacity:0}body.ready{opacity:1}</style>
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/style/variables.css">
     <link rel="stylesheet" href="/style/base.css">
