@@ -209,8 +209,10 @@ let handlerStatusRender = async (flag = false) => {
                 const key = getCarrierKey(res.network_provider);
                 if (key && carrierLogos[key]) {
                     gsLogo.innerHTML = carrierLogos[key];
+                    gsLogo.style.display = '';
                 } else {
                     gsLogo.innerHTML = '';
+                    gsLogo.style.display = 'none';
                 }
             }
             // Network type: 5G, LTE CA, LTE (4G), 3G, 2G

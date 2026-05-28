@@ -12,8 +12,6 @@ http:
   address: 192.168.0.1:3000
   session_ttl: 24h
 users:
-  - name: kandazh
-    password: $2b$12$5HYsblr7FP1MwYflQzDKaeIX993h2gMvtLKkEN8NHNurBO930W2Nq
   - name: root
     password: $2b$12$cPAt2pujJVjMiWIecnb1ZehxtoWUu87R.Q0cE9ogZlXppx/fhymxS
 auth_attempts: 3
@@ -138,11 +136,6 @@ user_rules:
   - '! ---- YouTube comments fix ----'
   - '@@||jnn-pa.googleapis.com^'
   - '@@||people-pa.googleapis.com^'
-  - '! ---- Block ZTE domains ----'
-  - '||ztems.com^$important'
-  - '||ztesmarthome.com^$important'
-  - '||kanokano.cn^$important'
-  - '||kano.ink^$important'
   - '! ---- Block Google ad/trackers ----'
   - '||googleadservices.com^'
   - '||googlesyndication.com^'
