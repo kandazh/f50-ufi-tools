@@ -363,13 +363,8 @@ function main_func() {
     // --- Initialize all modules ---
     window.initRenderMethod()
 
-    // --- Start status polling ---
-    handlerStatusRender(true)
-    window._StopStatusRenderTimer = requestInterval(() => handlerStatusRender(), window.REFRESH_TIME)
-
-    // --- QOS polling ---
-    QOSRDPCommand("AT+CGEQOSRDP=1")
-    window._QORSTimer = requestInterval(() => { QOSRDPCommand("AT+CGEQOSRDP=1") }, 10000);
+    // --- Start status polling (startRefresh stops any existing timers first) ---
+    window.startRefresh();
 
     // --- Initialize language pack ---
     (() => {

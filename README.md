@@ -1,14 +1,62 @@
-# ZTE F50 Hotbox - Actual Implemented Features
+# ZTE F50 Hotbox
 
-**Status**: ✅ Production-ready application  
-**Last Updated**: May 21, 2026  
-**App Version**: Hotbox F50  
-**Device**: ZTE F50 (MU300)  
-**OS**: Android 13
+A modernized fork of [UFI-TOOLS](https://github.com/kanoqwq/UFI-TOOLS) — custom web-based management interface for the ZTE F50 (MU300) MiFi hotspot running Android 13.
+
+Replaces the stock web UI with a feature-rich dashboard accessible at `192.168.0.1:2333`.
+
+## Quick Start
+
+```powershell
+# Build and install to connected device via ADB
+.\build-and-install.ps1
+```
+
+### Development
+
+```powershell
+cd app/frontEnd
+pnpm install
+node dev-server.js    # http://localhost:3000
+```
+
+### Requirements
+
+- Android SDK (API 33)
+- JDK 17+
+- Node.js 18+
+- ADB with device connected
+- Device must be rooted
+
+## Architecture
+
+| Layer | Tech | Details |
+|-------|------|---------|
+| Backend | Kotlin + Ktor | Web server on port 2333, root-level system access |
+| Frontend | Vanilla JS/CSS | No framework, SSI-style includes, built with `build.js` |
+| Build | Gradle 8.7.2 | `build-and-install.ps1` handles full pipeline |
+| Dev | Express.js | Dev server on port 3000 with mock API |
+
+## Project Structure
+
+```
+app/
+├── frontEnd/          # Frontend source
+│   ├── public/        # HTML, CSS, JS assets
+│   ├── build.js       # Production build (assemble + obfuscate)
+│   └── dev-server.js  # Dev server with mock API
+└── src/main/          # Kotlin backend (Ktor server)
+gradle/                # Gradle wrapper & version catalog
+platform-tools/        # Bundled ADB
+```
 
 ---
 
-## 📊 Dashboard & Monitoring
+## Features
+
+**Status**: ✅ Production-ready | **89+ verified features**  
+**Last Updated**: May 2026
+
+### 📊 Dashboard & Monitoring
 
 - ✅ Real-time CPU usage with core-by-core breakdown
 - ✅ Memory monitoring (total, available, used)
@@ -245,57 +293,3 @@
 - ✅ Admin password protection
 - ✅ Secure API endpoints
 - ✅ Input validation
-
----
-
-## 🏗️ Technical Architecture
-
-### Backend
-- ✅ Kotlin + Ktor web server (port 2333)
-- ✅ Android 13 compatible
-- ✅ Root-level system access
-- ✅ Multi-threaded request handling
-
-### Frontend
-- ✅ Vanilla JavaScript
-- ✅ Express.js dev server (port 3000)
-- ✅ Responsive HTML5/CSS3
-- ✅ Mobile-optimized
-
-### API
-- ✅ 60+ REST endpoints
-- ✅ JSON request/response
-- ✅ Comprehensive error handling
-- ✅ Authentication
-
-### Build System
-- ✅ Gradle 8.7.2
-- ✅ npm for frontend
-- ✅ Automated build/install
-
----
-
-## 📊 Feature Summary
-
-**Actual Verified Features**: 89+
-
-| Category | Features |
-|----------|----------|
-| Dashboard & Monitoring | 7 |
-| Network Management | 17 |
-| ADB & Root Access | 5 |
-| Advanced Tools | 12 |
-| SMS & Communications | 6 |
-| VPN & Proxy | 6 |
-| Task Scheduling | 7 |
-| DNS & Ad-Blocking | 8 |
-| System Management | 9 |
-| Plugins | 5 |
-| UI Controls | 18 |
-| **Total** | **89** |
-
-All features have:
-- ✅ Backend API implementation
-- ✅ Frontend UI (where applicable)
-- ✅ Functional code
-- ✅ Security validation
