@@ -4,6 +4,20 @@ A modernized fork of [UFI-TOOLS](https://github.com/kanoqwq/UFI-TOOLS) — custo
 
 Replaces the stock web UI with a feature-rich dashboard accessible at `192.168.0.1:2333`.
 
+## Screenshots
+
+| Dashboard | Dashboard (continued) |
+|:-:|:-:|
+| ![Dashboard](Tab_dashboard_1.jpg) | ![Dashboard 2](Tab_dashboard_2.jpg) |
+
+| Network | Settings |
+|:-:|:-:|
+| ![Network](Tab_Network.jpg) | ![Settings](Tab_settings.jpg) |
+
+| Mobile View |
+|:-:|
+| <img src="Tab_mobile.jpg" width="300"> |
+
 ## Quick Start
 
 ```powershell
